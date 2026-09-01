@@ -1,10 +1,39 @@
 import { TopBar, Card, ProvBar, MiniBar, Spark, Pill, Kpi } from "@/components/dashboard/ui";
 import { TrendChart } from "@/components/dashboard/TrendChart";
-import { org, kpis, trend6, attention, repos } from "@/lib/mock";
+import { getRepos, getOrgScans, getEvents, ago, monthLabel, num } from "@/lib/data";
 
 const chip = "inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 text-[13px] text-muted";
 
-export default function Overview() {
+// derive a gentle sparkline from a repo's current AI share (no per-repo history yet)
+function spark(ai: number, attention: boolean): number[] {
+  const end = Math.min(0.95, ai / 100);
+  const start = Math.max(0.05, end - (attention ? 0.22 : 0.05));
+  return Array.from({ length: 6 }, (_, i) => start + ((end - start) * i) / 5);
+}
+
+export default async function Overview() {
+  const [repos, scans, events] = await Promise.all([getRepos(), getOrgScans(), getEvents()]);
+  const last = scans.at(-1);
+  const prev = scans.at(-2);
+  const kpis = {
+    human: num(last?.human ?? 0),
+    ai: num(last?.ai ?? 0),
+    unc: num(last?.unc ?? 0),
+    aiDelta: last && prev ? num(last.ai) - num(prev.ai) : 0,
+    attention: repos.filter((r) => r.status === "attention").length,
+    coverage: repos.length,
+  };
+  const trend = {
+    months: scans.map((s) => monthLabel(s.created_at)),
+    human: scans.map((s) => num(s.human)),
+    ai: scans.map((s) => num(s.ai)),
+    threshold: 40,
+  };
+  const attention = events
+    .filter((e) => e.kind === "attention" && e.pr)
+    .slice(0, 5)
+    .map((e) => ({ repo: e.repo!, pr: e.pr!, ai: num(e.ai ?? 0), ago: ago(e.created_at) }));
+
   return (
     <>
       <TopBar
@@ -18,24 +47,25 @@ export default function Overview() {
       />
 
       <div className="flex flex-1 flex-col gap-[18px] overflow-y-auto p-7">
-        {/* KPIs */}
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <Kpi label="Org provenance" value={`${kpis.human}%`} valueClass="text-human">
-            human-authored across {org.repos} repos
+            human-authored across {kpis.coverage} repos
             <ProvBar human={kpis.human} ai={kpis.ai} unc={kpis.unc} h={8} />
           </Kpi>
           <Kpi label="AI-assisted" value={`${kpis.ai}%`} valueClass="text-ai">
-            <span className="rounded bg-ai-soft px-1.5 py-0.5 font-mono text-ai">▲ +{kpis.aiDeltaPts} pts</span> vs last month
+            {kpis.aiDelta !== 0 && (
+              <span className="rounded bg-ai-soft px-1.5 py-0.5 font-mono text-ai">▲ +{kpis.aiDelta} pts</span>
+            )}{" "}
+            vs last month
           </Kpi>
-          <Kpi label="Open attention" value={`${kpis.openAttention}`}>
-            PRs over policy in human-owned paths
+          <Kpi label="Open attention" value={`${kpis.attention}`}>
+            repos flagged in human-owned paths
           </Kpi>
-          <Kpi label="Coverage" value={`${org.repos}`}>
-            repos tracked · {org.scannedToday} scanned today
+          <Kpi label="Coverage" value={`${kpis.coverage}`}>
+            repositories tracked
           </Kpi>
         </div>
 
-        {/* trend + attention */}
         <div className="grid gap-[18px] lg:grid-cols-[1.9fr_1fr]">
           <Card className="p-5">
             <div className="mb-1.5 flex items-center justify-between">
@@ -46,7 +76,7 @@ export default function Overview() {
                 <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-line-strong" />policy 40%</span>
               </div>
             </div>
-            <TrendChart months={trend6.months} human={trend6.human} ai={trend6.ai} threshold={trend6.threshold} height={210} />
+            <TrendChart months={trend.months} human={trend.human} ai={trend.ai} threshold={trend.threshold} height={210} />
           </Card>
 
           <Card className="p-5">
@@ -65,11 +95,11 @@ export default function Overview() {
                   <span className="w-10 text-right font-mono text-[11px] text-faint">{a.ago}</span>
                 </div>
               ))}
+              {attention.length === 0 && <div className="py-6 text-center text-[13px] text-faint">Nothing needs attention 🎉</div>}
             </div>
           </Card>
         </div>
 
-        {/* repo table */}
         <Card className="px-2 pb-1">
           <table className="w-full border-collapse">
             <thead>
@@ -84,13 +114,13 @@ export default function Overview() {
             </thead>
             <tbody className="[&_td]:border-b [&_td]:border-line/60 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:text-[13px] [&_tr:last-child_td]:border-none">
               {repos.map((r) => (
-                <tr key={r.name}>
+                <tr key={r.id}>
                   <td className="font-medium">{r.name} <span className="font-mono font-normal text-faint">acme/</span></td>
-                  <td><MiniBar human={r.human} ai={r.ai} /></td>
-                  <td className="font-mono tabular-nums">{r.ai}%</td>
-                  <td><Spark series={r.spark} up={r.ai > r.human || r.status === "attention"} /></td>
+                  <td><MiniBar human={num(r.human)} ai={num(r.ai)} /></td>
+                  <td className="font-mono tabular-nums">{num(r.ai)}%</td>
+                  <td><Spark series={spark(num(r.ai), r.status === "attention")} up={r.status === "attention"} /></td>
                   <td><Pill tone={r.status === "attention" ? "attention" : "ok"}>{r.status}</Pill></td>
-                  <td className="font-mono tabular-nums text-faint">{r.lastScan}</td>
+                  <td className="font-mono tabular-nums text-faint">{r.last_scan_at ? ago(r.last_scan_at) + " ago" : "—"}</td>
                 </tr>
               ))}
             </tbody>

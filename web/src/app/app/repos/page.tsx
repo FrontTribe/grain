@@ -1,8 +1,15 @@
 import Link from "next/link";
 import { TopBar, Card, MiniBar, Spark, Pill } from "@/components/dashboard/ui";
-import { repos } from "@/lib/mock";
+import { getRepos, ago, num } from "@/lib/data";
 
-export default function Repositories() {
+function spark(ai: number, attention: boolean): number[] {
+  const end = Math.min(0.95, ai / 100);
+  const start = Math.max(0.05, end - (attention ? 0.22 : 0.05));
+  return Array.from({ length: 6 }, (_, i) => start + ((end - start) * i) / 5);
+}
+
+export default async function Repositories() {
+  const repos = await getRepos();
   return (
     <>
       <TopBar
@@ -19,17 +26,17 @@ export default function Repositories() {
             </thead>
             <tbody className="[&_td]:border-b [&_td]:border-line/60 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:text-[13px] [&_tr:last-child_td]:border-none">
               {repos.map((r) => (
-                <tr key={r.name} className="hover:bg-surface-2">
+                <tr key={r.id} className="hover:bg-surface-2">
                   <td className="font-medium">
                     <Link href={`/app/repos/${r.name}`} className="hover:text-brand">
                       {r.name} <span className="font-mono font-normal text-faint">acme/</span>
                     </Link>
                   </td>
-                  <td><MiniBar human={r.human} ai={r.ai} /></td>
-                  <td className="font-mono tabular-nums">{r.ai}%</td>
-                  <td><Spark series={r.spark} up={r.status === "attention"} /></td>
+                  <td><MiniBar human={num(r.human)} ai={num(r.ai)} /></td>
+                  <td className="font-mono tabular-nums">{num(r.ai)}%</td>
+                  <td><Spark series={spark(num(r.ai), r.status === "attention")} up={r.status === "attention"} /></td>
                   <td><Pill tone={r.status === "attention" ? "attention" : "ok"}>{r.status}</Pill></td>
-                  <td className="font-mono tabular-nums text-faint">{r.lastScan}</td>
+                  <td className="font-mono tabular-nums text-faint">{r.last_scan_at ? ago(r.last_scan_at) + " ago" : "—"}</td>
                 </tr>
               ))}
             </tbody>

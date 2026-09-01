@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mark } from "@/components/Mark";
+import { signup } from "@/app/auth/actions";
 
 const check = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="mt-0.5 size-[18px] flex-none text-[#57C6A8]">
@@ -14,7 +15,9 @@ const gitIcon = (
 );
 const inputCls = "h-[46px] w-full rounded-[10px] border border-line bg-surface px-3.5 text-[14.5px] outline-none focus:border-brand";
 
-export default function SignUp() {
+export default async function SignUp({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+  const { error } = await searchParams;
+
   return (
     <div className="flex min-h-screen bg-ground text-ink">
       <div className="hidden w-[520px] flex-none flex-col bg-[#1A1712] p-[52px] text-[#C9C2B3] lg:flex">
@@ -38,23 +41,25 @@ export default function SignUp() {
       </div>
 
       <div className="flex flex-1 items-center justify-center p-10">
-        <div className="w-[400px]">
+        <form action={signup} className="w-[400px]">
           <h2 className="font-display text-[28px] font-bold">Create your account</h2>
-          <p className="mb-6 mt-2 text-[14.5px] text-muted">Team plan — free while in early access.</p>
+          <p className="mb-5 mt-2 text-[14.5px] text-muted">Team plan — free while in early access.</p>
+
+          {error && <div className="mb-4 rounded-lg border border-ai/40 bg-ai-soft px-3.5 py-2.5 text-[13px] text-ai">{error}</div>}
 
           <label className="mb-1.5 block text-[13px] font-medium">Full name</label>
-          <input className={`${inputCls} mb-4`} placeholder="Maya Green" />
+          <input name="name" className={`${inputCls} mb-4`} placeholder="Maya Green" />
           <label className="mb-1.5 block text-[13px] font-medium">Work email</label>
-          <input className={`${inputCls} mb-4`} type="email" placeholder="maya@acme.com" />
+          <input name="email" required className={`${inputCls} mb-4`} type="email" placeholder="maya@acme.com" />
           <label className="mb-1.5 block text-[13px] font-medium">Password</label>
-          <input className={`${inputCls} mb-1`} type="password" placeholder="••••••••••••" />
-          <div className="mb-2 text-[11.5px] text-faint">At least 12 characters.</div>
+          <input name="password" required minLength={8} className={`${inputCls} mb-1`} type="password" placeholder="••••••••••••" />
+          <div className="mb-2 text-[11.5px] text-faint">At least 8 characters.</div>
 
-          <Link href="/connect" className="mt-1 flex h-[46px] w-full items-center justify-center rounded-[10px] bg-brand text-[14.5px] font-semibold text-white transition hover:-translate-y-px">
+          <button type="submit" className="mt-1 flex h-[46px] w-full items-center justify-center rounded-[10px] bg-brand text-[14.5px] font-semibold text-white transition hover:-translate-y-px">
             Create account
-          </Link>
+          </button>
 
-          <div className="my-4.5 my-[18px] flex items-center gap-3.5 font-mono text-[11px] uppercase tracking-[0.1em] text-faint before:h-px before:flex-1 before:bg-line after:h-px after:flex-1 after:bg-line">
+          <div className="my-[18px] flex items-center gap-3.5 font-mono text-[11px] uppercase tracking-[0.1em] text-faint before:h-px before:flex-1 before:bg-line after:h-px after:flex-1 after:bg-line">
             or
           </div>
 
@@ -66,7 +71,7 @@ export default function SignUp() {
           <div className="mt-3 text-center text-[13.5px] text-muted">
             Already have an account? <Link href="/login" className="text-brand">Sign in</Link>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

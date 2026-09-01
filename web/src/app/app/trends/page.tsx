@@ -1,10 +1,18 @@
 import { TopBar, Card, Spark, Kpi } from "@/components/dashboard/ui";
 import { TrendChart } from "@/components/dashboard/TrendChart";
-import { trend12, trendsKpis, teams } from "@/lib/mock";
+import { getOrgScans, getRepos, monthLabel, num } from "@/lib/data";
+import { teams } from "@/lib/mock";
 
 const chip = "inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 font-mono text-xs text-muted";
 
-export default function Trends() {
+export default async function Trends() {
+  const [scans, repos] = await Promise.all([getOrgScans(), getRepos()]);
+  const orgAi = num(scans.at(-1)?.ai ?? 0);
+  const yoy = scans.length > 1 ? orgAi - num(scans[0].ai) : 0;
+  const over40 = repos.filter((r) => num(r.ai) > 40).length;
+  const fastest = [...repos].sort((a, b) => num(b.ai) - num(a.ai))[0];
+  const trend = { months: scans.map((s) => monthLabel(s.created_at)), human: scans.map((s) => num(s.human)), ai: scans.map((s) => num(s.ai)), threshold: 40 };
+
   return (
     <>
       <TopBar
@@ -19,14 +27,14 @@ export default function Trends() {
       />
       <div className="flex flex-1 flex-col gap-[18px] overflow-y-auto p-7">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Kpi label="Org AI-assisted" value={`${trendsKpis.orgAi}%`} valueClass="text-ai">
-            <span className="rounded bg-ai-soft px-1.5 py-0.5 font-mono text-ai">▲ +{trendsKpis.yoy} pts</span> year over year
+          <Kpi label="Org AI-assisted" value={`${orgAi}%`} valueClass="text-ai">
+            {yoy !== 0 && <span className="rounded bg-ai-soft px-1.5 py-0.5 font-mono text-ai">▲ +{yoy} pts</span>} since first scan
           </Kpi>
-          <Kpi label="Fastest-rising repo" value={trendsKpis.fastest} valueClass="!text-[26px]">
-            AI share up <b className="text-ink">+{trendsKpis.fastestDelta} pts</b> in 12 months
+          <Kpi label="Highest-AI repo" value={fastest?.name ?? "—"} valueClass="!text-[26px]">
+            currently <b className="text-ink">{num(fastest?.ai ?? 0)}% AI</b>
           </Kpi>
-          <Kpi label="Repos over 40% AI" value={`${trendsKpis.over40}`}>
-            of 42 tracked repositories
+          <Kpi label="Repos over 40% AI" value={`${over40}`}>
+            of {repos.length} tracked repositories
           </Kpi>
         </div>
 
@@ -39,7 +47,7 @@ export default function Trends() {
               <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-line-strong" />policy 40%</span>
             </div>
           </div>
-          <TrendChart months={trend12.months} human={trend12.human} ai={trend12.ai} threshold={trend12.threshold} height={300} />
+          <TrendChart months={trend.months} human={trend.human} ai={trend.ai} threshold={trend.threshold} height={300} />
         </Card>
 
         <Card className="px-2 pb-1">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Mark } from "@/components/Mark";
+import { signout } from "@/app/auth/actions";
 
 type NavItem = { href: string; label: string; icon: React.ReactNode };
 
@@ -39,9 +40,10 @@ function link(item: NavItem, active: boolean) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ orgName, plan, userName, userEmail }: { orgName: string; plan: string; userName: string; userEmail: string }) {
   const path = usePathname();
   const isActive = (href: string) => (href === "/app" ? path === "/app" : path.startsWith(href));
+  const initials = userName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "U";
 
   return (
     <aside className="flex w-[244px] flex-none flex-col bg-[#1A1712] p-4 text-[#C9C2B3]">
@@ -53,7 +55,7 @@ export function Sidebar() {
 
       <div className="my-5 flex items-center gap-2.5 rounded-[10px] border border-[#322c1f] bg-[#241F17] px-3 py-2.5 text-[13px]">
         <span className="size-[22px] flex-none rounded-md bg-gradient-to-br from-[#57C6A8] to-[#E28A50]" />
-        <span className="font-semibold text-[#ECE6D8]">Acme Corp</span>
+        <span className="truncate font-semibold text-[#ECE6D8]">{orgName}</span>
         <span className="ml-auto text-[#6E6656]">▾</span>
       </div>
 
@@ -64,11 +66,18 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-auto flex items-center gap-2.5 border-t border-[#2a2519] px-2 pt-2.5">
-        <span className="flex size-[30px] flex-none items-center justify-center rounded-lg bg-[#3a3323] text-xs font-semibold">MG</span>
-        <div>
-          <div className="text-[13px] font-medium text-[#E4DDCD]">Maya G.</div>
-          <div className="text-[11px] text-[#7C7462]">Team plan · 42 repos</div>
+        <span className="flex size-[30px] flex-none items-center justify-center rounded-lg bg-[#3a3323] text-xs font-semibold">{initials}</span>
+        <div className="min-w-0">
+          <div className="truncate text-[13px] font-medium text-[#E4DDCD]">{userName}</div>
+          <div className="truncate text-[11px] text-[#7C7462] capitalize">{plan} plan</div>
         </div>
+        <form action={signout} className="ml-auto">
+          <button type="submit" title="Sign out" className="flex size-7 items-center justify-center rounded-md text-[#7C7462] hover:bg-[#242c26] hover:text-[#7FD8BE]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="size-[16px]">
+              <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" />
+            </svg>
+          </button>
+        </form>
       </div>
     </aside>
   );
