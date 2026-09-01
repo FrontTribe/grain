@@ -1,7 +1,9 @@
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { TopBar, Card, MiniBar } from "@/components/dashboard/ui";
 import { Fingerprint } from "@/components/Fingerprint";
 import { RepoPolicyForm } from "@/components/dashboard/RepoPolicyForm";
+import { BadgeCard } from "@/components/dashboard/BadgeCard";
 import { getRepoDetail, ago, num } from "@/lib/data";
 import { rescanRepo } from "@/app/app/integrations/actions";
 
@@ -26,6 +28,8 @@ export default async function RepoDetail({
   if (!data) notFound();
   const { repo, dirs, prs, policy, orgPolicy } = data;
   const okMsg = rescanned ? BANNERS.rescanned : policyMsg ? BANNERS[`policy=${policyMsg}`] : "";
+  const origin = (await headers()).get("origin") ?? "";
+  const badgeUrl = repo.badge_token ? `${origin}/api/badge/${repo.badge_token}.svg` : null;
 
   return (
     <>
@@ -153,6 +157,10 @@ export default async function RepoDetail({
           <div className="flex flex-col gap-4">
             <Card className="p-5">
               <RepoPolicyForm repoId={repo.id} name={repo.name} policy={policy} orgPolicy={orgPolicy} />
+            </Card>
+
+            <Card className="p-5">
+              <BadgeCard repoId={repo.id} name={repo.name} badgeUrl={badgeUrl} />
             </Card>
 
             <Card className="p-5">

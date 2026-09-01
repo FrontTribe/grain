@@ -52,6 +52,7 @@ export type Repo = {
   human: number; ai: number; unc: number;
   status: "healthy" | "attention"; human_owned: string[]; last_scan_at: string | null;
   ai_attested: number; ai_declared: number; ai_inferred: number;
+  badge_token: string | null;
 };
 export type ScanRow = { human: number; ai: number; unc: number; commits: number; created_at: string };
 export type EventRow = { id: string; kind: string; title: string; subtitle: string | null; repo: string | null; pr: number | null; ai: number | null; created_at: string };
