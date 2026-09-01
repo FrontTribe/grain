@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Mark } from "@/components/Mark";
 import { signout } from "@/app/auth/actions";
+import { switchOrg } from "@/app/app/org-actions";
+
+type Org = { org_id: string; name: string };
 
 type NavItem = { href: string; label: string; icon: React.ReactNode };
 
@@ -40,7 +43,7 @@ function link(item: NavItem, active: boolean) {
   );
 }
 
-export function Sidebar({ orgName, plan, userName, userEmail }: { orgName: string; plan: string; userName: string; userEmail: string }) {
+export function Sidebar({ orgName, plan, userName, userEmail, orgs = [], activeOrgId }: { orgName: string; plan: string; userName: string; userEmail: string; orgs?: Org[]; activeOrgId?: string | null }) {
   const path = usePathname();
   const isActive = (href: string) => (href === "/app" ? path === "/app" : path.startsWith(href));
   const initials = userName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "U";
@@ -53,11 +56,32 @@ export function Sidebar({ orgName, plan, userName, userEmail }: { orgName: strin
         <span className="rounded border border-[#35301f] px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.16em] text-[#8A8272]">cloud</span>
       </div>
 
-      <div className="my-5 flex items-center gap-2.5 rounded-[10px] border border-[#322c1f] bg-[#241F17] px-3 py-2.5 text-[13px]">
-        <span className="size-[22px] flex-none rounded-md bg-gradient-to-br from-[#57C6A8] to-[#E28A50]" />
-        <span className="truncate font-semibold text-[#ECE6D8]">{orgName}</span>
-        <span className="ml-auto text-[#6E6656]">▾</span>
-      </div>
+      {orgs.length > 1 ? (
+        <details className="relative my-5">
+          <summary className="flex cursor-pointer list-none items-center gap-2.5 rounded-[10px] border border-[#322c1f] bg-[#241F17] px-3 py-2.5 text-[13px] marker:hidden [&::-webkit-details-marker]:hidden">
+            <span className="size-[22px] flex-none rounded-md bg-gradient-to-br from-[#57C6A8] to-[#E28A50]" />
+            <span className="truncate font-semibold text-[#ECE6D8]">{orgName}</span>
+            <span className="ml-auto text-[#6E6656]">▾</span>
+          </summary>
+          <div className="absolute left-0 right-0 z-20 mt-1 max-h-[300px] overflow-y-auto rounded-[10px] border border-[#322c1f] bg-[#241F17] p-1 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+            {orgs.map((o) => (
+              <form key={o.org_id} action={switchOrg}>
+                <input type="hidden" name="org" value={o.org_id} />
+                <button type="submit" className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[12.5px] ${o.org_id === activeOrgId ? "text-[#7FD8BE]" : "text-[#C9C2B3] hover:bg-[#2c2519]"}`}>
+                  <span className="size-4 flex-none rounded bg-gradient-to-br from-[#57C6A8] to-[#E28A50]" />
+                  <span className="truncate">{o.name}</span>
+                  {o.org_id === activeOrgId && <span className="ml-auto text-[#57C6A8]">✓</span>}
+                </button>
+              </form>
+            ))}
+          </div>
+        </details>
+      ) : (
+        <div className="my-5 flex items-center gap-2.5 rounded-[10px] border border-[#322c1f] bg-[#241F17] px-3 py-2.5 text-[13px]">
+          <span className="size-[22px] flex-none rounded-md bg-gradient-to-br from-[#57C6A8] to-[#E28A50]" />
+          <span className="truncate font-semibold text-[#ECE6D8]">{orgName}</span>
+        </div>
+      )}
 
       <nav className="flex flex-col gap-0.5">
         {NAV.map((n) => link(n, isActive(n.href)))}

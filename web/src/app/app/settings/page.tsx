@@ -1,19 +1,22 @@
 import { TopBar, Card } from "@/components/dashboard/ui";
-import { getUserAndOrg, getIngestTokens } from "@/lib/data";
+import { getUserAndOrg, getIngestTokens, getOrgMembers, getInvites, getMyOrgs, getActiveOrgId } from "@/lib/data";
 import { IngestTokens } from "@/components/dashboard/IngestTokens";
+import { MembersCard } from "@/components/dashboard/MembersCard";
 import { GithubPanel } from "@/components/dashboard/GithubPanel";
 import { renameWorkspace } from "@/app/app/settings/general/actions";
-import { members } from "@/lib/mock";
 
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
 
 export default async function Settings({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
   const { saved, error } = await searchParams;
-  const { org } = await getUserAndOrg();
-  const tokens = await getIngestTokens();
+  const [{ org }, tokens, members, invites, myOrgs, activeId] = await Promise.all([
+    getUserAndOrg(), getIngestTokens(), getOrgMembers(), getInvites(), getMyOrgs(), getActiveOrgId(),
+  ]);
   const name = org?.name ?? "Workspace";
   const slug = org?.slug ?? "workspace";
   const plan = org?.plan ?? "team";
+  const myRole = myOrgs.find((o) => o.org_id === activeId)?.role ?? "member";
+  const canInvite = myRole === "admin" || myRole === "owner";
 
   return (
     <>
@@ -50,27 +53,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
           </Card>
 
           <Card className="p-6">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="font-display text-base font-bold">Members</h3>
-              <span className={`${btn} border border-line bg-surface text-muted`}>Invite people</span>
-            </div>
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="[&_th]:border-b [&_th]:border-line [&_th]:px-2 [&_th]:py-2.5 [&_th]:text-left [&_th]:font-mono [&_th]:text-[10px] [&_th]:font-normal [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted">
-                  <th>Person</th><th>Email</th><th>Role</th><th>Last active</th>
-                </tr>
-              </thead>
-              <tbody className="[&_td]:border-b [&_td]:border-line/60 [&_td]:px-2 [&_td]:py-2.5 [&_td]:text-[13px] [&_tr:last-child_td]:border-none">
-                {members.map((m) => (
-                  <tr key={m.email}>
-                    <td><span className="flex items-center gap-2.5"><span className="flex size-7 items-center justify-center rounded-lg bg-surface-2 text-[11px] font-semibold text-muted">{m.initials}</span>{m.name}</span></td>
-                    <td className="text-muted">{m.email}</td>
-                    <td><span className={`rounded-full px-2 py-0.5 font-mono text-[11px] ${m.role === "admin" ? "bg-human-soft text-human" : "bg-surface-2 text-muted"}`}>{m.role}</span></td>
-                    <td className="text-faint">{m.active}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <MembersCard members={members} invites={invites} canInvite={canInvite} />
           </Card>
 
           <Card className="p-6">
@@ -86,7 +69,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               <ul className="mt-3.5 flex flex-col gap-1.5 text-[13px]">
                 <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">Unlimited repos</li>
                 <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">Org dashboard &amp; policy</li>
-                <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">{members.length} seats used</li>
+                <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">{members.length} {members.length === 1 ? "seat" : "seats"} used</li>
               </ul>
               <div className="mt-4 flex justify-end"><span className={`${btn} border border-line bg-surface text-muted`}>Manage billing</span></div>
             </Card>

@@ -29,7 +29,7 @@ export default async function Repositories() {
                 <tr key={r.id} className="hover:bg-surface-2">
                   <td className="font-medium">
                     <Link href={`/app/repos/${r.name}`} className="hover:text-brand">
-                      {r.name} <span className="font-mono font-normal text-faint">acme/</span>
+                      {r.name} <span className="font-mono font-normal text-faint">{r.full_name?.split("/")[0] ?? ""}/</span>
                     </Link>
                   </td>
                   <td><MiniBar human={num(r.human)} ai={num(r.ai)} /></td>

@@ -1,7 +1,51 @@
+import { cache } from "react";
+import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { listUserRepos, type GhRepo } from "@/lib/github";
 
-// RLS scopes every table to the signed-in user's org, so we don't filter by org_id.
+// RLS keeps a user to their own orgs, but a user can belong to several (e.g. after
+// accepting an invite). The active org is a cookie; every query is scoped to it.
+
+export type OrgRow = { org_id: string; name: string; slug: string; role: string };
+
+export const getMyOrgs = cache(async (): Promise<OrgRow[]> => {
+  const s = await createClient();
+  const { data } = await s.rpc("my_orgs");
+  return (data as OrgRow[]) ?? [];
+});
+
+// Resolve the active org id: the cookie if it names an org the user is in, else the first.
+export const getActiveOrgId = cache(async (): Promise<string | null> => {
+  const orgs = await getMyOrgs();
+  if (orgs.length === 0) return null;
+  const pref = (await cookies()).get("grain_org")?.value;
+  if (pref && orgs.some((o) => o.org_id === pref)) return pref;
+  return orgs[0].org_id;
+});
+
+export type Member = { user_id: string; email: string; name: string; role: string; joined_at: string };
+
+export async function getOrgMembers(): Promise<Member[]> {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return [];
+  const s = await createClient();
+  const { data } = await s.rpc("org_members", { p_org: orgId });
+  return (data as Member[]) ?? [];
+}
+
+export type Invite = { id: string; email: string; role: string; token: string; created_at: string };
+
+export async function getInvites(): Promise<Invite[]> {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return [];
+  const s = await createClient();
+  const { data } = await s
+    .from("invites")
+    .select("id,email,role,token,created_at")
+    .eq("org_id", orgId)
+    .order("created_at", { ascending: false });
+  return (data as Invite[]) ?? [];
+}
 
 export type Repo = {
   id: string; name: string; full_name: string | null;
@@ -13,28 +57,34 @@ export type EventRow = { id: string; kind: string; title: string; subtitle: stri
 
 export async function getUserAndOrg() {
   const s = await createClient();
-  const [{ data: userData }, { data: org }] = await Promise.all([
-    s.auth.getUser(),
-    s.from("orgs").select("id,name,slug,plan").limit(1).maybeSingle(),
-  ]);
+  const [{ data: userData }, orgId] = await Promise.all([s.auth.getUser(), getActiveOrgId()]);
+  const { data: org } = orgId
+    ? await s.from("orgs").select("id,name,slug,plan").eq("id", orgId).maybeSingle()
+    : { data: null };
   return { user: userData.user, org };
 }
 
 export async function getRepos(): Promise<Repo[]> {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return [];
   const s = await createClient();
-  const { data } = await s.from("repos").select("*").order("last_scan_at", { ascending: false, nullsFirst: false });
+  const { data } = await s.from("repos").select("*").eq("org_id", orgId).order("last_scan_at", { ascending: false, nullsFirst: false });
   return (data as Repo[]) ?? [];
 }
 
 export async function getOrgScans(): Promise<ScanRow[]> {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return [];
   const s = await createClient();
-  const { data } = await s.from("scans").select("human,ai,unc,commits,created_at").is("repo_id", null).order("created_at", { ascending: true });
+  const { data } = await s.from("scans").select("human,ai,unc,commits,created_at").eq("org_id", orgId).is("repo_id", null).order("created_at", { ascending: true });
   return (data as ScanRow[]) ?? [];
 }
 
 export async function getEvents(): Promise<EventRow[]> {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return [];
   const s = await createClient();
-  const { data } = await s.from("events").select("*").order("created_at", { ascending: false });
+  const { data } = await s.from("events").select("*").eq("org_id", orgId).order("created_at", { ascending: false });
   return (data as EventRow[]) ?? [];
 }
 
@@ -44,10 +94,13 @@ export type IngestToken = {
 };
 
 export async function getIngestTokens(): Promise<IngestToken[]> {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return [];
   const s = await createClient();
   const { data } = await s
     .from("ingest_tokens")
     .select("id,name,token_prefix,created_at,last_used_at")
+    .eq("org_id", orgId)
     .order("created_at", { ascending: false });
   return (data as IngestToken[]) ?? [];
 }
@@ -73,14 +126,18 @@ export async function getGithubRepos(): Promise<GhRepo[]> {
 }
 
 export async function getOrgPolicy() {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return null;
   const s = await createClient();
-  const { data } = await s.from("org_policy").select("*").maybeSingle();
+  const { data } = await s.from("org_policy").select("*").eq("org_id", orgId).maybeSingle();
   return data as { threshold: number; confidence_floor: number; enforcement: string; human_owned: string[] } | null;
 }
 
 export async function getRepoPolicies() {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return [];
   const s = await createClient();
-  const { data } = await s.from("repo_policies").select("repo_id,threshold,enforcement,floor,paths,repos(name)").order("threshold", { ascending: true });
+  const { data } = await s.from("repo_policies").select("repo_id,threshold,enforcement,floor,paths,repos(name)").eq("org_id", orgId).order("threshold", { ascending: true });
   return (data ?? []) as unknown as { repo_id: string; threshold: number; enforcement: string; floor: number; paths: number; repos: { name: string } | null }[];
 }
 
@@ -88,8 +145,10 @@ export type DirRow = { path: string; human: number; ai: number; owned: boolean; 
 export type PrRow = { number: number; title: string; ai: number; created_at: string };
 
 export async function getRepoDetail(name: string) {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return null;
   const s = await createClient();
-  const { data: repo } = await s.from("repos").select("*").eq("name", name).maybeSingle();
+  const { data: repo } = await s.from("repos").select("*").eq("org_id", orgId).eq("name", name).maybeSingle();
   if (!repo) return null;
   const [{ data: dirs }, { data: prs }] = await Promise.all([
     s.from("repo_dirs").select("path,human,ai,owned,lines").eq("repo_id", (repo as Repo).id).order("position", { ascending: true }),

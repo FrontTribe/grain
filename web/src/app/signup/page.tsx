@@ -15,8 +15,8 @@ const gitIcon = (
 );
 const inputCls = "h-[46px] w-full rounded-[10px] border border-line bg-surface px-3.5 text-[14.5px] outline-none focus:border-brand";
 
-export default async function SignUp({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
-  const { error } = await searchParams;
+export default async function SignUp({ searchParams }: { searchParams: Promise<{ error?: string; next?: string }> }) {
+  const { error, next } = await searchParams;
 
   return (
     <div className="flex min-h-screen bg-ground text-ink">
@@ -42,6 +42,7 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
 
       <div className="flex flex-1 items-center justify-center p-10">
         <form action={signup} className="w-[400px]">
+          {next && <input type="hidden" name="next" value={next} />}
           <h2 className="font-display text-[28px] font-bold">Create your account</h2>
           <p className="mb-5 mt-2 text-[14.5px] text-muted">Team plan — free while in early access.</p>
 

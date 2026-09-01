@@ -34,29 +34,35 @@ export async function connectGithub(formData?: FormData) {
 }
 
 export async function login(formData: FormData) {
+  const next = String(formData.get("next") ?? "");
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
   });
-  if (error) redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  if (error) {
+    const q = next ? `&next=${encodeURIComponent(next)}` : "";
+    redirect(`/login?error=${encodeURIComponent(error.message)}${q}`);
+  }
   revalidatePath("/app", "layout");
-  redirect("/app");
+  redirect(next && next.startsWith("/") ? next : "/app");
 }
 
 export async function signup(formData: FormData) {
+  const next = String(formData.get("next") ?? "");
+  const nextQ = next && next.startsWith("/") ? `&next=${encodeURIComponent(next)}` : "";
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: String(formData.get("email") ?? ""),
     password: String(formData.get("password") ?? ""),
     options: { data: { full_name: String(formData.get("name") ?? "") } },
   });
-  if (error) redirect(`/signup?error=${encodeURIComponent(error.message)}`);
+  if (error) redirect(`/signup?error=${encodeURIComponent(error.message)}${nextQ}`);
   if (!data.session) {
-    redirect(`/login?message=${encodeURIComponent("Check your email to confirm, then sign in.")}`);
+    redirect(`/login?message=${encodeURIComponent("Check your email to confirm, then sign in.")}${nextQ}`);
   }
   revalidatePath("/app", "layout");
-  redirect("/connect");
+  redirect(next && next.startsWith("/") ? next : "/connect");
 }
 
 export async function signout() {
