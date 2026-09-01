@@ -68,6 +68,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
           )}
 
           {tab === "general" && (
+            <>
             <Card className="p-6">
               <form action={renameWorkspace}>
                 <h3 className="font-display text-base font-bold">Workspace</h3>
@@ -85,6 +86,15 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 <div className="mt-4 flex justify-end"><button type="submit" className={`${btn} bg-brand text-surface`}>Save changes</button></div>
               </form>
             </Card>
+
+            <Card className="p-6">
+              <h3 className="font-display text-base font-bold">Authorship report</h3>
+              <p className="mb-4 mt-1 text-[12.5px] text-muted">
+                A timestamped, integrity-hashed Bill of Materials of human vs AI authorship across your repos — for audits, IP due diligence, or M&amp;A.
+              </p>
+              <a href="/app/export" className={`${btn} border border-line bg-surface text-ink`}>Open authorship report →</a>
+            </Card>
+            </>
           )}
 
           {tab === "members" && (
