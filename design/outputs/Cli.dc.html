@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    .board { width: 1280px; height: 840px; background: #F6F7F8; color: #1F2328;
+      font-family: "IBM Plex Sans", system-ui, sans-serif; padding: 36px 40px; display: flex; flex-direction: column; }
+    .tag { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #8b929b; margin-bottom: 6px; }
+    h2 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 28px; letter-spacing: -.02em; margin: 0 0 4px; }
+    .sub { color: #656D76; font-size: 15px; margin: 0 0 20px; max-width: 74ch; }
+    .term { background: #17150F; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.22); flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .tbar { display: flex; align-items: center; gap: 8px; padding: 13px 16px; background: #221F17; border-bottom: 1px solid #2c281d; }
+    .tbar .d { width: 12px; height: 12px; border-radius: 50%; }
+    .tbar .t { margin-left: 10px; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #8b8577; }
+    .scr { padding: 22px 26px; font-family: "IBM Plex Mono", monospace; font-size: 14px; line-height: 1.75; color: #E7E1D4; flex-grow: 1; }
+    .scr .row { white-space: pre; }
+    .p { color: #57C6A8; } .cmd { color: #E7E1D4; } .dim { color: #8b8577; }
+    .h { color: #57C6A8; } .a { color: #E28A50; } .u { color: #b5ad9c; }
+    .ok { color: #57C6A8; } .warn { color: #E28A50; }
+    .blk-h { color: #1F6E5B; } .blk-a { color: #B0511C; } .blk-u { color: #6f695c; }
+    .brand { color: #E7E1D4; }
+    .spacer { height: 14px; }
+  </style>
+</helmet>
+<div class="board">
+  <div class="tag">Output 04 &middot; CLI</div>
+  <h2>One command, no dashboard</h2>
+  <p class="sub">The whole engine runs locally. <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">grain scan</span> writes the report; <span style="font-family:'IBM Plex Mono',monospace;font-size:13px">grain check</span> gates a PR in CI.</p>
+
+  <div class="term">
+    <div class="tbar">
+      <span class="d" style="background:#f0685f"></span><span class="d" style="background:#f5bd4f"></span><span class="d" style="background:#61c554"></span>
+      <span class="t">payments-service &mdash; grain</span>
+    </div>
+    <div class="scr">
+      <div class="row"><span class="p">$</span> <span class="cmd">grain scan</span></div>
+      <div class="row"><span class="brand">grain</span> <span class="dim">v0.1.0 &middot; scanning</span> acme/payments-service</div>
+      <div class="row"><span class="dim">  reading 400 commits</span> <span class="dim">.................</span> <span class="ok">done</span></div>
+      <div class="row"><span class="dim">  provenance:</span></div>
+      <div class="row">    <span class="h">human-authored</span>   71%  <span class="blk-h">&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;</span><span class="blk-u">&block;&block;&block;&block;&block;&block;</span></div>
+      <div class="row">    <span class="a">ai-assisted</span>      24%  <span class="blk-a">&block;&block;&block;&block;&block;</span><span class="blk-u">&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;</span></div>
+      <div class="row">    <span class="u">unclassified</span>      5%  <span class="blk-u">&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;&block;</span></div>
+      <div class="row"><span class="dim">  wrote</span> PROVENANCE.md <span class="dim">&middot;</span> grain.json</div>
+      <div class="spacer"></div>
+      <div class="row"><span class="p">$</span> <span class="cmd">grain check --range main..HEAD</span></div>
+      <div class="row"><span class="dim">  PR provenance:</span> <span class="a">62% ai-assisted</span> <span class="dim">(+214 / -18 lines, 4 commits)</span></div>
+      <div class="row">  <span class="warn">&#9888;</span> <span class="dim">src/auth/ is</span> <span class="h">human-owned</span> <span class="dim">&mdash; AI share above 40% threshold</span></div>
+      <div class="row">  <span class="dim">&rarr; 1 human review requested</span> <span class="dim">(signal, not a block)</span></div>
+      <div class="row"><span class="dim">  exit</span> <span class="warn">1</span></div>
+      <div class="spacer"></div>
+      <div class="row"><span class="p">$</span> <span class="cmd">grain explain 9f3a2c1</span></div>
+      <div class="row"><span class="dim">  9f3a2c1</span> <span class="a">ai_authored</span> <span class="dim">&middot; conf</span> <span class="ok">0.97</span> <span class="dim">&middot; basis</span> declared</div>
+      <div class="row"><span class="dim">    signal:</span> Co-Authored-By: Claude <span class="dim">&lt;noreply@anthropic.com&gt;</span></div>
+      <div class="row"><span class="p">$</span> <span class="cmd">&block;</span></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

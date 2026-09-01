@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #0969DA; text-decoration: none; }
+    .board { width: 1280px; height: 840px; background: #F6F7F8; color: #1F2328;
+      font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 14px; padding: 36px 40px; display: flex; flex-direction: column; }
+    .tag { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #8b929b; margin-bottom: 18px; }
+    .cols { display: grid; grid-template-columns: 1.25fr 1fr; gap: 24px; flex-grow: 1; }
+    /* readme preview */
+    .readme { background: #fff; border: 1px solid #d0d7de; border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+    .rtab { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid #d0d7de; background: #f6f8fa; font-size: 12.5px; color: #656D76; }
+    .rtab .file { font-family: "IBM Plex Mono", monospace; color: #1F2328; font-weight: 500; }
+    .rbody { padding: 26px 30px; }
+    .rbody h1 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 30px; letter-spacing: -.02em; margin: 0 0 14px; padding-bottom: 12px; border-bottom: 1px solid #eaeef2; }
+    .shields { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+    .rbody p { color: #1F2328; line-height: 1.6; margin: 0 0 14px; max-width: 60ch; }
+    .rbody h2 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 19px; margin: 18px 0 10px; }
+    .rbody .muted { color: #656D76; font-size: 13.5px; }
+    /* shield component */
+    .shield { display: inline-flex; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; border-radius: 4px; overflow: hidden; height: 22px; }
+    .shield .lft { background: #55595e; color: #fff; padding: 0 8px; display: flex; align-items: center; gap: 5px; }
+    .shield .rgt { padding: 0 8px; display: flex; align-items: center; font-weight: 600; color: #fff; }
+    .shield.grain .lft { background: #201D19; }
+    .shield .rgt.blue { background: #0969DA; } .shield .rgt.green { background: #1a7f37; }
+    .shield .rgt.mix { background: #6B655B; } .shield .rgt.gray { background: #55595e; }
+    .shield .rgt.ok { background: #1F6E5B; } .shield .rgt.warn { background: #B0511C; }
+    .seed { width: 12px; height: 12px; }
+    /* right column */
+    .side { display: flex; flex-direction: column; gap: 20px; }
+    .panel { background: #fff; border: 1px solid #d0d7de; border-radius: 10px; padding: 20px 22px; }
+    .panel .k { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: #B0511C; margin-bottom: 14px; }
+    .vlist { display: flex; flex-direction: column; gap: 14px; }
+    .vitem { display: flex; align-items: center; gap: 14px; }
+    .vitem .desc { font-size: 12.5px; color: #656D76; }
+    .vitem .desc b { color: #1F2328; display: block; font-size: 13px; font-family: "IBM Plex Sans"; }
+    pre { background: #24292f; color: #d1d9e0; border-radius: 8px; padding: 14px 16px; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; line-height: 1.7; overflow-x: auto; margin: 0; }
+    pre .c { color: #8b949e; } pre .u { color: #79c0ff; }
+    .endpoint { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #656D76; margin-top: 4px; }
+  </style>
+</helmet>
+<div class="board">
+  <div class="tag">Output 02 &middot; README badge</div>
+  <div class="cols">
+    <div class="readme">
+      <div class="rtab"><span class="file">README.md</span><span>&middot; preview</span></div>
+      <div class="rbody">
+        <h1>payments-service</h1>
+        <div class="shields">
+          <span class="shield"><span class="lft">build</span><span class="rgt green">passing</span></span>
+          <span class="shield"><span class="lft">coverage</span><span class="rgt blue">92%</span></span>
+          <span class="shield grain"><span class="lft"><svg class="seed" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="28" width="11" height="64" rx="5" fill="#57C6A8"/><rect x="37" y="36" width="11" height="48" rx="5" fill="#E28A50"/><rect x="54" y="20" width="11" height="80" rx="5" fill="#57C6A8"/><rect x="71" y="38" width="11" height="44" rx="5" fill="#E28A50"/><rect x="88" y="31" width="11" height="58" rx="5" fill="#57C6A8"/></svg> grain</span><span class="rgt mix">24% AI-assisted</span></span>
+          <span class="shield"><span class="lft">license</span><span class="rgt gray">MIT</span></span>
+        </div>
+        <p>Idempotent payment webhook processing with retry and dead-letter handling. Built for high-throughput settlement.</p>
+        <h2>Provenance</h2>
+        <p class="muted">This repository publishes its authorship mix with <a href="#">grain</a>. 71% of the codebase is human-authored; see <a href="#">PROVENANCE.md</a> for the full breakdown.</p>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="panel">
+        <div class="k">Badge variants</div>
+        <div class="vlist">
+          <div class="vitem">
+            <span class="shield grain"><span class="lft"><svg class="seed" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="28" width="11" height="64" rx="5" fill="#57C6A8"/><rect x="37" y="36" width="11" height="48" rx="5" fill="#E28A50"/><rect x="54" y="20" width="11" height="80" rx="5" fill="#57C6A8"/><rect x="71" y="38" width="11" height="44" rx="5" fill="#E28A50"/><rect x="88" y="31" width="11" height="58" rx="5" fill="#57C6A8"/></svg> grain</span><span class="rgt mix">24% AI-assisted</span></span>
+            <span class="desc"><b>mix</b> the human/AI ratio</span>
+          </div>
+          <div class="vitem">
+            <span class="shield grain"><span class="lft">grain</span><span class="rgt ok">human-owned</span></span>
+            <span class="desc"><b>owned</b> path is human-authored</span>
+          </div>
+          <div class="vitem">
+            <span class="shield grain"><span class="lft">grain</span><span class="rgt warn">review needed</span></span>
+            <span class="desc"><b>policy</b> attention flag on the PR</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="k">Embed &mdash; one line in README</div>
+        <pre><span class="c"># shields.io endpoint reading grain.json</span>
+![grain](https://img.shields.io/<span class="u">endpoint</span>?url=
+  https://acme.dev/payments/<span class="u">grain.json</span>)</pre>
+        <div class="endpoint">The badge reads the committed grain.json &mdash; no service to run.</div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

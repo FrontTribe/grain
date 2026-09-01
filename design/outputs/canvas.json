@@ -1,0 +1,9 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "title": "PR check", "x": 0, "y": 0, "w": 940, "h": 1180 },
+    { "file": "Provenance.dc.html", "title": "PROVENANCE.md", "x": 1060, "y": 0, "w": 940, "h": 1240 },
+    { "file": "Badge.dc.html", "title": "README badge", "x": 0, "y": 1360, "w": 1280, "h": 840 },
+    { "file": "Cli.dc.html", "title": "CLI", "x": 1360, "y": 1360, "w": 1280, "h": 840 }
+  ],
+  "launch": { "view": "canvas" }
+}
