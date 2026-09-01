@@ -27,8 +27,8 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
-  // gate the dashboard
-  if (!user && path.startsWith("/app")) {
+  // gate the dashboard and the onboarding wizard
+  if (!user && (path.startsWith("/app") || path === "/connect" || path === "/onboarding")) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { parseRepoInput, scanGithubRepo, GithubScanError } from "@/lib/github";
 
@@ -47,6 +48,28 @@ export async function connectGithubRepo(
     ai: scan.ai,
     commits: scan.commits,
   };
+}
+
+// Onboarding step 3: scan the repositories selected on /connect, then show
+// the result on /onboarding. Bounded so a large selection can't hang the flow.
+export async function onboardScan(formData: FormData) {
+  const selected = formData.getAll("repo").map(String).filter(Boolean).slice(0, 10);
+  const supabase = await createClient();
+  const { data: token } = await supabase.rpc("get_github_token");
+
+  for (const full of selected) {
+    const p = parseRepoInput(full);
+    if (!p) continue;
+    try {
+      const scan = await scanGithubRepo(p.owner, p.repo, { token: token ?? undefined, max: 100 });
+      await supabase.rpc("ingest_grain_member", { p_payload: scan.report });
+    } catch {
+      // one repo failing (rate limit, gone private) shouldn't abort onboarding
+    }
+  }
+  revalidatePath("/app");
+  revalidatePath("/onboarding");
+  redirect("/onboarding");
 }
 
 export async function disconnectGithub() {
