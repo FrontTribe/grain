@@ -1,7 +1,7 @@
 import { TopBar, Card } from "@/components/dashboard/ui";
 import { getUserAndOrg, getIngestTokens } from "@/lib/data";
 import { IngestTokens } from "@/components/dashboard/IngestTokens";
-import { ConnectRepo } from "@/components/dashboard/ConnectRepo";
+import { GithubPanel } from "@/components/dashboard/GithubPanel";
 import { members } from "@/lib/mock";
 
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
@@ -83,9 +83,7 @@ export default async function Settings() {
             </Card>
 
             <Card className="p-6">
-              <h3 className="font-display text-base font-bold">Connect a repository</h3>
-              <p className="mb-4 mt-1 text-[12.5px] text-muted">Scan a public GitHub repo straight into {name}.</p>
-              <ConnectRepo compact />
+              <GithubPanel />
             </Card>
           </div>
         </div>

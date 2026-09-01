@@ -2,15 +2,29 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 
 // OAuth callback: exchange the code for a session, then land on the dashboard.
+// When the elevated "Connect GitHub" flow (?connect=1) brings back a
+// provider_token with repo scope, persist it so we can scan private repos.
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/app";
+  const isConnect = searchParams.get("connect") === "1";
 
   if (code) {
     const supabase = await createClient();
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
+      if (isConnect && data.session?.provider_token) {
+        const login =
+          (data.user?.user_metadata?.user_name as string | undefined) ??
+          (data.user?.user_metadata?.preferred_username as string | undefined) ??
+          null;
+        await supabase.rpc("store_github_token", {
+          p_login: login,
+          p_token: data.session.provider_token,
+          p_scope: "repo",
+        });
+      }
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocal = process.env.NODE_ENV === "development";
       if (isLocal) return NextResponse.redirect(`${origin}${next}`);

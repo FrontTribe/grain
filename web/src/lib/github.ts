@@ -68,6 +68,29 @@ export function isDeclaredAI(c: Commit): boolean {
   return false;
 }
 
+export type GhRepo = { full_name: string; private: boolean; pushed_at: string | null };
+
+// List the authenticated user's repositories (owner + collaborator + org),
+// most-recently-pushed first. Requires a token with repo (or public_repo) scope.
+export async function listUserRepos(token: string, max = 100): Promise<GhRepo[]> {
+  const res = await fetch(
+    `https://api.github.com/user/repos?per_page=${max}&sort=pushed&affiliation=owner,collaborator,organization_member`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        "User-Agent": "grain-cloud",
+        "X-GitHub-Api-Version": "2022-11-28",
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    },
+  );
+  if (!res.ok) throw new GithubScanError(`Could not list repositories (${res.status}).`, res.status);
+  const rows = (await res.json()) as Array<{ full_name: string; private: boolean; pushed_at: string | null }>;
+  if (!Array.isArray(rows)) return [];
+  return rows.map((r) => ({ full_name: r.full_name, private: r.private, pushed_at: r.pushed_at }));
+}
+
 export class GithubScanError extends Error {
   status: number;
   constructor(message: string, status: number) {

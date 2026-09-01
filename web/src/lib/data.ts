@@ -1,4 +1,5 @@
 import { createClient } from "@/utils/supabase/server";
+import { listUserRepos, type GhRepo } from "@/lib/github";
 
 // RLS scopes every table to the signed-in user's org, so we don't filter by org_id.
 
@@ -49,6 +50,26 @@ export async function getIngestTokens(): Promise<IngestToken[]> {
     .select("id,name,token_prefix,created_at,last_used_at")
     .order("created_at", { ascending: false });
   return (data as IngestToken[]) ?? [];
+}
+
+export type GithubConn = { github_login: string | null; connected_at: string } | null;
+
+export async function getGithubConnection(): Promise<GithubConn> {
+  const s = await createClient();
+  const { data } = await s.rpc("github_connection_info");
+  const row = Array.isArray(data) ? data[0] : null;
+  return (row as GithubConn) ?? null;
+}
+
+export async function getGithubRepos(): Promise<GhRepo[]> {
+  const s = await createClient();
+  const { data: token } = await s.rpc("get_github_token");
+  if (!token) return [];
+  try {
+    return await listUserRepos(token as string, 100);
+  } catch {
+    return [];
+  }
 }
 
 export async function getOrgPolicy() {

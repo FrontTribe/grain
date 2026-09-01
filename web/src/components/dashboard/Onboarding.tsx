@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Fingerprint } from "@/components/Fingerprint";
-import { ConnectRepo } from "@/components/dashboard/ConnectRepo";
 
 const INGEST_URL = "https://grain-fronttribe.vercel.app/api/ingest";
 const REPO = "https://github.com/FrontTribe/grain";
@@ -50,7 +49,7 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
   );
 }
 
-export function Onboarding({ workspace }: { workspace: string }) {
+export function Onboarding({ workspace, connect }: { workspace: string; connect: ReactNode }) {
   const pushBlock = `export GRAIN_API=${INGEST_URL}\nexport GRAIN_TOKEN=grain_…        # from Settings\ngrain push`;
 
   return (
@@ -82,9 +81,9 @@ export function Onboarding({ workspace }: { workspace: string }) {
             <h3 className="font-display text-[15.5px] font-bold text-ink">Connect a GitHub repo</h3>
           </div>
           <p className="mb-3.5 text-[13px] text-muted">
-            Paste a public repository — Grain reads its commit history and scores it right here. No install.
+            Scan a public repo by name, or connect GitHub to pick a private one — Grain reads its commit history and scores it right here. No install.
           </p>
-          <ConnectRepo />
+          {connect}
         </div>
 
         <div className="mb-3 flex items-center gap-3.5 font-mono text-[11px] uppercase tracking-[0.1em] text-faint before:h-px before:flex-1 before:bg-line after:h-px after:flex-1 after:bg-line">

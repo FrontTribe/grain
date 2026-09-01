@@ -16,6 +16,22 @@ export async function signInWithGithub() {
   if (data.url) redirect(data.url);
 }
 
+// Elevated GitHub authorization (repo scope) so the dashboard can list & scan
+// private repositories. The callback captures the provider_token and stores it.
+export async function connectGithub() {
+  const supabase = await createClient();
+  const origin = (await headers()).get("origin") ?? "http://localhost:3000";
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "github",
+    options: {
+      scopes: "read:user repo",
+      redirectTo: `${origin}/auth/callback?connect=1&next=/app/settings`,
+    },
+  });
+  if (error) redirect(`/app/settings?error=${encodeURIComponent(error.message)}`);
+  if (data.url) redirect(data.url);
+}
+
 export async function login(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({

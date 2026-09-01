@@ -1,6 +1,7 @@
 import { TopBar, Card, ProvBar, MiniBar, Spark, Pill, Kpi } from "@/components/dashboard/ui";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { Onboarding } from "@/components/dashboard/Onboarding";
+import { GithubPanel } from "@/components/dashboard/GithubPanel";
 import { getRepos, getOrgScans, getEvents, getUserAndOrg, ago, monthLabel, num } from "@/lib/data";
 
 const chip = "inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 text-[13px] text-muted";
@@ -21,7 +22,7 @@ export default async function Overview() {
     return (
       <>
         <TopBar title="Get started" />
-        <Onboarding workspace={org?.name ?? "Your workspace"} />
+        <Onboarding workspace={org?.name ?? "Your workspace"} connect={<GithubPanel heading={false} />} />
       </>
     );
   }
