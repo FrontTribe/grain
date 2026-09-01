@@ -224,8 +224,9 @@ func (r Report) WriteCheckMarkdown(w io.Writer, threshold float64, flagged []str
 	p := func(format string, a ...any) { fmt.Fprintf(w, format, a...) }
 	p("<!-- grain-provenance -->\n")
 	p("## 🌾 Provenance report\n\n")
-	p("**%d%% AI-assisted** · %d%% human · %d%% unclassified — %d commits, %d lines changed\n\n",
-		pct(r.Summary.AIAssisted), pct(r.Summary.Human), pct(r.Summary.Unclassified), r.NumCommits, r.Summary.Lines)
+	p("**%d%% AI-assisted** · %d%% human · %d%% unclassified — %d %s, %d lines changed\n\n",
+		pct(r.Summary.AIAssisted), pct(r.Summary.Human), pct(r.Summary.Unclassified),
+		r.NumCommits, plural(r.NumCommits, "commit", "commits"), r.Summary.Lines)
 
 	if len(r.ByPath) > 0 {
 		p("| Path | Human | AI | Lines | |\n|---|---|---|---|---|\n")
@@ -288,7 +289,7 @@ func (r Report) WriteText(w io.Writer, color bool) {
 	c := colorizer(color)
 	pad := func(s string) string { return fmt.Sprintf("%-15s", s) }
 	fmt.Fprintf(w, "%s %s\n", c(bold, "grain "+EngineVersion), c(dim, "· scanning "+r.Repo))
-	fmt.Fprintf(w, "  reading %d commits %s\n", r.NumCommits, c(human, "done"))
+	fmt.Fprintf(w, "  reading %d %s %s\n", r.NumCommits, plural(r.NumCommits, "commit", "commits"), c(human, "done"))
 	fmt.Fprintf(w, "  provenance:\n")
 	fmt.Fprintf(w, "    %s %3d%%  %s\n", c(human, pad("human-authored")), pct(r.Summary.Human), c(human, bar(r.Summary.Human)))
 	fmt.Fprintf(w, "    %s %3d%%  %s\n", c(ai, pad("ai-assisted")), pct(r.Summary.AIAssisted), c(ai, bar(r.Summary.AIAssisted)))
@@ -334,6 +335,13 @@ func bar(frac float64) string {
 		filled = 0
 	}
 	return strings.Repeat("█", filled) + strings.Repeat("░", width-filled)
+}
+
+func plural(n int, one, many string) string {
+	if n == 1 {
+		return one
+	}
+	return many
 }
 
 func pct(f float64) int    { return int(math.Round(f * 100)) }
