@@ -1,0 +1,25 @@
+{
+  "version": "0.1.0",
+  "description": "Code provenance layer — see how much of your codebase is human-written vs AI. Signals, not verdicts.",
+  "homepage": "https://github.com/FrontTribe/grain",
+  "license": "MIT",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/FrontTribe/grain/releases/download/v0.1.0/grain-windows-amd64.exe",
+      "hash": "e2afd8d520fd6766f5d1d60df6f0641806478b46c69c20e7fa1e3cabd5b479b6"
+    },
+    "arm64": {
+      "url": "https://github.com/FrontTribe/grain/releases/download/v0.1.0/grain-windows-arm64.exe",
+      "hash": "181e41f177f0f099e9a4f2e2270cd3e49bb2c46d38be23c75abf704b758a762e"
+    }
+  },
+  "pre_install": "Get-ChildItem \"$dir\\grain-windows-*.exe\" | Rename-Item -NewName 'grain.exe'",
+  "bin": "grain.exe",
+  "checkver": "github",
+  "autoupdate": {
+    "architecture": {
+      "64bit": { "url": "https://github.com/FrontTribe/grain/releases/download/v$version/grain-windows-amd64.exe" },
+      "arm64": { "url": "https://github.com/FrontTribe/grain/releases/download/v$version/grain-windows-arm64.exe" }
+    }
+  }
+}

@@ -6,8 +6,8 @@
 *.out
 vendor/
 
-# Grain output (generated)
-grain.json
+# Grain output (generated) — only the one grain writes at the repo root
+/grain.json
 # PROVENANCE.md is intentionally committable — do not ignore it
 
 # Node (npm shim)
