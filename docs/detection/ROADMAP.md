@@ -19,6 +19,10 @@ Don't detect — *record* provenance as code is written.
   before commit.
 - **Provenance standard**: agents write provenance (Claude already writes
   `Co-Authored-By`); Grain becomes the *reader of truth*, not a guesser.
+- **✅ git-notes attestation shipped**: `grain annotate <sha> --ai|--human|--assisted`
+  writes an authoritative `Provenance:` note on `refs/notes/grain`; scanning reads
+  it as the top tier (basis `attested`), overriding message trailers and inference.
+  Provenance lives in git — portable, versioned, tool- or human-written.
 - Confidence: ~0.98. The long-term moat.
 
 ### Tier 2 — DECLARED (trailers · high confidence when present) — *shipped*

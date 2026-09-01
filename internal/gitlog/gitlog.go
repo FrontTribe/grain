@@ -30,8 +30,12 @@ type Commit struct {
 	CommitTime     int64
 	Subject        string
 	Body           string
+	Note           string // git note (attested provenance), if any
 	Files          []FileChange
 }
+
+// NotesRef is the git-notes ref grain reads/writes provenance attestations on.
+const NotesRef = "refs/notes/grain"
 
 // Lines returns total churn (added + deleted) across all files.
 func (c Commit) Lines() int {
@@ -91,10 +95,52 @@ func ReadCommits(dir, rev string, max int) ([]Commit, error) {
 	if err != nil {
 		return nil, err
 	}
+	notes := readNotes(dir, NotesRef, rev, max) // best-effort; nil if the ref is absent
 	for i := range meta {
 		meta[i].Files = files[meta[i].SHA]
+		if n, ok := notes[meta[i].SHA]; ok {
+			meta[i].Note = n
+		}
 	}
 	return meta, nil
+}
+
+// readNotes returns each commit's git note on `ref`, keyed by SHA. A missing ref
+// is not an error — grain simply sees no attestations.
+func readNotes(dir, ref, rev string, max int) map[string]string {
+	args := []string{"log", "--no-merges", "--notes=" + ref, "--format=" + rs + "%H" + us + "%N"}
+	if max > 0 {
+		args = append(args, fmt.Sprintf("--max-count=%d", max))
+	}
+	if rev != "" {
+		args = append(args, rev)
+	}
+	out, err := run(dir, args...)
+	if err != nil {
+		return nil
+	}
+	m := make(map[string]string)
+	for _, rec := range strings.Split(out, rs) {
+		rec = strings.Trim(rec, "\n")
+		if rec == "" {
+			continue
+		}
+		sha, note, ok := strings.Cut(rec, us)
+		if !ok {
+			continue
+		}
+		if sha, note = strings.TrimSpace(sha), strings.TrimSpace(note); sha != "" && note != "" {
+			m[sha] = note
+		}
+	}
+	return m
+}
+
+// AddNote writes (overwriting) a git note on `ref` for the given commit — how
+// grain records an attested provenance declaration.
+func AddNote(dir, ref, sha, body string) error {
+	_, err := run(dir, "notes", "--ref="+ref, "add", "-f", "-m", body, sha)
+	return err
 }
 
 // ReadAddedLines returns, per commit SHA, the added ('+') lines grouped by file

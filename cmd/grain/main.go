@@ -34,6 +34,8 @@ func main() {
 		err = cmdBadge(os.Args[2:])
 	case "explain":
 		err = cmdExplain(os.Args[2:])
+	case "annotate":
+		err = cmdAnnotate(os.Args[2:])
 	case "eval":
 		err = cmdEval(os.Args[2:])
 	case "push":
@@ -72,6 +74,7 @@ usage:
   grain check --range <a..b> [-C dir]            gate a change set; exit 1 on attention
   grain badge [-C dir]                           print the shields.io endpoint JSON
   grain explain <sha> [-C dir]                    why a commit was classified as it was
+  grain annotate <sha> --ai|--human|--assisted   attest a commit's provenance in a git note
   grain eval [--fit] [-C dir]                     score the content classifier vs declared commits
   grain push [--url U] [--token T] [--file f]     push grain.json to Grain Cloud
   grain init [-C dir]                            write an example .grain.toml

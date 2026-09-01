@@ -13,6 +13,25 @@ func scoreCommit(c gitlog.Commit) Result {
 	return Classify(c, signal.Extract(c, cfg), cfg, nil)
 }
 
+func TestAttestedHumanOverridesAITrailer(t *testing.T) {
+	c := gitlog.Commit{
+		SHA:  "bbbbbbb",
+		Body: "Co-Authored-By: Claude <noreply@anthropic.com>",
+		Note: "Provenance: human",
+	}
+	r := scoreCommit(c)
+	if r.IsAI() || r.Basis != "attested" {
+		t.Errorf("attested human should win: class=%q basis=%q", r.Class, r.Basis)
+	}
+}
+
+func TestAttestedAI(t *testing.T) {
+	r := scoreCommit(gitlog.Commit{SHA: "ccccccc", Note: "Provenance: ai"})
+	if !r.IsAI() || r.Basis != "attested" {
+		t.Errorf("attested ai: class=%q basis=%q", r.Class, r.Basis)
+	}
+}
+
 func TestDeclaredAI(t *testing.T) {
 	c := gitlog.Commit{
 		SHA:     "aaaaaaa",

@@ -59,6 +59,22 @@ var conventional = regexp.MustCompile(`^(feat|fix|chore|docs|refactor|test|build
 func Classify(c gitlog.Commit, s signal.Set, cfg config.Config, added map[string][]string) Result {
 	r := Result{SHA: c.SHA, Lines: c.Lines(), Signals: s.Declared}
 
+	// Attested: an authoritative git-note declaration overrides everything else.
+	switch s.AttestedClass {
+	case "ai":
+		r.AILikelihood = 0.98
+		r.Confidence = 0.95
+		r.Basis = "attested"
+		r.Class = bucket(r.AILikelihood, r.Confidence)
+		return r
+	case "human":
+		r.AILikelihood = 0.05
+		r.Confidence = 0.95
+		r.Basis = "attested"
+		r.Class = Human
+		return r
+	}
+
 	if s.DeclaredAI {
 		r.AILikelihood = 0.98
 		r.Confidence = 0.95

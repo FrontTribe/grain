@@ -53,6 +53,43 @@ func TestAIAssistedTrailer(t *testing.T) {
 	}
 }
 
+func TestNoteAttestsAI(t *testing.T) {
+	c := gitlog.Commit{Note: "Provenance: ai"}
+	s := Extract(c, config.Default())
+	if s.AttestedClass != "ai" || !s.DeclaredAI {
+		t.Errorf("note 'Provenance: ai' → AttestedClass=%q DeclaredAI=%v", s.AttestedClass, s.DeclaredAI)
+	}
+}
+
+func TestNoteAttestsHuman(t *testing.T) {
+	c := gitlog.Commit{Note: "Provenance: human"}
+	s := Extract(c, config.Default())
+	if s.AttestedClass != "human" || !s.DeclaredHuman {
+		t.Errorf("note 'Provenance: human' → AttestedClass=%q DeclaredHuman=%v", s.AttestedClass, s.DeclaredHuman)
+	}
+}
+
+func TestNoteAIAuthoredFraction(t *testing.T) {
+	if s := Extract(gitlog.Commit{Note: "AI-Authored: 0.9"}, config.Default()); s.AttestedClass != "ai" {
+		t.Errorf("AI-Authored 0.9 → %q, want ai", s.AttestedClass)
+	}
+	if s := Extract(gitlog.Commit{Note: "AI-Authored: 0.1"}, config.Default()); s.AttestedClass != "human" {
+		t.Errorf("AI-Authored 0.1 → %q, want human", s.AttestedClass)
+	}
+}
+
+// A note is authoritative: it overrides an AI trailer in the commit message.
+func TestNoteOverridesMessage(t *testing.T) {
+	c := gitlog.Commit{
+		Body: "Co-Authored-By: Claude <noreply@anthropic.com>",
+		Note: "Provenance: human",
+	}
+	s := Extract(c, config.Default())
+	if s.AttestedClass != "human" {
+		t.Errorf("note should override message: AttestedClass=%q, want human", s.AttestedClass)
+	}
+}
+
 func TestPlainHumanCommit(t *testing.T) {
 	c := gitlog.Commit{AuthorName: "Jane Dev", AuthorEmail: "jane@example.com", Subject: "fix: off-by-one", Body: "Manual fix."}
 	s := Extract(c, config.Default())
