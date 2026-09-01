@@ -43,8 +43,49 @@ it protects real humans who happen to write clean code.
 
 ## Status
 
-**Pre-MVP.** This repo currently holds the product design and specification.
-Implementation (Go CLI + GitHub Action) is next.
+**v0.1 skeleton — `grain scan` works.** The Go CLI reads real git history
+(no external dependencies; it shells out to `git`) and classifies commits.
+Working commands: `scan`, `check`, `badge`, `explain`, `init`, `version`.
+Next: convention diffing, the GitHub Action, and richer inference.
+
+## Quickstart
+
+```bash
+go build -o grain ./cmd/grain     # or: make build
+./grain scan                      # writes PROVENANCE.md + grain.json
+```
+
+Example (grain scanning its own repo — every commit is Co-Authored-By Claude):
+
+```
+grain 0.1.0 · scanning kresimirgalic/grain
+  reading 3 commits done
+  provenance:
+    human-authored    0%  ░░░░░░░░░░░░░░░░░░░░
+    ai-assisted     100%  ████████████████████
+    unclassified      0%  ░░░░░░░░░░░░░░░░░░░░
+  wrote PROVENANCE.md · grain.json
+```
+
+Other commands:
+
+```bash
+./grain check --range main..HEAD   # gate a change set; exit 1 on attention
+./grain explain <sha>              # why a commit was classified as it was
+./grain badge                      # shields.io endpoint JSON
+./grain init                       # write an example .grain.toml
+```
+
+### Layout
+
+```
+cmd/grain/         CLI entry + command dispatch
+internal/gitlog/   reads commit history via the git binary
+internal/signal/   extracts declared + inferred authorship signals
+internal/score/    scores each commit (declared high-confidence; inference capped at 0.70)
+internal/report/   aggregates + renders grain.json, PROVENANCE.md, badge, terminal
+internal/config/   loads .grain.toml
+```
 
 ## Docs
 
