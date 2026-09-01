@@ -19,10 +19,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/kresimirgalic/grain.git"
+    "url": "git+https://github.com/FrontTribe/grain.git"
   },
-  "homepage": "https://github.com/kresimirgalic/grain",
-  "bugs": "https://github.com/kresimirgalic/grain/issues",
+  "homepage": "https://github.com/FrontTribe/grain",
+  "bugs": "https://github.com/FrontTribe/grain/issues",
   "license": "MIT",
   "keywords": [
     "provenance",

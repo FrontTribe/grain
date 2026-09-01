@@ -1,6 +1,6 @@
 # Provenance
 
-Authorship mix for **kresimirgalic/grain**, measured from 4 commits. Signals, not verdicts.
+Authorship mix for **FrontTribe/grain**, measured from 4 commits. Signals, not verdicts.
 
 | | Share |
 |---|---|

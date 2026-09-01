@@ -6,8 +6,8 @@ package signal
 import (
 	"strings"
 
-	"github.com/kresimirgalic/grain/internal/config"
-	"github.com/kresimirgalic/grain/internal/gitlog"
+	"github.com/FrontTribe/grain/internal/config"
+	"github.com/FrontTribe/grain/internal/gitlog"
 )
 
 // Set is the result of reading one commit's signals.

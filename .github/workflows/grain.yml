@@ -18,7 +18,7 @@ jobs:
           fetch-depth: 0   # grain needs base..head history
 
       - name: Grain provenance
-        uses: ./            # in your repo: kresimirgalic/grain@v1
+        uses: ./            # in your repo: FrontTribe/grain@v1
         with:
           fail_on: never    # comment only; set to "policy" to gate merges
           comment: 'true'

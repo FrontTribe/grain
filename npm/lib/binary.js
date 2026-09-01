@@ -8,7 +8,7 @@ const fs = require('fs');
 const path = require('path');
 
 const VERSION = require('../package.json').version;
-const REPO = 'kresimirgalic/grain';
+const REPO = 'FrontTribe/grain';
 
 // Map Node's platform/arch to the release asset naming (Go's GOOS/GOARCH).
 function target() {

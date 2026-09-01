@@ -3,9 +3,9 @@ package score
 import (
 	"testing"
 
-	"github.com/kresimirgalic/grain/internal/config"
-	"github.com/kresimirgalic/grain/internal/gitlog"
-	"github.com/kresimirgalic/grain/internal/signal"
+	"github.com/FrontTribe/grain/internal/config"
+	"github.com/FrontTribe/grain/internal/gitlog"
+	"github.com/FrontTribe/grain/internal/signal"
 )
 
 func classify(c gitlog.Commit) Result {

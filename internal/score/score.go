@@ -8,9 +8,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/kresimirgalic/grain/internal/config"
-	"github.com/kresimirgalic/grain/internal/gitlog"
-	"github.com/kresimirgalic/grain/internal/signal"
+	"github.com/FrontTribe/grain/internal/config"
+	"github.com/FrontTribe/grain/internal/gitlog"
+	"github.com/FrontTribe/grain/internal/signal"
 )
 
 // InferredConfidenceCap is the hard ceiling on confidence for behavioral

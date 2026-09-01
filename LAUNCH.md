@@ -50,7 +50,7 @@ Title rules: no "revolutionary" / "AI-powered", no emoji, no hype. Say what it d
 > layer earn its place, or should it be declared-signals-only? (2) as a
 > maintainer, what would make the PR comment useful instead of noise?
 >
-> Repo: github.com/kresimirgalic/grain — happy to answer anything.
+> Repo: github.com/FrontTribe/grain — happy to answer anything.
 
 ## Pre-launch checklist (do it the day before)
 

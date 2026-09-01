@@ -11,9 +11,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/kresimirgalic/grain/internal/config"
-	"github.com/kresimirgalic/grain/internal/gitlog"
-	"github.com/kresimirgalic/grain/internal/score"
+	"github.com/FrontTribe/grain/internal/config"
+	"github.com/FrontTribe/grain/internal/gitlog"
+	"github.com/FrontTribe/grain/internal/score"
 )
 
 // EngineVersion / WeightsID pin how a score was produced, so grain.json is reproducible.

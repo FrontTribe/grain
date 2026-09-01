@@ -6,11 +6,11 @@
 
 **See the grain of your codebase — how it was made, not just what it is.**
 
-[![CI](https://github.com/kresimirgalic/grain/actions/workflows/ci.yml/badge.svg)](https://github.com/kresimirgalic/grain/actions/workflows/ci.yml)
+[![CI](https://github.com/FrontTribe/grain/actions/workflows/ci.yml/badge.svg)](https://github.com/FrontTribe/grain/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-1F6E5B)](LICENSE)
 ![Go 1.23+](https://img.shields.io/badge/Go-1.23%2B-1F6E5B)
 ![grain 100% AI-assisted](https://img.shields.io/badge/%F0%9F%8C%BE_grain-100%25_AI--assisted-B0511C)
-[![Stars](https://img.shields.io/github/stars/kresimirgalic/grain?color=6B655B&label=stars)](https://github.com/kresimirgalic/grain/stargazers)
+[![Stars](https://img.shields.io/github/stars/FrontTribe/grain?color=6B655B&label=stars)](https://github.com/FrontTribe/grain/stargazers)
 
 </div>
 
@@ -29,7 +29,7 @@ the project's own rules — with a confidence level on every claim.
 
 ```console
 $ grain scan
-grain 0.1.0 · scanning kresimirgalic/grain
+grain 0.1.0 · scanning FrontTribe/grain
   reading 8 commits done
   provenance:
     human-authored    0%  ░░░░░░░░░░░░░░░░░░░░
@@ -132,7 +132,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0        # grain needs base..head history
-      - uses: kresimirgalic/grain@v1
+      - uses: FrontTribe/grain@v1
         with:
           fail_on: never        # comment only; "policy" fails the check on attention
 ```

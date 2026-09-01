@@ -10,11 +10,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/kresimirgalic/grain/internal/config"
-	"github.com/kresimirgalic/grain/internal/gitlog"
-	"github.com/kresimirgalic/grain/internal/report"
-	"github.com/kresimirgalic/grain/internal/score"
-	"github.com/kresimirgalic/grain/internal/signal"
+	"github.com/FrontTribe/grain/internal/config"
+	"github.com/FrontTribe/grain/internal/gitlog"
+	"github.com/FrontTribe/grain/internal/report"
+	"github.com/FrontTribe/grain/internal/score"
+	"github.com/FrontTribe/grain/internal/signal"
 )
 
 const version = "0.1.0"
