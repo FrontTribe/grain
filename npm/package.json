@@ -1,0 +1,35 @@
+{
+  "name": "grain",
+  "version": "0.1.0",
+  "description": "Code provenance layer — see how much of your codebase is human-written vs AI-assisted. Signals, not verdicts.",
+  "bin": {
+    "grain": "bin/grain.js"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "scripts",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kresimirgalic/grain.git"
+  },
+  "homepage": "https://github.com/kresimirgalic/grain",
+  "bugs": "https://github.com/kresimirgalic/grain/issues",
+  "license": "MIT",
+  "keywords": [
+    "provenance",
+    "ai",
+    "git",
+    "code",
+    "authorship",
+    "cli"
+  ]
+}

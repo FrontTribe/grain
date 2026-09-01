@@ -10,6 +10,10 @@ vendor/
 grain.json
 # PROVENANCE.md is intentionally committable — do not ignore it
 
+# Node (npm shim)
+node_modules/
+npm/vendor/
+
 # Editors / OS
 .DS_Store
 .idea/
