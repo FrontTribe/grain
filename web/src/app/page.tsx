@@ -50,6 +50,7 @@ export default function Home() {
             <a href={REPO} className="hover:text-ink">Open source</a>
           </div>
           <span className="flex-1" />
+          <a href="/login" className="text-[14.5px] text-muted hover:text-ink">Sign in</a>
           <a href={REPO} className={`${btnBase} border border-line-strong text-ink hover:border-brand hover:text-brand`}>
             ★ GitHub
           </a>
