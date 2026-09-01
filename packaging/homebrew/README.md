@@ -41,11 +41,20 @@ brew install FrontTribe/tap/grain
 To update on a new release, re-run steps 2–3 with the new tag, and users get it
 with `brew upgrade grain`.
 
-## Automating (optional)
+## Automated publishing (recommended)
 
-The release workflow can push the formula to the tap automatically. Add a
-Personal Access Token with `contents:write` on `homebrew-tap` as a repo secret
-(e.g. `HOMEBREW_TAP_TOKEN`), then extend `.github/workflows/release.yml` with a
-final job that runs `update-formula.sh "$GITHUB_REF_NAME"` and pushes `grain.rb`
-to the tap using that token. Until then, steps 2–3 are a 30-second manual step
-per release.
+The [release workflow](../../.github/workflows/release.yml) already has a `tap`
+job that regenerates the formula and pushes it to `FrontTribe/homebrew-tap` on
+every `v*` tag — **steps 2–3 above become automatic.** To enable it:
+
+1. Create the tap repo (step 1 above), once.
+2. Create a Personal Access Token with **`contents: write`** on
+   `FrontTribe/homebrew-tap` and add it to **grain's** repo as an Actions secret
+   named **`HOMEBREW_TAP_TOKEN`**
+   (`gh secret set HOMEBREW_TAP_TOKEN -R FrontTribe/grain`).
+
+That's it. Each `git tag v0.1.0 && git push origin v0.1.0` builds the binaries,
+attaches them to the release, computes the checksums, and commits an updated
+`Formula/grain.rb` to the tap. Without the secret, the job logs a warning and
+skips (the release still succeeds) — so steps 2–3 stay available as the manual
+fallback.

@@ -14,6 +14,8 @@ ver="${VERSION#v}"
 
 REPO="FrontTribe/grain"
 OUT="$(cd "$(dirname "$0")" && pwd)/grain.rb"
+# When set (e.g. in CI), read assets from this dir instead of downloading them.
+ASSET_DIR="${GRAIN_ASSET_DIR:-}"
 tmp=$(mktemp -d) || exit 1
 trap 'rm -rf "$tmp"' EXIT INT TERM
 
@@ -27,6 +29,10 @@ sha_of() {
 
 fetch_sha() {
   asset="$1"
+  if [ -n "$ASSET_DIR" ] && [ -f "$ASSET_DIR/$asset" ]; then
+    sha_of "$ASSET_DIR/$asset"
+    return
+  fi
   curl -fsSL "https://github.com/$REPO/releases/download/$VERSION/$asset" -o "$tmp/$asset" \
     || { echo "grain: failed to download $asset for $VERSION — is the release published?" >&2; exit 1; }
   sha_of "$tmp/$asset"
