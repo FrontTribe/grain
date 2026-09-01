@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #1F6E5B; } a:hover { color: #17513f; }
+    .auth { width: 1280px; height: 860px; display: flex; font-family: "IBM Plex Sans", system-ui, sans-serif; color: #211E1A; background: #ECE9E1; }
+    h1,h2,h3 { font-family: "Bricolage Grotesque", sans-serif; margin: 0; letter-spacing: -.02em; }
+    .brandside { width: 520px; flex: none; background: #1A1712; color: #C9C2B3; padding: 52px 54px; display: flex; flex-direction: column; }
+    .brandside .lg { display: flex; align-items: center; gap: 10px; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 22px; color: #F1ECE0; letter-spacing: -.02em; }
+    .brandside .big { font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 34px; line-height: 1.1; color: #F1ECE0; letter-spacing: -.02em; margin-top: auto; }
+    .points { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+    .points li { display: flex; align-items: flex-start; gap: 11px; font-size: 14px; color: #C9C2B3; }
+    .points .ic { color: #57C6A8; flex: none; margin-top: 2px; }
+    .formside { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; }
+    .card { width: 400px; }
+    .card h2 { font-size: 28px; font-weight: 700; } .card .lead { color: #6B655B; font-size: 14.5px; margin: 8px 0 26px; }
+    .field { margin-bottom: 15px; }
+    .field label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 7px; }
+    .input { width: 100%; height: 46px; border: 1px solid #DCD6C9; border-radius: 10px; background: #FBFAF6; padding: 0 14px; font-size: 14.5px; display: flex; align-items: center; }
+    .input .ph { color: #A69E90; }
+    .hint { font-size: 11.5px; color: #948D80; margin-top: 6px; }
+    .btn { width: 100%; height: 46px; border-radius: 10px; border: 1px solid transparent; font-size: 14.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+    .btn-primary { background: #1F6E5B; color: #fff; margin-top: 8px; }
+    .btn-git { background: #211E1A; color: #F1ECE0; }
+    .divider { display: flex; align-items: center; gap: 14px; margin: 18px 0; color: #A69E90; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .1em; }
+    .divider::before, .divider::after { content: ""; height: 1px; background: #DCD6C9; flex: 1; }
+    .terms { font-size: 11.5px; color: #948D80; margin-top: 16px; text-align: center; line-height: 1.5; }
+    .foot { text-align: center; font-size: 13.5px; color: #6B655B; margin-top: 14px; }
+  </style>
+</helmet>
+<div class="auth">
+  <div class="brandside">
+    <div class="lg">
+      <svg width="26" height="26" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="28" width="11" height="64" rx="4.5" fill="#57C6A8"/><rect x="37" y="36" width="11" height="48" rx="4.5" fill="#E28A50"/><rect x="54" y="20" width="11" height="80" rx="4.5" fill="#57C6A8"/><rect x="71" y="38" width="11" height="44" rx="4.5" fill="#E28A50"/><rect x="88" y="31" width="11" height="58" rx="4.5" fill="#57C6A8"/></svg>
+      grain
+    </div>
+    <div class="big">Start seeing your codebase's grain.</div>
+    <ul class="points">
+      <li><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l4 4 10-10"/></svg></span> Connect a repo, get a provenance report in minutes.</li>
+      <li><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l4 4 10-10"/></svg></span> Free for the CLI &amp; badge — always, MIT.</li>
+      <li><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12l4 4 10-10"/></svg></span> Your code never leaves your machine.</li>
+    </ul>
+  </div>
+
+  <div class="formside">
+    <div class="card">
+      <h2>Create your account</h2>
+      <div class="lead">Team plan — free while in early access.</div>
+
+      <div class="field">
+        <label>Full name</label>
+        <div class="input"><span class="ph">Maya Green</span></div>
+      </div>
+      <div class="field">
+        <label>Work email</label>
+        <div class="input"><span class="ph">maya@acme.com</span></div>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <div class="input"><span class="ph">••••••••••••</span></div>
+        <div class="hint">At least 12 characters.</div>
+      </div>
+      <button class="btn btn-primary">Create account</button>
+
+      <div class="divider">or</div>
+      <button class="btn btn-git">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="9" r="2.4"/><path d="M6 8.4v7.2M8.2 6h5.6a2 2 0 0 1 2 2v.6"/></svg>
+        Sign up with GitHub
+      </button>
+
+      <div class="terms">By creating an account you agree to the Terms and Privacy Policy.</div>
+      <div class="foot">Already have an account? <a href="#">Sign in</a></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

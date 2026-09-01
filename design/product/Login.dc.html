@@ -1,0 +1,86 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #1F6E5B; } a:hover { color: #17513f; }
+    .auth { width: 1280px; height: 860px; display: flex; font-family: "IBM Plex Sans", system-ui, sans-serif; color: #211E1A; background: #ECE9E1; }
+    h1,h2,h3 { font-family: "Bricolage Grotesque", sans-serif; margin: 0; letter-spacing: -.02em; }
+    /* left brand panel */
+    .brandside { width: 520px; flex: none; background: #1A1712; color: #C9C2B3; padding: 52px 54px; display: flex; flex-direction: column; }
+    .brandside .lg { display: flex; align-items: center; gap: 10px; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 22px; color: #F1ECE0; letter-spacing: -.02em; }
+    .brandside .big { font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 40px; line-height: 1.05; color: #F1ECE0; letter-spacing: -.03em; margin-top: auto; }
+    .brandside .big .h { color: #57C6A8; } .brandside .big .a { color: #E28A50; }
+    .brandside .sub { color: #8F8778; font-size: 15px; margin-top: 16px; max-width: 34ch; }
+    .fp { margin-top: 30px; } .fp svg { display: block; width: 100%; height: 60px; }
+    .fp .cap { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: #6E6656; margin-top: 10px; letter-spacing: .04em; }
+    /* right form */
+    .formside { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px; }
+    .card { width: 400px; }
+    .card h2 { font-size: 28px; font-weight: 700; } .card .lead { color: #6B655B; font-size: 14.5px; margin: 8px 0 28px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 7px; }
+    .field .lrow { display: flex; justify-content: space-between; }
+    .field .lrow a { font-size: 12.5px; }
+    .input { width: 100%; height: 46px; border: 1px solid #DCD6C9; border-radius: 10px; background: #FBFAF6; padding: 0 14px; font-family: "IBM Plex Sans"; font-size: 14.5px; color: #211E1A; display: flex; align-items: center; }
+    .input .ph { color: #A69E90; }
+    .btn { width: 100%; height: 46px; border-radius: 10px; border: 1px solid transparent; font-family: "IBM Plex Sans"; font-size: 14.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; }
+    .btn-primary { background: #1F6E5B; color: #fff; margin-top: 6px; }
+    .btn-git { background: #211E1A; color: #F1ECE0; }
+    .divider { display: flex; align-items: center; gap: 14px; margin: 20px 0; color: #A69E90; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .1em; }
+    .divider::before, .divider::after { content: ""; height: 1px; background: #DCD6C9; flex: 1; }
+    .foot { text-align: center; font-size: 13.5px; color: #6B655B; margin-top: 22px; }
+  </style>
+</helmet>
+<div class="auth">
+  <div class="brandside">
+    <div class="lg">
+      <svg width="26" height="26" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="28" width="11" height="64" rx="4.5" fill="#57C6A8"/><rect x="37" y="36" width="11" height="48" rx="4.5" fill="#E28A50"/><rect x="54" y="20" width="11" height="80" rx="4.5" fill="#57C6A8"/><rect x="71" y="38" width="11" height="44" rx="4.5" fill="#E28A50"/><rect x="88" y="31" width="11" height="58" rx="4.5" fill="#57C6A8"/></svg>
+      grain
+    </div>
+    <div class="big">See the <span class="h">human</span> and the <span class="a">AI</span> grain in your code.</div>
+    <div class="sub">Provenance across every repo — signals, not verdicts.</div>
+    <div class="fp">
+      <svg viewBox="0 0 520 60" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="14" width="14" height="36" rx="3" fill="#57C6A8"/><rect x="24" y="6" width="14" height="48" rx="3" fill="#57C6A8"/><rect x="44" y="20" width="14" height="27" rx="3" fill="#E28A50"/><rect x="64" y="10" width="14" height="42" rx="3" fill="#57C6A8"/><rect x="84" y="4" width="14" height="54" rx="3" fill="#57C6A8"/><rect x="104" y="22" width="14" height="24" rx="3" fill="#3a3323"/><rect x="124" y="12" width="14" height="39" rx="3" fill="#57C6A8"/><rect x="144" y="16" width="14" height="30" rx="3" fill="#E28A50"/><rect x="164" y="8" width="14" height="45" rx="3" fill="#57C6A8"/><rect x="184" y="5" width="14" height="51" rx="3" fill="#57C6A8"/><rect x="204" y="20" width="14" height="22" rx="3" fill="#E28A50"/><rect x="224" y="10" width="14" height="42" rx="3" fill="#57C6A8"/><rect x="244" y="6" width="14" height="48" rx="3" fill="#57C6A8"/><rect x="264" y="14" width="14" height="33" rx="3" fill="#57C6A8"/><rect x="284" y="18" width="14" height="26" rx="3" fill="#E28A50"/><rect x="304" y="8" width="14" height="44" rx="3" fill="#57C6A8"/><rect x="324" y="12" width="14" height="37" rx="3" fill="#57C6A8"/><rect x="344" y="5" width="14" height="50" rx="3" fill="#57C6A8"/><rect x="364" y="16" width="14" height="29" rx="3" fill="#3a3323"/><rect x="384" y="10" width="14" height="40" rx="3" fill="#57C6A8"/><rect x="404" y="7" width="14" height="46" rx="3" fill="#57C6A8"/><rect x="424" y="18" width="14" height="25" rx="3" fill="#E28A50"/><rect x="444" y="10" width="14" height="42" rx="3" fill="#57C6A8"/><rect x="464" y="13" width="14" height="35" rx="3" fill="#57C6A8"/><rect x="484" y="6" width="14" height="49" rx="3" fill="#57C6A8"/><rect x="504" y="15" width="14" height="31" rx="3" fill="#E28A50"/>
+      </svg>
+      <div class="cap">acme/payments-service · 73% human</div>
+    </div>
+  </div>
+
+  <div class="formside">
+    <div class="card">
+      <h2>Sign in to Grain</h2>
+      <div class="lead">Welcome back. Pick up where your repos left off.</div>
+
+      <div class="field">
+        <label>Work email</label>
+        <div class="input"><span class="ph">maya@acme.com</span></div>
+      </div>
+      <div class="field">
+        <div class="lrow"><label>Password</label><a href="#">Forgot?</a></div>
+        <div class="input"><span class="ph">••••••••••••</span></div>
+      </div>
+      <button class="btn btn-primary">Sign in</button>
+
+      <div class="divider">or</div>
+
+      <button class="btn btn-git">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="9" r="2.4"/><path d="M6 8.4v7.2M8.2 6h5.6a2 2 0 0 1 2 2v.6"/></svg>
+        Continue with GitHub
+      </button>
+
+      <div class="foot">New to Grain? <a href="#">Create an account</a></div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #1F6E5B; }
+    .scene { width: 1280px; height: 860px; background: #ECE9E1; font-family: "IBM Plex Sans", system-ui, sans-serif; color: #211E1A; display: flex; flex-direction: column; align-items: center; padding: 40px; }
+    h1,h2,h3 { font-family: "Bricolage Grotesque", sans-serif; margin: 0; letter-spacing: -.02em; }
+    .head { width: 720px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+    .lg { display: flex; align-items: center; gap: 9px; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 19px; }
+    .steps { display: flex; align-items: center; gap: 8px; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: #948D80; }
+    .steps .d { width: 8px; height: 8px; border-radius: 50%; background: #DCD6C9; } .steps .d.on { background: #1F6E5B; } .steps .d.done { background: #57C6A8; }
+    .card { width: 720px; background: #FBFAF6; border: 1px solid #DCD6C9; border-radius: 16px; box-shadow: 0 18px 46px rgba(32,29,25,.08); overflow: hidden; }
+    .card .top { padding: 26px 30px 20px; border-bottom: 1px solid #EDEAE2; }
+    .card h2 { font-size: 24px; font-weight: 700; }
+    .card .sub { color: #6B655B; font-size: 14px; margin-top: 8px; max-width: 60ch; }
+    .body { padding: 22px 30px; }
+    .row { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .row .lbl { font-size: 13px; font-weight: 500; width: 120px; }
+    .select { flex: 1; height: 44px; border: 1px solid #DCD6C9; border-radius: 10px; background: #fff; display: flex; align-items: center; padding: 0 14px; font-size: 14px; }
+    .select .logo { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(150deg,#57C6A8,#E28A50); margin-right: 10px; }
+    .select .cev { margin-left: auto; color: #A69E90; }
+    .access { display: flex; gap: 12px; margin-bottom: 16px; }
+    .opt { flex: 1; border: 1px solid #DCD6C9; border-radius: 12px; padding: 14px 16px; display: flex; gap: 11px; align-items: flex-start; cursor: pointer; }
+    .opt.sel { border-color: #1F6E5B; background: #EAF3EF; }
+    .radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #C4BCAC; flex: none; margin-top: 1px; }
+    .opt.sel .radio { border-color: #1F6E5B; background: radial-gradient(circle at center, #1F6E5B 0 5px, transparent 6px); }
+    .opt .t { font-size: 13.5px; font-weight: 600; } .opt .d { font-size: 12px; color: #6B655B; margin-top: 3px; }
+    .repolist { border: 1px solid #EDEAE2; border-radius: 12px; overflow: hidden; }
+    .repo { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #F0EDE5; }
+    .repo:last-child { border-bottom: none; }
+    .cbx { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid #C4BCAC; flex: none; display: flex; align-items: center; justify-content: center; color: #fff; }
+    .cbx.on { background: #1F6E5B; border-color: #1F6E5B; }
+    .repo .nm { font-size: 13.5px; font-weight: 500; } .repo .nm small { color: #948D80; font-family: "IBM Plex Mono", monospace; font-weight: 400; }
+    .repo .vis { margin-left: auto; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; color: #6B655B; background: #F1EFE7; border: 1px solid #E7E3D9; border-radius: 999px; padding: 2px 9px; }
+    .perms { margin-top: 18px; background: #F3F0E8; border: 1px solid #E7E3D9; border-radius: 10px; padding: 14px 16px; font-size: 12.5px; color: #4a453b; }
+    .perms b { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: #6B655B; }
+    .perms .line { display: flex; gap: 8px; margin-top: 6px; }
+    .foot { display: flex; justify-content: flex-end; gap: 12px; padding: 18px 30px; border-top: 1px solid #EDEAE2; }
+    .btn { height: 44px; border-radius: 10px; padding: 0 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 9px; cursor: pointer; border: 1px solid transparent; }
+    .btn-ghost { background: #fff; border-color: #DCD6C9; color: #4a453b; }
+    .btn-primary { background: #1F6E5B; color: #fff; }
+    .note { width: 720px; font-size: 12px; color: #948D80; margin-top: 14px; text-align: center; }
+  </style>
+</helmet>
+<div class="scene">
+  <div class="head">
+    <div class="lg">
+      <svg width="24" height="24" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="28" width="11" height="64" rx="4.5" fill="#1F6E5B"/><rect x="37" y="36" width="11" height="48" rx="4.5" fill="#B0511C"/><rect x="54" y="20" width="11" height="80" rx="4.5" fill="#1F6E5B"/><rect x="71" y="38" width="11" height="44" rx="4.5" fill="#B0511C"/><rect x="88" y="31" width="11" height="58" rx="4.5" fill="#1F6E5B"/></svg>
+      grain
+    </div>
+    <div class="steps"><span class="d done"></span><span class="d on"></span><span class="d"></span> Step 2 of 3 — Connect</div>
+  </div>
+
+  <div class="card">
+    <div class="top">
+      <h2>Install the Grain GitHub App</h2>
+      <div class="sub">Grain reads commit metadata and pull-request events to measure provenance. It never sends your source code to our servers.</div>
+    </div>
+    <div class="body">
+      <div class="row">
+        <span class="lbl">Organization</span>
+        <div class="select"><span class="logo"></span>Acme Corp<span class="cev">▾</span></div>
+      </div>
+
+      <div class="access">
+        <div class="opt"><span class="radio"></span><div><div class="t">All repositories</div><div class="d">Current and future repos in Acme Corp.</div></div></div>
+        <div class="opt sel"><span class="radio"></span><div><div class="t">Only select repositories</div><div class="d">Choose which repos Grain can see.</div></div></div>
+      </div>
+
+      <div class="repolist">
+        <div class="repo"><span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4 10-10"/></svg></span><span class="nm">payments-service <small>acme/</small></span><span class="vis">private</span></div>
+        <div class="repo"><span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4 10-10"/></svg></span><span class="nm">auth-gateway <small>acme/</small></span><span class="vis">private</span></div>
+        <div class="repo"><span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l4 4 10-10"/></svg></span><span class="nm">web-app <small>acme/</small></span><span class="vis">private</span></div>
+        <div class="repo"><span class="cbx"></span><span class="nm">design-tokens <small>acme/</small></span><span class="vis">public</span></div>
+        <div class="repo"><span class="cbx"></span><span class="nm">infra <small>acme/</small></span><span class="vis">private</span></div>
+      </div>
+
+      <div class="perms">
+        <b>Permissions grain requests</b>
+        <div class="line"><span style="color:#1F6E5B;font-weight:600">Read</span> — repository metadata, commits, pull requests, contents (checksum only)</div>
+        <div class="line"><span style="color:#B0511C;font-weight:600">Write</span> — checks &amp; commit statuses, pull-request comments</div>
+      </div>
+    </div>
+    <div class="foot">
+      <button class="btn btn-ghost">Cancel</button>
+      <button class="btn btn-primary">Install &amp; authorize</button>
+    </div>
+  </div>
+  <div class="note">You can change repository access anytime in Settings → Integrations.</div>
+</div>
+</x-dc>
+</body>
+</html>

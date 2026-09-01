@@ -1,0 +1,23 @@
+{
+  "pages": [
+    { "id": "auth", "name": "Auth & onboarding" },
+    { "id": "dashboard", "name": "Dashboard" },
+    { "id": "marketing", "name": "Marketing" }
+  ],
+  "artboards": [
+    { "file": "Login.dc.html", "title": "Sign in", "page": "auth", "x": 0, "y": 0, "w": 1280, "h": 860 },
+    { "file": "SignUp.dc.html", "title": "Create account", "page": "auth", "x": 1360, "y": 0, "w": 1280, "h": 860 },
+    { "file": "ConnectRepos.dc.html", "title": "Connect GitHub", "page": "auth", "x": 0, "y": 980, "w": 1280, "h": 860 },
+    { "file": "Onboarding.dc.html", "title": "First scan", "page": "auth", "x": 1360, "y": 980, "w": 1280, "h": 860 },
+
+    { "file": "Main.dc.html", "title": "Overview", "page": "dashboard", "x": 0, "y": 3000, "w": 1440, "h": 1040 },
+    { "file": "RepoDetail.dc.html", "title": "Repo detail", "page": "dashboard", "x": 1520, "y": 3000, "w": 1440, "h": 1040 },
+    { "file": "Trends.dc.html", "title": "Trends", "page": "dashboard", "x": 0, "y": 4160, "w": 1440, "h": 1040 },
+    { "file": "Policy.dc.html", "title": "Policy", "page": "dashboard", "x": 1520, "y": 4160, "w": 1440, "h": 1040 },
+    { "file": "Activity.dc.html", "title": "Activity", "page": "dashboard", "x": 0, "y": 5320, "w": 1440, "h": 1040 },
+    { "file": "Settings.dc.html", "title": "Settings", "page": "dashboard", "x": 1520, "y": 5320, "w": 1440, "h": 1040 },
+
+    { "file": "Landing.dc.html", "title": "Landing page", "page": "marketing", "x": 0, "y": 8000, "w": 1200, "h": 3400, "print": "flow", "expand": "fill" }
+  ],
+  "launch": { "view": "canvas", "page": "auth" }
+}
