@@ -160,7 +160,7 @@ runs:
       env:
         GRAIN_API: ${{ inputs.api_url }}
         GRAIN_TOKEN: ${{ inputs.token }}
-      run: "$RUNNER_TEMP/grain" push
+      run: '"$RUNNER_TEMP/grain" push'
 
     - name: Enforce policy
       if: ${{ inputs.fail_on == 'policy' && steps.grain.outputs.exit_code != '0' }}
