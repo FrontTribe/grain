@@ -71,7 +71,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">Org dashboard &amp; policy</li>
                 <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">{members.length} {members.length === 1 ? "seat" : "seats"} used</li>
               </ul>
-              <div className="mt-4 flex justify-end"><span className={`${btn} border border-line bg-surface text-muted`}>Manage billing</span></div>
+              <div className="mt-4 flex justify-end"><span className="font-mono text-[11.5px] text-faint">No billing during early access</span></div>
             </Card>
 
             <Card className="p-6">
