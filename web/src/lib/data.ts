@@ -157,6 +157,60 @@ export async function getRepoDetail(name: string) {
   return { repo: repo as Repo, dirs: (dirs as DirRow[]) ?? [], prs: (prs as PrRow[]) ?? [] };
 }
 
+// Org authorship trend: per-repo scans aggregated by month (averaged).
+export async function getOrgTrend(): Promise<{ month: string; human: number; ai: number }[]> {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return [];
+  const s = await createClient();
+  const { data } = await s
+    .from("scans")
+    .select("human,ai,created_at")
+    .eq("org_id", orgId)
+    .not("repo_id", "is", null)
+    .order("created_at", { ascending: true });
+  const rows = (data ?? []) as { human: number; ai: number; created_at: string }[];
+  const byMonth = new Map<string, { h: number; a: number; n: number; label: string }>();
+  for (const r of rows) {
+    const d = new Date(r.created_at);
+    const key = `${d.getFullYear()}-${String(d.getMonth()).padStart(2, "0")}`;
+    const cur = byMonth.get(key) ?? { h: 0, a: 0, n: 0, label: d.toLocaleString("en-US", { month: "short" }) };
+    cur.h += Number(r.human); cur.a += Number(r.ai); cur.n += 1;
+    byMonth.set(key, cur);
+  }
+  return [...byMonth.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, v]) => ({ month: v.label, human: Math.round(v.h / v.n), ai: Math.round(v.a / v.n) }));
+}
+
+export type RepoTrend = { id: string; name: string; owner: string; ai: number; series: number[]; delta: number };
+
+export async function getRepoTrends(): Promise<RepoTrend[]> {
+  const orgId = await getActiveOrgId();
+  if (!orgId) return [];
+  const s = await createClient();
+  const [{ data: repos }, { data: scans }] = await Promise.all([
+    s.from("repos").select("id,name,full_name,ai").eq("org_id", orgId).order("ai", { ascending: false }),
+    s.from("scans").select("repo_id,ai,created_at").eq("org_id", orgId).not("repo_id", "is", null).order("created_at", { ascending: true }),
+  ]);
+  const hist = new Map<string, number[]>();
+  for (const sc of (scans ?? []) as { repo_id: string; ai: number }[]) {
+    (hist.get(sc.repo_id) ?? hist.set(sc.repo_id, []).get(sc.repo_id)!).push(Math.round(Number(sc.ai)));
+  }
+  return ((repos ?? []) as Repo[]).map((r) => {
+    const pct = hist.get(r.id) ?? [Math.round(Number(r.ai))]; // AI %, oldest → newest
+    const delta = pct.length > 1 ? pct[pct.length - 1] - pct[0] : 0;
+    const fractions = (pct.length > 1 ? pct : [pct[0], pct[0]]).map((v) => v / 100); // Spark wants 0..1
+    return {
+      id: r.id,
+      name: r.name,
+      owner: r.full_name?.split("/")[0] ?? "",
+      ai: Math.round(Number(r.ai)),
+      series: fractions,
+      delta,
+    };
+  });
+}
+
 // ---- shaping helpers ----
 
 export function ago(iso: string): string {
