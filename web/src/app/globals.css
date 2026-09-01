@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+/* grain design tokens — light (default) + dark (system). */
+:root {
+  --ground: #ECE9E1;
+  --surface: #FBFAF6;
+  --surface-2: #F3F0E8;
+  --ink: #201D19;
+  --muted: #6B655B;
+  --faint: #948D80;
+  --line: #DCD6C9;
+  --line-strong: #C4BCAC;
+  --human: #1F6E5B;
+  --human-soft: #DCEBE4;
+  --ai: #B0511C;
+  --ai-soft: #F1E1D2;
+  --brand: #1F6E5B;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #15130E;
+    --surface: #1F1C15;
+    --surface-2: #26221A;
+    --ink: #ECE7DB;
+    --muted: #9C9384;
+    --faint: #736B5D;
+    --line: #322D23;
+    --line-strong: #433C2E;
+    --human: #57C6A8;
+    --human-soft: #16332B;
+    --ai: #E28A50;
+    --ai-soft: #35251A;
+    --brand: #57C6A8;
+  }
+}
+
+@theme inline {
+  --color-ground: var(--ground);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-human: var(--human);
+  --color-human-soft: var(--human-soft);
+  --color-ai: var(--ai);
+  --color-ai-soft: var(--ai-soft);
+  --color-brand: var(--brand);
+
+  --font-display: var(--font-bricolage), "Bricolage Grotesque", system-ui, sans-serif;
+  --font-sans: var(--font-plex-sans), "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
