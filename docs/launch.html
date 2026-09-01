@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Grain Launch Plan</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground:#ECE9E1; --surface:#FBFAF6; --surface-2:#F3F0E8; --code-bg:#211E1A; --code-ink:#E7E1D4;
+    --ink:#201D19; --muted:#6B655B; --faint:#948D80; --line:#DCD6C9; --line-strong:#C4BCAC;
+    --human:#1F6E5B; --human-soft:#DCEBE4; --ai:#B0511C; --ai-soft:#F1E1D2; --brand:#1F6E5B;
+  }
+  :root:not([data-theme="light"]) { @media (prefers-color-scheme: dark) {
+    --ground:#16140F; --surface:#201D16; --surface-2:#26221A; --code-bg:#100E09; --code-ink:#E7E1D4;
+    --ink:#ECE7DB; --muted:#9C9384; --faint:#736B5D; --line:#322D23; --line-strong:#433C2E;
+    --human:#57C6A8; --human-soft:#16332B; --ai:#E28A50; --ai-soft:#35251A; --brand:#57C6A8;
+  } }
+  :root[data-theme="dark"] {
+    --ground:#16140F; --surface:#201D16; --surface-2:#26221A; --code-bg:#100E09; --code-ink:#E7E1D4;
+    --ink:#ECE7DB; --muted:#9C9384; --faint:#736B5D; --line:#322D23; --line-strong:#433C2E;
+    --human:#57C6A8; --human-soft:#16332B; --ai:#E28A50; --ai-soft:#35251A; --brand:#57C6A8;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 16px; line-height: 1.62; -webkit-font-smoothing: antialiased; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  h1,h2,h3,h4 { font-family: "Bricolage Grotesque", system-ui, sans-serif; text-wrap: balance; line-height: 1.12; letter-spacing: -.01em; margin: 0; }
+  a { color: var(--brand); text-decoration: none; } a:hover { text-decoration: underline; }
+  code:not(pre code){ font-family: "IBM Plex Mono", monospace; font-size: .87em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; padding: .05em .4em; }
+
+  .topbar { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--ground) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  .topbar .in { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 26px; max-width: 1200px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; gap: 9px; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 17px; letter-spacing: -.02em; }
+  .brand .doc { color: var(--muted); font-weight: 600; }
+  .theme-btn { font-family: "IBM Plex Mono", monospace; font-size: 12px; background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+
+  .shell { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 244px minmax(0,1fr); }
+  .toc { position: sticky; top: 56px; align-self: start; height: calc(100vh - 56px); overflow-y: auto; padding: 30px 18px 60px 26px; border-right: 1px solid var(--line); }
+  .toc .lbl { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin: 0 0 10px; }
+  .toc a { display: block; font-size: 13.5px; color: var(--muted); padding: 4px 0 4px 12px; border-left: 2px solid transparent; }
+  .toc a:hover { color: var(--ink); text-decoration: none; }
+  .toc a.active { color: var(--brand); border-left-color: var(--brand); }
+  .toc a .n { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--faint); margin-right: 7px; }
+
+  main { padding: 40px 52px 120px; min-width: 0; }
+  .dochead { border-bottom: 1px solid var(--line); padding-bottom: 24px; margin-bottom: 20px; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ai); }
+  .dochead h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 800; letter-spacing: -.03em; margin: 14px 0 10px; }
+  .dochead .sub { font-size: 18px; color: var(--muted); max-width: 60ch; }
+  .metaline { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .pill { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); }
+  .pill b { color: var(--ink); }
+
+  section { padding-top: 30px; margin-top: 26px; border-top: 1px solid var(--line); scroll-margin-top: 74px; }
+  section:first-of-type { border-top: none; }
+  section > h2 { font-size: 25px; font-weight: 700; display: flex; align-items: baseline; gap: 12px; }
+  section > h2 .sn { font-family: "IBM Plex Mono", monospace; font-size: 14px; color: var(--ai); font-weight: 500; }
+  h3 { font-size: 17px; margin: 24px 0 8px; }
+  p { margin: 10px 0; max-width: 72ch; } ul, ol { max-width: 72ch; padding-left: 22px; } li { margin: 6px 0; }
+  .lead-p { font-size: 17px; }
+
+  .asset { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin: 16px 0; }
+  .asset .ahead { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--line); background: var(--surface-2); font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .asset .abody { padding: 18px 20px; }
+  .asset.dark { background: var(--code-bg); border-color: #2c2820; }
+  .asset.dark .ahead { background: #1b1810; border-color: #2c2820; color: #8b8577; }
+  .asset.dark .abody { color: var(--code-ink); font-family: "IBM Plex Mono", monospace; font-size: 13px; line-height: 1.7; white-space: pre-wrap; }
+  .titlebox { font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--ink); font-weight: 600; }
+  .titlebox .kick { color: #d1662f; }
+
+  .callout { border-radius: 12px; padding: 15px 17px; margin: 16px 0; font-size: 14.5px; border: 1px solid var(--line); background: var(--surface); }
+  .callout .ct { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 5px; }
+  .callout.good { border-left: 3px solid var(--human); background: var(--human-soft); } .callout.good .ct { color: var(--human); }
+  .callout.warn { border-left: 3px solid var(--ai); background: var(--ai-soft); } .callout.warn .ct { color: var(--ai); }
+
+  .check { list-style: none; padding: 0; margin: 14px 0; }
+  .check li { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; border-bottom: 1px dashed var(--line); }
+  .check li:last-child { border-bottom: none; }
+  .check .box { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--line-strong); flex: none; margin-top: 2px; }
+  .check .box.on { background: var(--human); border-color: var(--human); }
+  .check .tx b { font-weight: 600; } .check .tx small { display: block; color: var(--muted); font-size: 13px; }
+
+  .qa { border: 1px solid var(--line); border-radius: 12px; margin: 12px 0; overflow: hidden; }
+  .qa .q { padding: 13px 18px; background: var(--surface-2); font-weight: 600; font-size: 14.5px; display: flex; gap: 10px; }
+  .qa .q .mk { color: var(--ai); font-family: "IBM Plex Mono", monospace; }
+  .qa .a { padding: 14px 18px; font-size: 14.5px; color: var(--ink); } .qa .a .mk { color: var(--human); font-family: "IBM Plex Mono", monospace; font-weight: 600; margin-right: 6px; }
+
+  .timeline { border-left: 2px solid var(--line); margin: 16px 0 16px 6px; padding-left: 22px; display: flex; flex-direction: column; gap: 18px; }
+  .tl { position: relative; }
+  .tl::before { content:""; position: absolute; left: -29px; top: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--brand); border: 2px solid var(--ground); }
+  .tl .t { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--ai); }
+  .tl h4 { font-size: 15px; margin: 3px 0 4px; } .tl p { margin: 0; font-size: 14px; color: var(--muted); }
+
+  .twrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px; margin: 14px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; } .twrap table { margin: 0; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); }
+  tbody tr:last-child td { border-bottom: none; }
+
+  footer { border-top: 1px solid var(--line); padding: 28px 52px; color: var(--muted); font-family: "IBM Plex Mono", monospace; font-size: 12px; max-width: 1200px; margin: 0 auto; }
+  @media (max-width: 900px){ .shell { grid-template-columns: 1fr; } .toc { display: none; } main { padding: 30px 24px 90px; } footer { padding: 24px; } }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce){ html { scroll-behavior: auto; } }
+</style>
+
+<div class="topbar"><div class="in">
+  <div class="brand"><svg width="22" height="22" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="28" width="11" height="64" rx="4.5" fill="#1F6E5B"/><rect x="37" y="36" width="11" height="48" rx="4.5" fill="#B0511C"/><rect x="54" y="20" width="11" height="80" rx="4.5" fill="#1F6E5B"/><rect x="71" y="38" width="11" height="44" rx="4.5" fill="#B0511C"/><rect x="88" y="31" width="11" height="58" rx="4.5" fill="#1F6E5B"/></svg> grain <span class="doc">/ launch plan</span></div>
+  <button class="theme-btn" id="themeBtn">◐ theme</button>
+</div></div>
+
+<div class="shell">
+  <nav class="toc" id="toc">
+    <div class="lbl">Show HN plan</div>
+    <a href="#thesis"><span class="n">00</span>Why grain wins on HN</a>
+    <a href="#timing"><span class="n">01</span>Timing</a>
+    <a href="#title"><span class="n">02</span>The title</a>
+    <a href="#comment"><span class="n">03</span>The first comment</a>
+    <a href="#checklist"><span class="n">04</span>Pre-launch checklist</a>
+    <a href="#demo"><span class="n">05</span>Demo assets</a>
+    <a href="#faq"><span class="n">06</span>Objection FAQ</a>
+    <a href="#conduct"><span class="n">07</span>Launch-day conduct</a>
+    <a href="#after"><span class="n">08</span>After the front page</a>
+    <a href="#crosspost"><span class="n">09</span>Cross-post schedule</a>
+    <a href="#metrics"><span class="n">10</span>Success metrics</a>
+  </nav>
+
+  <main>
+    <div class="dochead">
+      <div class="kicker">Launch Playbook</div>
+      <h1>Show HN: Grain</h1>
+      <p class="sub">One shot at the front page. This is the title, the first comment, the checklist, and the answers to every objection you'll get — so launch day is execution, not improvisation.</p>
+      <div class="metaline">
+        <span class="pill"><b>Channel</b> Show HN → then cross-post</span>
+        <span class="pill"><b>Asset that matters most</b> the first comment</span>
+        <span class="pill"><b>Voice</b> honest, humble, specific</span>
+      </div>
+    </div>
+
+    <section id="thesis">
+      <h2><span class="sn">00</span> Why grain wins on HN</h2>
+      <p class="lead-p">Grain is unusually well-suited to Hacker News, and the launch should lean into exactly that:</p>
+      <ul>
+        <li><b>Culturally charged, right now.</b> "How much of this code is AI?" is a live, unresolved debate. HN will have opinions — which means comments, which means the front page.</li>
+        <li><b>Developer-native.</b> It's a Go CLI you run in your own repo in one command. No signup to try. HN rewards "I can run this in 10 seconds."</li>
+        <li><b>Self-distributing.</b> The README badge is an ad on every repo that adopts it.</li>
+        <li><b>Honest by construction.</b> "Signals, not verdicts" and openly-stated limits are catnip for a skeptical audience. The honesty <em>is</em> the pitch.</li>
+      </ul>
+      <div class="callout warn">
+        <div class="ct">The one risk to manage</div>
+        HN's reflex will be "another AI-detector that will falsely accuse people." You defuse this by raising it yourself, first, in the comment — before anyone else does. Own the limitation and you convert the biggest objection into a trust signal.
+      </div>
+    </section>
+
+    <section id="timing">
+      <h2><span class="sn">01</span> Timing</h2>
+      <ul>
+        <li><b>Day:</b> Tuesday, Wednesday, or Thursday. Avoid Friday–Sunday (lower weekday-dev traffic) and Monday (inbox chaos).</li>
+        <li><b>Time:</b> ~08:00–10:00 US Eastern. Catches the US morning and European afternoon in one window — grain's core audience.</li>
+        <li><b>One shot:</b> post once. If it doesn't catch, you may repost <em>once</em> after a substantial change, weeks later (HN allows a second Show HN for a real update). Don't spam reposts.</li>
+        <li><b>Be free for 6 hours after.</b> The first two hours decide everything; you must reply fast. Don't launch and walk away.</li>
+      </ul>
+      <div class="callout good"><div class="ct">Rule</div>Never ask for upvotes, never post the link in group chats asking friends to vote — HN detects voting rings and will bury you. Let it rise on its own.</div>
+    </section>
+
+    <section id="title">
+      <h2><span class="sn">02</span> The title</h2>
+      <div class="asset"><div class="ahead">Primary — use this</div><div class="abody"><div class="titlebox"><span class="kick">Show HN:</span> Grain – see how much of your codebase was written by AI vs humans</div></div></div>
+      <p>Concrete, instantly clear, mildly provocative, zero buzzwords. The reader knows exactly what it does before clicking.</p>
+      <h3>Backups (if you want a different angle)</h3>
+      <ul>
+        <li class="mono" style="font-size:13.5px">Show HN: Grain – a provenance layer that labels AI-assisted code in your repo</li>
+        <li class="mono" style="font-size:13.5px">Show HN: I built a "nutrition label" for AI vs human code in Git</li>
+      </ul>
+      <div class="callout warn"><div class="ct">Title rules</div>No "revolutionary", no "AI-powered", no emoji in the HN title. Say what it does, not how it feels. The URL should point straight at the GitHub repo (not the marketing site) — HN prefers the source.</div>
+    </section>
+
+    <section id="comment">
+      <h2><span class="sn">03</span> The first comment</h2>
+      <p>Post this as the <b>first comment</b> immediately after submitting (from your own account). It's the single most important asset of the launch — it frames the whole thread. Draft:</p>
+      <div class="asset dark"><div class="ahead">first comment — paste as-is, tweak the repo URL</div><div class="abody">Hi HN. I built Grain because two things collided this year: AI agents now commit directly to repos, and maintainers have started rewriting their contribution policies to ask "what did an AI write here?" There was no neutral way to actually measure that, so I made one.
+
+Grain reads your git history and reports how much of a repo is human-written vs AI-assisted, with a confidence level on every claim. One command:
+
+    npx grain scan
+
+It writes a PROVENANCE.md, a grain.json, and a README badge. A GitHub Action posts a calm, itemized comment on each PR.
+
+The core principle is "signals, not verdicts," and it is NOT an AI-cheating detector — I've worked hard to keep it from becoming one:
+
+- Declared signals (Co-Authored-By trailers, bot accounts, explicit tags) are high-confidence. Behavioral inference (diff shape, burst timing) is deliberately weak and capped at 0.70 confidence — it never claims certainty from a guess.
+- It can be defeated by stripping a trailer. That's fine: it's a transparency tool for cooperative repos, not an anti-cheat. I say so in the README, because overclaiming is exactly what would make a tool like this harmful.
+- The whole engine is dependency-free Go and runs locally — your code never leaves your machine. MIT licensed.
+
+Honest dogfood: Grain scans its own repo as 100% AI-assisted, because every commit is Co-Authored-By Claude. It doesn't pretend otherwise.
+
+Two things I'd genuinely love feedback on: (1) does the behavioral-inference layer earn its place, or should it be declared-signals-only? (2) as a maintainer, what would make the PR comment useful instead of noise?
+
+Repo: github.com/kresimirgalic/grain — happy to answer anything.</div></div>
+      <div class="callout good"><div class="ct">Why this works</div>It's personal (why you built it), concrete (one command), and it raises the two biggest objections — "it'll falsely accuse people" and "it can be gamed" — before the crowd does, then answers them. Ending on two real questions invites discussion instead of applause.</div>
+    </section>
+
+    <section id="checklist">
+      <h2><span class="sn">04</span> Pre-launch checklist</h2>
+      <p>Do all of this the day <em>before</em>. On launch morning you only hit submit.</p>
+      <ul class="check">
+        <li><span class="box"></span><span class="tx"><b>Repo is public</b><small>Flip kresimirgalic/grain to public. Every link in the launch dies if it's private.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>README opens strong</b><small>First screen: one-line what-it-is, the <code>npx grain scan</code> command, and the example output. HN reads the README, not the site.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>The install path actually works</b><small>Test <code>npx grain</code> / <code>go install</code> on a clean machine. A broken first command kills the launch. If npx isn't wired yet, lead the README with <code>go install</code> or a curl script.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>Grain badge on grain's own README</b><small>Dogfood is the demo. The 100%-AI badge on your own repo is a great, honest talking point.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>Demo GIF embedded in the README</b><small>A 20–30s asciinema/GIF of <code>grain scan</code>. See §05.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>Landing site live &amp; real links</b><small>Deploy site/ to Pages/Vercel. Fill the waitlist and contact placeholders, or remove those CTAs for launch.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>LICENSE, CONTRIBUTING, CI badge present</b><small>Signals a real project, not a weekend dump. CI is green.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>No broken links, no lorem, no TODOs in sight</b><small>Skim the README and site once more as a stranger.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>You've drafted the FAQ answers (§06)</b><small>So you reply in 2 minutes, not 20.</small></span></li>
+      </ul>
+    </section>
+
+    <section id="demo">
+      <h2><span class="sn">05</span> Demo assets</h2>
+      <p>Two visuals do 90% of the work. Prepare both before launch:</p>
+      <ol>
+        <li><b>A terminal recording of <code>grain scan</code></b> (20–30s). Use <code>asciinema</code> (crisp, copy-pasteable) or a GIF via <code>vhs</code>. Show: the command, the bars filling, "wrote PROVENANCE.md", then <code>grain explain &lt;sha&gt;</code> revealing the Co-Authored-By signal. End on the honest 100%-AI dogfood.</li>
+        <li><b>A screenshot of the PR comment</b> from the GitHub Action on a real PR (you already have one on PR #1). It shows the product in its natural habitat.</li>
+      </ol>
+      <div class="callout good"><div class="ct">Keep it real</div>Don't stage a fake "73% human" repo for the demo. The 100%-AI dogfood is more memorable and more credible <em>because</em> it's honest — that's the whole brand.</div>
+    </section>
+
+    <section id="faq">
+      <h2><span class="sn">06</span> Objection FAQ — prepared answers</h2>
+      <p>These are the comments you <em>will</em> get. Reply fast, agree where they're right, never get defensive.</p>
+
+      <div class="qa"><div class="q"><span class="mk">Q</span>"This is just heuristics — it can be trivially gamed."</div><div class="a"><span class="mk">A</span>Correct, and it's in the README. Grain is a transparency tool for cooperative repos, not an anti-cheat. Declared signals (Co-Authored-By, bot commits) carry the weight; inference is a weak, capped hint. If someone wants to hide AI use they can — grain measures the honest signal that exists, it doesn't claim to catch adversaries.</div></div>
+
+      <div class="qa"><div class="q"><span class="mk">Q</span>"False positives will flame innocent developers."</div><div class="a"><span class="mk">A</span>That's the failure mode I designed hardest against. Inference confidence is capped at 0.70 and always labeled "inferred"; the output says "62% of lines carry AI signals," never "this person cheated"; and the default is comment-only, never a merge block. A human who writes clean code reads as human unless there's a declared signal.</div></div>
+
+      <div class="qa"><div class="q"><span class="mk">Q</span>"This will be used by managers to surveil/punish devs."</div><div class="a"><span class="mk">A</span>A real risk, and an explicit non-goal. Grain is framed for maintainer transparency, not dev policing; there's no per-developer leaderboard, and the copy avoids blame language. I'd rather it be less "powerful" than become a weapon — that's a deliberate product choice, not an oversight.</div></div>
+
+      <div class="qa"><div class="q"><span class="mk">Q</span>"Why not just grep for Co-Authored-By?"</div><div class="a"><span class="mk">A</span>That's exactly grain's highest-confidence signal — grain just aggregates it across the whole history, weights by lines, renders a badge + PR comment + PROVENANCE.md, adds CODEOWNERS-aware policy, and falls back to (clearly-labeled) inference when the trailer is absent. The grep is the seed; the product is everything around it.</div></div>
+
+      <div class="qa"><div class="q"><span class="mk">Q</span>"GitHub will just build this in."</div><div class="a"><span class="mk">A</span>Maybe. If they ship declared-signal counting, great — that validates the need. The defensible part isn't the counter; it's owning the norm early, plus the org policy engine and the compliance/audit layer (EU AI Act, signed provenance) where the actual budgets are.</div></div>
+
+      <div class="qa"><div class="q"><span class="mk">Q</span>"Who even cares what % is AI? AI-assisted isn't bad."</div><div class="a"><span class="mk">A</span>Agreed — grain is neutral, not a purity test. The people who care are already telling us: maintainers rewriting contribution policies, and orgs facing provenance/disclosure requirements (EU AI Act). Grain is for them; if you don't need it, the badge is opt-in.</div></div>
+
+      <div class="qa"><div class="q"><span class="mk">Q</span>"Your own repo is 100% AI — isn't that embarrassing?"</div><div class="a"><span class="mk">A</span>It's the honest result and I lead with it. Every commit is Co-Authored-By Claude, so grain reports 100% AI-assisted. A provenance tool that fudged its own number would be worthless — the dogfood being unflattering is the point.</div></div>
+    </section>
+
+    <section id="conduct">
+      <h2><span class="sn">07</span> Launch-day conduct</h2>
+      <ul>
+        <li><b>Reply to everything in the first 2 hours.</b> Speed and presence signal a real, engaged maintainer. This is the whole game.</li>
+        <li><b>Thank critics specifically.</b> "Good point — you're right that X" earns more trust than any defense. Upvotes follow humility.</li>
+        <li><b>Never argue or get defensive.</b> If someone's hostile, answer the substance calmly or don't answer. Don't feed flame.</li>
+        <li><b>Ship a small fix live.</b> If a good suggestion lands, do it that day and reply "done — thanks, shipped in &lt;commit&gt;." Nothing converts a thread like visible responsiveness.</li>
+        <li><b>Don't touch the votes.</b> No asking, no rings, no sockpuppets. Ever.</li>
+      </ul>
+    </section>
+
+    <section id="after">
+      <h2><span class="sn">08</span> After the front page</h2>
+      <div class="timeline">
+        <div class="tl"><div class="t">Day 0, evening</div><h4>Harvest the feedback</h4><p>Collect every concrete suggestion and objection into GitHub issues. The thread is a free product-research session.</p></div>
+        <div class="tl"><div class="t">Day 1–2</div><h4>Ship the top ask</h4><p>Pick the single most-requested improvement and ship it. Reply in the (still-live) thread that you did.</p></div>
+        <div class="tl"><div class="t">Day 2–3</div><h4>Thank-you + recap</h4><p>A short post/tweet: "Show HN takeaways + what I shipped from your feedback." Keeps momentum and shows you listen.</p></div>
+        <div class="tl"><div class="t">Week 1</div><h4>Convert interest</h4><p>Point Cloud-curious commenters at the waitlist. Note which objection recurred most — that's your next roadmap item.</p></div>
+      </div>
+    </section>
+
+    <section id="crosspost">
+      <h2><span class="sn">09</span> Cross-post schedule</h2>
+      <p>Space these out — never simultaneously, and never before HN. Each community has its own etiquette; read the room, don't drop-and-run.</p>
+      <div class="twrap"><table>
+        <thead><tr><th>When</th><th>Where</th><th>Angle</th></tr></thead>
+        <tbody>
+          <tr><td>Launch day</td><td>Hacker News (Show HN)</td><td>The main event. Source repo link.</td></tr>
+          <tr><td>+1 day</td><td>Lobste.rs</td><td>Same, more technical framing (Go, git internals, the scoring model).</td></tr>
+          <tr><td>+2 days</td><td>r/programming, r/opensource</td><td>The "two trends collided" story; link the repo, engage in comments.</td></tr>
+          <tr><td>+3 days</td><td>X / Bluesky</td><td>Short thread with the demo GIF + the honest 100%-AI dogfood hook.</td></tr>
+          <tr><td>+1 week</td><td>dev.to / a blog post</td><td>"Why I built a provenance layer, and why it reports signals not verdicts."</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="metrics">
+      <h2><span class="sn">10</span> Success metrics</h2>
+      <div class="twrap"><table>
+        <thead><tr><th>Horizon</th><th>Signal</th><th>Good result</th></tr></thead>
+        <tbody>
+          <tr><td>Launch day</td><td>HN front page + stars</td><td>Front page (top 30); 500–1,500 stars</td></tr>
+          <tr><td>Week 1</td><td>Badges in the wild</td><td>50–100 repos rendering a grain badge</td></tr>
+          <tr><td>Week 1</td><td>GitHub Action installs</td><td>100+ repos</td></tr>
+          <tr><td>Week 2</td><td>Cloud waitlist</td><td>300+ signups</td></tr>
+          <tr><td>Ongoing</td><td>False-positive complaints</td><td>Trending to zero — the health metric that matters most</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout good"><div class="ct">The one number to watch</div>Badges in the wild. Stars are vanity; a badge on someone else's repo means the norm is forming — and that's the whole thesis of grain.</div>
+    </section>
+  </main>
+</div>
+
+<footer>🌾 grain · Show HN launch plan · one shot — execute, don't improvise</footer>
+
+<script>
+  (function(){
+    var root=document.documentElement, btn=document.getElementById('themeBtn'), KEY='grain-theme';
+    try{var s=localStorage.getItem(KEY); if(s) root.setAttribute('data-theme',s);}catch(e){}
+    btn.addEventListener('click',function(){
+      var cur=root.getAttribute('data-theme');
+      var isDark=cur?cur==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+      root.setAttribute('data-theme', isDark?'light':'dark');
+      try{localStorage.setItem(KEY, isDark?'light':'dark');}catch(e){}
+    });
+  })();
+  (function(){
+    var links=[].slice.call(document.querySelectorAll('#toc a')), map={};
+    links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+    if(!('IntersectionObserver'in window))return;
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){
+      if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');}); var a=map[e.target.id]; if(a)a.classList.add('active');}
+    });},{rootMargin:'-40% 0px -55% 0px'});
+    document.querySelectorAll('main section').forEach(function(s){io.observe(s);});
+  })();
+</script>
+
+</body>
+</html>
