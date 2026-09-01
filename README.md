@@ -59,6 +59,12 @@ ab1e0fa  ai_authored · conf 0.95 · basis declared
 curl -fsSL https://raw.githubusercontent.com/FrontTribe/grain/main/install.sh | sh
 ```
 
+**Homebrew** (macOS / Linux):
+
+```bash
+brew install FrontTribe/tap/grain
+```
+
 **Any platform** — via npm, or Go:
 
 ```bash
