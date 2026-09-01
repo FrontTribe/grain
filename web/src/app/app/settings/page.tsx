@@ -1,6 +1,7 @@
 import { TopBar, Card } from "@/components/dashboard/ui";
 import { getUserAndOrg, getIngestTokens } from "@/lib/data";
 import { IngestTokens } from "@/components/dashboard/IngestTokens";
+import { ConnectRepo } from "@/components/dashboard/ConnectRepo";
 import { members } from "@/lib/mock";
 
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
@@ -82,20 +83,9 @@ export default async function Settings() {
             </Card>
 
             <Card className="p-6">
-              <h3 className="font-display text-base font-bold">Integrations</h3>
-              <p className="mb-4 mt-1 text-[12.5px] text-muted">Where Grain reads from.</p>
-              <div className="flex items-center gap-3.5">
-                <span className="flex size-[42px] flex-none items-center justify-center rounded-xl bg-ink text-ground">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="size-[22px]">
-                    <circle cx="6" cy="6" r="2.4" /><circle cx="6" cy="18" r="2.4" /><circle cx="18" cy="9" r="2.4" /><path d="M6 8.4v7.2M8.2 6h5.6a2 2 0 0 1 2 2v.6" />
-                  </svg>
-                </span>
-                <div>
-                  <div className="text-sm font-semibold">GitHub</div>
-                  <div className="text-[12px] text-muted">{name} · {org ? "connected" : "not connected"}</div>
-                </div>
-                <span className="ml-auto flex items-center gap-1.5 font-mono text-[11.5px] text-human"><span className="size-2 rounded-full bg-human" /> connected</span>
-              </div>
+              <h3 className="font-display text-base font-bold">Connect a repository</h3>
+              <p className="mb-4 mt-1 text-[12.5px] text-muted">Scan a public GitHub repo straight into {name}.</p>
+              <ConnectRepo compact />
             </Card>
           </div>
         </div>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Fingerprint } from "@/components/Fingerprint";
+import { ConnectRepo } from "@/components/dashboard/ConnectRepo";
 
 const INGEST_URL = "https://grain-fronttribe.vercel.app/api/ingest";
 const REPO = "https://github.com/FrontTribe/grain";
@@ -71,6 +72,23 @@ export function Onboarding({ workspace }: { workspace: string }) {
           <div className="overflow-hidden rounded-xl border border-[#2c2820]">
             <Fingerprint height={54} bars={72} />
           </div>
+        </div>
+
+        <div className="mb-4 rounded-2xl border border-brand/30 bg-surface p-6 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+          <div className="mb-1 flex items-center gap-2">
+            <span className="rounded-full bg-human-soft px-2 py-0.5 font-mono text-[10.5px] font-semibold uppercase tracking-wider text-human">
+              Fastest
+            </span>
+            <h3 className="font-display text-[15.5px] font-bold text-ink">Connect a GitHub repo</h3>
+          </div>
+          <p className="mb-3.5 text-[13px] text-muted">
+            Paste a public repository — Grain reads its commit history and scores it right here. No install.
+          </p>
+          <ConnectRepo />
+        </div>
+
+        <div className="mb-3 flex items-center gap-3.5 font-mono text-[11px] uppercase tracking-[0.1em] text-faint before:h-px before:flex-1 before:bg-line after:h-px after:flex-1 after:bg-line">
+          or push from your machine / CI
         </div>
 
         <div className="flex flex-col gap-7 rounded-2xl border border-line bg-surface p-7">
