@@ -1,6 +1,7 @@
 import { TopBar, Card, ProvBar, MiniBar, Spark, Pill, Kpi } from "@/components/dashboard/ui";
 import { TrendChart } from "@/components/dashboard/TrendChart";
-import { getRepos, getOrgScans, getEvents, ago, monthLabel, num } from "@/lib/data";
+import { Onboarding } from "@/components/dashboard/Onboarding";
+import { getRepos, getOrgScans, getEvents, getUserAndOrg, ago, monthLabel, num } from "@/lib/data";
 
 const chip = "inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 text-[13px] text-muted";
 
@@ -13,6 +14,18 @@ function spark(ai: number, attention: boolean): number[] {
 
 export default async function Overview() {
   const [repos, scans, events] = await Promise.all([getRepos(), getOrgScans(), getEvents()]);
+
+  // Fresh workspace (e.g. a new GitHub OAuth user): guide them to first data.
+  if (repos.length === 0) {
+    const { org } = await getUserAndOrg();
+    return (
+      <>
+        <TopBar title="Get started" />
+        <Onboarding workspace={org?.name ?? "Your workspace"} />
+      </>
+    );
+  }
+
   const last = scans.at(-1);
   const prev = scans.at(-2);
   const kpis = {
@@ -115,7 +128,7 @@ export default async function Overview() {
             <tbody className="[&_td]:border-b [&_td]:border-line/60 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:text-[13px] [&_tr:last-child_td]:border-none">
               {repos.map((r) => (
                 <tr key={r.id}>
-                  <td className="font-medium">{r.name} <span className="font-mono font-normal text-faint">acme/</span></td>
+                  <td className="font-medium">{r.name} <span className="font-mono font-normal text-faint">{r.full_name?.split("/")[0] ?? ""}/</span></td>
                   <td><MiniBar human={num(r.human)} ai={num(r.ai)} /></td>
                   <td className="font-mono tabular-nums">{num(r.ai)}%</td>
                   <td><Spark series={spark(num(r.ai), r.status === "attention")} up={r.status === "attention"} /></td>
