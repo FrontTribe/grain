@@ -59,7 +59,7 @@ export async function getUserAndOrg() {
   const s = await createClient();
   const [{ data: userData }, orgId] = await Promise.all([s.auth.getUser(), getActiveOrgId()]);
   const { data: org } = orgId
-    ? await s.from("orgs").select("id,name,slug,plan").eq("id", orgId).maybeSingle()
+    ? await s.from("orgs").select("id,name,slug,plan,subscription_status,current_period_end").eq("id", orgId).maybeSingle()
     : { data: null };
   return { user: userData.user, org };
 }
