@@ -51,11 +51,33 @@ ab1e0fa  ai_authored · conf 0.95 · basis declared
 > **Record the GIF:** `grain` on your PATH + [VHS](https://github.com/charmbracelet/vhs), then
 > `vhs docs/demo.tape` → writes `docs/demo.gif`. Uncomment the line above to embed it.
 
-## Quickstart
+## Install
+
+**macOS / Linux** — one line:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/FrontTribe/grain/main/install.sh | sh
+```
+
+**Any platform** — via npm, or Go:
+
+```bash
+npx grain scan
+go install github.com/FrontTribe/grain/cmd/grain@latest
+```
+
+Or grab a binary from [Releases](https://github.com/FrontTribe/grain/releases).
+Then:
+
+```bash
+grain scan                        # writes PROVENANCE.md + grain.json
+```
+
+## Build from source
 
 ```bash
 go build -o grain ./cmd/grain     # or: make build
-./grain scan                      # writes PROVENANCE.md + grain.json
+./grain scan
 ```
 
 Other commands:
