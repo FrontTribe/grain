@@ -1,70 +1,61 @@
-# 🌾 grain
+<div align="center">
+
+<img src="docs/mark.svg" alt="grain" width="72" height="72">
+
+# grain
 
 **See the grain of your codebase — how it was made, not just what it is.**
 
-Grain is a code-provenance layer. It reads a git history and shows how much of a
-repository was human-written, how much was AI-assisted, and whether changes
-followed the project's own rules — with a confidence level on every claim.
+[![CI](https://github.com/kresimirgalic/grain/actions/workflows/ci.yml/badge.svg)](https://github.com/kresimirgalic/grain/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-1F6E5B)](LICENSE)
+![Go 1.23+](https://img.shields.io/badge/Go-1.23%2B-1F6E5B)
+![grain 100% AI-assisted](https://img.shields.io/badge/%F0%9F%8C%BE_grain-100%25_AI--assisted-B0511C)
+[![Stars](https://img.shields.io/github/stars/kresimirgalic/grain?color=6B655B&label=stars)](https://github.com/kresimirgalic/grain/stargazers)
+
+</div>
+
+Grain is a **code-provenance layer**. It reads a git history and reports how much
+of a repository was human-written vs AI-assisted, and whether changes followed
+the project's own rules — with a confidence level on every claim.
 
 > **Signals, not verdicts.** Grain is a transparency tool for cooperative repos.
 > It is *not* an anti-cheat or plagiarism detector, and never claims certainty
-> from inference.
+> from inference. (Yes — grain reports its *own* repo as 100% AI-assisted, because
+> every commit is `Co-Authored-By: Claude`. It doesn't pretend otherwise.)
 
 ---
 
-## Why
+## Demo
 
-Two trends collided in 2026: AI agents now commit directly to repos, and
-maintainers have grown wary of undeclared AI code. The gap between them is
-**trust** — and trust needs measurement. Grain is the instrument.
+```console
+$ grain scan
+grain 0.1.0 · scanning kresimirgalic/grain
+  reading 8 commits done
+  provenance:
+    human-authored    0%  ░░░░░░░░░░░░░░░░░░░░
+    ai-assisted     100%  ████████████████████
+    unclassified      0%  ░░░░░░░░░░░░░░░░░░░░
+  wrote PROVENANCE.md · grain.json
 
-## What it outputs
+$ grain explain HEAD
+ab1e0fa  ai_authored · conf 0.95 · basis declared
+  subject: Add Show HN launch plan (LAUNCH.md + docs/launch.html)
+  churn:   612 lines across 3 files
+  signal:  Co-Authored-By: claude
+```
 
-One input (a repo or a diff), three outputs:
+<!-- After recording the GIF (see below), uncomment:
+![grain scan demo](docs/demo.gif)
+-->
 
-- **A badge** — a README shield showing the repo's human/AI mix.
-- **A PR check** — a calm, itemized comment from `grain[bot]` on each PR.
-- **`PROVENANCE.md`** — a committable "nutrition label" for the whole repo,
-  backed by a machine-readable `grain.json`.
-
-## How it works
-
-The detection engine extracts **signals** from each commit, ranked by confidence:
-
-1. **Declared** (high confidence) — `Co-Authored-By:` trailers, bot accounts,
-   explicit `Generated-by:` / `Assisted-by:` tags, self-declaration labels.
-2. **Inferred** (capped confidence) — diff uniformity, burst timing, message
-   style, net-new vs incremental edits.
-3. **Contextual** (attention, not classification) — CODEOWNERS checks,
-   convention deviation.
-
-Declared signals dominate. Inference is deliberately weak and clearly labeled —
-it protects real humans who happen to write clean code.
-
-## Status
-
-**v0.1 skeleton — `grain scan` works.** The Go CLI reads real git history
-(no external dependencies; it shells out to `git`) and classifies commits.
-Working commands: `scan`, `check`, `badge`, `explain`, `init`, `version`.
-Next: convention diffing, the GitHub Action, and richer inference.
+> **Record the GIF:** `grain` on your PATH + [VHS](https://github.com/charmbracelet/vhs), then
+> `vhs docs/demo.tape` → writes `docs/demo.gif`. Uncomment the line above to embed it.
 
 ## Quickstart
 
 ```bash
 go build -o grain ./cmd/grain     # or: make build
 ./grain scan                      # writes PROVENANCE.md + grain.json
-```
-
-Example (grain scanning its own repo — every commit is Co-Authored-By Claude):
-
-```
-grain 0.1.0 · scanning kresimirgalic/grain
-  reading 3 commits done
-  provenance:
-    human-authored    0%  ░░░░░░░░░░░░░░░░░░░░
-    ai-assisted     100%  ████████████████████
-    unclassified      0%  ░░░░░░░░░░░░░░░░░░░░
-  wrote PROVENANCE.md · grain.json
 ```
 
 Other commands:
@@ -76,33 +67,57 @@ Other commands:
 ./grain init                       # write an example .grain.toml
 ```
 
-### Layout
+## What it outputs
+
+One input (a repo or a diff), three outputs — grain meets you where you already look.
+
+### 1. A README badge
+
+```markdown
+![grain](https://img.shields.io/endpoint?url=https://YOUR_HOST/grain.json)
+```
+
+`grain badge` emits the [shields.io endpoint](https://shields.io/badges/endpoint-badge)
+JSON. Point the badge at a hosted `grain.json` (commit it, or publish it from CI)
+and it renders the repo's human/AI mix — the way a coverage badge renders tests.
+No service to run.
+
+### 2. A PR check
+
+The GitHub Action posts a calm, itemized comment from `grain[bot]`:
 
 ```
-cmd/grain/         CLI entry + command dispatch
-internal/gitlog/   reads commit history via the git binary
-internal/signal/   extracts declared + inferred authorship signals
-internal/score/    scores each commit (declared high-confidence; inference capped at 0.70)
-internal/report/   aggregates + renders grain.json, PROVENANCE.md, badge, terminal
-internal/config/   loads .grain.toml
+grain report · #482
+› 62% of +214 lines carry AI-authorship signals  (1 Co-Authored-By: Claude)
+› 2 files touch src/auth/ — human-owned per CODEOWNERS
+› convention check: 3 deviations from repo style
+policy: AI share > 40% in a human-owned path → 1 human review requested
 ```
 
-## Docs
+### 3. `PROVENANCE.md`
 
-The full design work lives in [`docs/`](./docs) (open the HTML files in a browser):
+A committable, diff-friendly "nutrition label" for the whole repo — repo-level
+mix, a per-directory breakdown, and the engine version — backed by a
+machine-readable `grain.json`.
 
-| Doc | What it is |
-|-----|------------|
-| [`docs/concept.html`](./docs/concept.html) | The concept pitch — problem, outputs, launch. |
-| [`docs/product-spec.html`](./docs/product-spec.html) | Full product specification (engine, CLI, schema, roadmap). |
-| [`docs/design-system.html`](./docs/design-system.html) | Visual design system — tokens, type, components, voice. |
+## How it works
 
-Design tokens as plain CSS: [`design/tokens.css`](./design/tokens.css).
+Grain extracts **signals** from each commit, ranked by confidence:
+
+| Tier | Signals | Confidence |
+|------|---------|------------|
+| **Declared** | `Co-Authored-By:` trailers, bot accounts, `Generated-by:` / `AI-Assisted:` tags | high (up to 0.95) |
+| **Inferred** | diff uniformity, burst timing, greenfield vs edit, message style | capped at **0.70** |
+| **Contextual** | CODEOWNERS (human-owned paths), convention deviation | attention flag, not a score |
+
+Declared signals dominate. Inference is deliberately weak and clearly labeled —
+it protects real humans who happen to write clean code. Scores aggregate from
+commit → file → directory → repo, weighted by lines changed, and every score is
+reproducible from the engine + weights version pinned in `grain.json`.
 
 ## GitHub Action
 
-Grain ships a composite action that comments on every PR with a provenance
-report, and can optionally gate the merge. Add `.github/workflows/grain.yml`:
+Add `.github/workflows/grain.yml` to comment on every PR (and optionally gate it):
 
 ```yaml
 name: Grain
@@ -122,16 +137,28 @@ jobs:
           fail_on: never        # comment only; "policy" fails the check on attention
 ```
 
-Inputs: `fail_on` (`never` | `policy`), `comment` (`true` | `false`),
-`range`, `config`, `go-version`. The comment is a single sticky comment that
-updates in place. The action lives in [`action.yml`](./action.yml); this repo
-dogfoods it via [`.github/workflows/grain.yml`](./.github/workflows/grain.yml).
+Inputs: `fail_on` (`never` | `policy`), `comment`, `range`, `config`, `go-version`.
+The comment is a single sticky comment that updates in place. This repo dogfoods
+it — see [`.github/workflows/grain.yml`](./.github/workflows/grain.yml).
 
-## Tech (planned)
+## Configuration
 
-- **Language:** Go (single static binary; `go-git` for history).
-- **Distribution:** Homebrew / `go install` / curl script + a thin `npx grain` wrapper.
-- **Surface:** GitHub-first (Action + PR check), git-native core so other forges follow.
+`grain init` writes an example `.grain.toml`:
+
+```toml
+[policy]
+ai_threshold = 0.40
+human_owned  = ["src/auth/**", "src/payments/**"]
+
+[detection]
+inference   = true
+local_model = "off"
+agents      = ["claude", "copilot", "cursor", "codex", "devin"]
+
+[report]
+badge  = "mix"
+output = "PROVENANCE.md"
+```
 
 ## Open core
 
@@ -143,6 +170,41 @@ dogfoods it via [`.github/workflows/grain.yml`](./.github/workflows/grain.yml).
 
 Everything that runs on a single repo, locally, is free and MIT. The open engine
 is what makes the numbers credible.
+
+## Honest limits
+
+Grain is built to be trustworthy, not omniscient. It says so plainly:
+
+- **It can be defeated** by stripping a `Co-Authored-By` trailer. Grain measures
+  the honest signal that exists; it is not an adversarial anti-cheat.
+- **Inference is a hint, not proof.** It's capped at 0.70 confidence and always
+  labeled `inferred` — a clean human commit reads as human.
+- **It is not a dev-surveillance tool.** No per-developer leaderboard; defaults
+  are comment-only, never a merge block.
+
+## Layout
+
+```
+cmd/grain/         CLI entry + command dispatch
+internal/gitlog/   reads commit history via the git binary
+internal/signal/   declared + inferred authorship signals
+internal/score/    per-commit scoring (declared high-confidence; inference capped)
+internal/report/   grain.json, PROVENANCE.md, badge, terminal, PR markdown
+internal/config/   .grain.toml loader
+```
+
+## Design &amp; docs
+
+- [`docs/concept.html`](./docs/concept.html) — concept pitch
+- [`docs/product-spec.html`](./docs/product-spec.html) — full product specification
+- [`docs/design-system.html`](./docs/design-system.html) — visual design system
+- [`design/brand/`](./design/brand) — brand guidelines · [`design/product/`](./design/product) — full product design (auth, dashboard, landing)
+- [`site/`](./site) — landing page · [`LAUNCH.md`](./LAUNCH.md) — Show HN launch plan
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md). `go vet ./...` and `go test ./...` must
+pass (CI enforces this), and grain runs on its own PRs — expect a provenance comment.
 
 ## License
 
