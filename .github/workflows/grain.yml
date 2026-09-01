@@ -7,7 +7,8 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write   # needed to post the sticky comment
+  pull-requests: write   # post the sticky comment + request reviews
+  statuses: write        # set the grain/provenance commit status
 
 jobs:
   provenance:
@@ -20,5 +21,10 @@ jobs:
       - name: Grain provenance
         uses: ./            # in your repo: FrontTribe/grain@v1
         with:
-          fail_on: never    # comment only; set to "policy" to gate merges
+          fail_on: never          # comment only; set to "policy" to gate merges
           comment: 'true'
+          status_check: 'true'    # publishes a requireable "grain/provenance" check
+          # Route review when an AI-heavy change hits a human-owned path:
+          request_review: 'false' # set true and list reviewers to enable
+          # reviewers: 'octocat, some-maintainer'
+          # review_teams: 'platform-reviewers'

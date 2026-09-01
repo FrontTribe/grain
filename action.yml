@@ -22,6 +22,22 @@ inputs:
     description: 'Post/update a sticky PR comment ("true" or "false").'
     required: false
     default: 'true'
+  request_review:
+    description: 'When grain flags the change, request a human review ("true"/"false").'
+    required: false
+    default: 'false'
+  reviewers:
+    description: 'Comma-separated GitHub usernames to request review from when flagged.'
+    required: false
+    default: ''
+  review_teams:
+    description: 'Comma-separated team slugs to request review from when flagged.'
+    required: false
+    default: ''
+  status_check:
+    description: 'Set a "grain/provenance" commit status ("true"/"false").'
+    required: false
+    default: 'true'
   go-version:
     description: 'Go version used to build grain.'
     required: false
@@ -93,6 +109,49 @@ runs:
             await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
           } else {
             await github.rest.issues.createComment({ owner, repo, issue_number, body });
+          }
+
+    - name: Request review on attention
+      if: ${{ inputs.request_review == 'true' && github.event_name == 'pull_request' && steps.grain.outputs.exit_code != '0' }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const pr = context.payload.pull_request;
+          const author = pr.user.login;
+          const reviewers = `${{ inputs.reviewers }}`.split(',').map(s => s.trim()).filter(Boolean).filter(r => r !== author);
+          const teams = `${{ inputs.review_teams }}`.split(',').map(s => s.trim()).filter(Boolean);
+          if (!reviewers.length && !teams.length) {
+            core.info('grain: change flagged, but no reviewers/review_teams configured — skipping review request');
+            return;
+          }
+          try {
+            await github.rest.pulls.requestReviewers({ owner, repo, pull_number: pr.number, reviewers, team_reviewers: teams });
+            core.notice(`grain: review requested from ${[...reviewers, ...teams].join(', ')} — AI-assisted change flagged`);
+          } catch (e) {
+            core.warning('grain: could not request reviewers: ' + e.message);
+          }
+
+    - name: Set provenance status
+      if: ${{ inputs.status_check == 'true' && github.event_name == 'pull_request' }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const flagged = '${{ steps.grain.outputs.exit_code }}' !== '0';
+          const gate = '${{ inputs.fail_on }}' === 'policy';
+          // signals, not verdicts: only a hard failure when the repo opts into fail_on=policy.
+          const state = (flagged && gate) ? 'failure' : 'success';
+          const description = flagged
+            ? 'AI-assisted change flagged — a human should look'
+            : 'within provenance policy';
+          try {
+            await github.rest.repos.createCommitStatus({
+              owner, repo, sha: context.payload.pull_request.head.sha,
+              state, context: 'grain/provenance', description,
+            });
+          } catch (e) {
+            core.warning('grain: could not set status: ' + e.message);
           }
 
     - name: Push to Grain Cloud
