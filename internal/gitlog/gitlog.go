@@ -97,6 +97,66 @@ func ReadCommits(dir, rev string, max int) ([]Commit, error) {
 	return meta, nil
 }
 
+// ReadAddedLines returns, per commit SHA, the added ('+') lines grouped by file
+// path. It shells out once to `git log -p --unified=0` and parses the patch. Used
+// by content-based detection (which needs the actual added code, not just counts).
+func ReadAddedLines(dir, rev string, max int) (map[string]map[string][]string, error) {
+	args := []string{"log", "--no-merges", "-p", "--unified=0",
+		"--format=" + rs + "%H", "--no-color"}
+	if max > 0 {
+		args = append(args, fmt.Sprintf("--max-count=%d", max))
+	}
+	if rev != "" {
+		args = append(args, rev)
+	}
+	out, err := run(dir, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]map[string][]string)
+	for _, chunk := range strings.Split(out, rs) {
+		chunk = strings.TrimLeft(chunk, "\n")
+		if chunk == "" {
+			continue
+		}
+		nl := strings.IndexByte(chunk, '\n')
+		if nl < 0 {
+			continue
+		}
+		sha := strings.TrimSpace(chunk[:nl])
+		if sha == "" {
+			continue
+		}
+		byFile := make(map[string][]string)
+		var path string
+		for _, ln := range strings.Split(chunk[nl+1:], "\n") {
+			switch {
+			case strings.HasPrefix(ln, "+++ "):
+				p := strings.TrimPrefix(ln, "+++ ")
+				p = strings.TrimPrefix(p, "b/")
+				if p == "/dev/null" {
+					path = ""
+				} else {
+					path = p
+				}
+			case strings.HasPrefix(ln, "diff --git"), strings.HasPrefix(ln, "--- "),
+				strings.HasPrefix(ln, "@@"), strings.HasPrefix(ln, "index "),
+				strings.HasPrefix(ln, "new file"), strings.HasPrefix(ln, "deleted file"),
+				strings.HasPrefix(ln, "rename "), strings.HasPrefix(ln, "similarity "),
+				strings.HasPrefix(ln, "Binary files"):
+				// diff metadata — skip
+			case strings.HasPrefix(ln, "+") && path != "":
+				byFile[path] = append(byFile[path], ln[1:])
+			}
+		}
+		if len(byFile) > 0 {
+			result[sha] = byFile
+		}
+	}
+	return result, nil
+}
+
 func readMeta(dir, rev string, max int) ([]Commit, error) {
 	format := strings.Join([]string{
 		"%H", "%an", "%ae", "%cn", "%ce", "%at", "%ct", "%s", "%b",

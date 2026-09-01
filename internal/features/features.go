@@ -58,6 +58,22 @@ func (f Features) Vector() []float64 {
 	}
 }
 
+// FromVector rebuilds Features from values in Keys order (inverse of Vector).
+func FromVector(v []float64) Features {
+	get := func(i int) float64 {
+		if i < len(v) {
+			return v[i]
+		}
+		return 0
+	}
+	return Features{
+		CommentDensity: get(0), DocstringCompleteness: get(1), NamingDescriptiveness: get(2),
+		NamingConsistency: get(3), FuncLengthUniformity: get(4), LineLengthRegularity: get(5),
+		BlankLineRegularity: get(6), BoilerplateRatio: get(7), ErrorHandlingDensity: get(8),
+		TodoAbsence: get(9),
+	}
+}
+
 // Named returns the features as a key→value map (for `grain explain`).
 func (f Features) Named() map[string]float64 {
 	v := f.Vector()

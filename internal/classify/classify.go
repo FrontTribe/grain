@@ -93,4 +93,39 @@ func DefaultModel() Model {
 	}
 }
 
+// Fit trains weights + bias by L2-regularized logistic regression (batch gradient
+// descent) on centered features, matching Score's representation. X rows are
+// feature vectors in features.Keys order; y is 0/1 labels. Returns a fitted model
+// ("w2-content-fit"); the caller decides whether to persist it. Deterministic.
+func Fit(X [][]float64, y []float64) Model {
+	d := len(features.Keys)
+	w := make([]float64, d)
+	b := 0.0
+	n := len(X)
+	if n == 0 {
+		return Model{ID: "w2-content-fit", Weights: w, Bias: b, CalA: 1, CalB: 0}
+	}
+	const lr, l2, epochs = 0.3, 0.001, 500
+	for e := 0; e < epochs; e++ {
+		gw := make([]float64, d)
+		gb := 0.0
+		for i := 0; i < n; i++ {
+			z := b
+			for j := 0; j < d && j < len(X[i]); j++ {
+				z += w[j] * (X[i][j] - 0.5)
+			}
+			err := sigmoid(z) - y[i]
+			for j := 0; j < d && j < len(X[i]); j++ {
+				gw[j] += err * (X[i][j] - 0.5)
+			}
+			gb += err
+		}
+		for j := 0; j < d; j++ {
+			w[j] -= lr * (gw[j]/float64(n) + l2*w[j])
+		}
+		b -= lr * (gb / float64(n))
+	}
+	return Model{ID: "w2-content-fit", Weights: w, Bias: b, CalA: 1, CalB: 0}
+}
+
 func sigmoid(x float64) float64 { return 1 / (1 + math.Exp(-x)) }
