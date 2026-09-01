@@ -144,17 +144,27 @@ export async function getRepoPolicies() {
 export type DirRow = { path: string; human: number; ai: number; owned: boolean; lines: number };
 export type PrRow = { number: number; title: string; ai: number; created_at: string };
 
+export type RepoPolicy = { threshold: number; enforcement: string; floor: number } | null;
+
 export async function getRepoDetail(name: string) {
   const orgId = await getActiveOrgId();
   if (!orgId) return null;
   const s = await createClient();
   const { data: repo } = await s.from("repos").select("*").eq("org_id", orgId).eq("name", name).maybeSingle();
   if (!repo) return null;
-  const [{ data: dirs }, { data: prs }] = await Promise.all([
+  const [{ data: dirs }, { data: prs }, { data: policy }, { data: org }] = await Promise.all([
     s.from("repo_dirs").select("path,human,ai,owned,lines").eq("repo_id", (repo as Repo).id).order("position", { ascending: true }),
     s.from("pull_requests").select("number,title,ai,created_at").eq("repo_id", (repo as Repo).id).order("created_at", { ascending: false }),
+    s.from("repo_policies").select("threshold,enforcement,floor").eq("repo_id", (repo as Repo).id).maybeSingle(),
+    s.from("org_policy").select("threshold,enforcement,confidence_floor").eq("org_id", orgId).maybeSingle(),
   ]);
-  return { repo: repo as Repo, dirs: (dirs as DirRow[]) ?? [], prs: (prs as PrRow[]) ?? [] };
+  return {
+    repo: repo as Repo,
+    dirs: (dirs as DirRow[]) ?? [],
+    prs: (prs as PrRow[]) ?? [],
+    policy: (policy as RepoPolicy) ?? null,
+    orgPolicy: (org as { threshold: number; enforcement: string; confidence_floor: number } | null) ?? null,
+  };
 }
 
 // Org authorship trend: per-repo scans aggregated by month (averaged).

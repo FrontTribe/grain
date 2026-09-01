@@ -1,24 +1,31 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TopBar, Card, MiniBar } from "@/components/dashboard/ui";
 import { Fingerprint } from "@/components/Fingerprint";
+import { RepoPolicyForm } from "@/components/dashboard/RepoPolicyForm";
 import { getRepoDetail, ago, num } from "@/lib/data";
 import { rescanRepo } from "@/app/app/integrations/actions";
 
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
+
+const BANNERS: Record<string, string> = {
+  rescanned: "Re-scanned from GitHub — provenance updated.",
+  "policy=saved": "Repo policy override saved.",
+  "policy=cleared": "Reverted to the organization default policy.",
+};
 
 export default async function RepoDetail({
   params,
   searchParams,
 }: {
   params: Promise<{ name: string }>;
-  searchParams: Promise<{ error?: string; rescanned?: string }>;
+  searchParams: Promise<{ error?: string; rescanned?: string; policy?: string }>;
 }) {
   const { name } = await params;
-  const { error, rescanned } = await searchParams;
+  const { error, rescanned, policy: policyMsg } = await searchParams;
   const data = await getRepoDetail(name);
   if (!data) notFound();
-  const { repo, dirs, prs } = data;
+  const { repo, dirs, prs, policy, orgPolicy } = data;
+  const okMsg = rescanned ? BANNERS.rescanned : policyMsg ? BANNERS[`policy=${policyMsg}`] : "";
 
   return (
     <>
@@ -29,15 +36,14 @@ export default async function RepoDetail({
             <form action={rescanRepo}>
               <input type="hidden" name="full_name" value={repo.full_name ?? ""} />
               <input type="hidden" name="name" value={repo.name} />
-              <button type="submit" className={`${btn} border border-line bg-surface text-muted`}>Re-scan</button>
+              <button type="submit" className={`${btn} bg-brand text-surface`}>Re-scan</button>
             </form>
-            <Link href="/app/policy" className={`${btn} bg-brand text-surface`}>Configure policy</Link>
           </>
         }
       />
-      {(error || rescanned) && (
+      {(error || okMsg) && (
         <div className={`mx-7 mt-4 rounded-[10px] border px-3.5 py-2.5 text-[13px] ${error ? "border-ai/40 bg-ai-soft text-ai" : "border-human/40 bg-human-soft text-human"}`}>
-          {error ? error : "Re-scanned from GitHub — provenance updated."}
+          {error ? error : okMsg}
         </div>
       )}
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-7">
@@ -114,19 +120,25 @@ export default async function RepoDetail({
             )}
           </Card>
 
-          <Card className="p-5">
-            <h3 className="mb-3 font-display text-[15px] font-bold">Recent pull requests</h3>
-            <div className="flex flex-col">
-              {prs.map((pr) => (
-                <div key={pr.number} className="flex items-center gap-2.5 border-b border-line/50 py-2.5 last:border-none">
-                  <span className={`size-2 flex-none rounded-full ${num(pr.ai) >= 40 ? "bg-ai" : "bg-human"}`} />
-                  <span className="text-[12.5px]">{pr.title} <span className="font-mono text-faint">#{pr.number}</span></span>
-                  <span className={`ml-auto font-mono text-[12px] font-semibold ${num(pr.ai) >= 40 ? "text-ai" : "text-human"}`}>{num(pr.ai)}% AI</span>
-                </div>
-              ))}
-              {prs.length === 0 && <div className="py-6 text-center text-[13px] text-faint">No pull requests yet.</div>}
-            </div>
-          </Card>
+          <div className="flex flex-col gap-4">
+            <Card className="p-5">
+              <RepoPolicyForm repoId={repo.id} name={repo.name} policy={policy} orgPolicy={orgPolicy} />
+            </Card>
+
+            <Card className="p-5">
+              <h3 className="mb-3 font-display text-[15px] font-bold">Recent pull requests</h3>
+              <div className="flex flex-col">
+                {prs.map((pr) => (
+                  <div key={pr.number} className="flex items-center gap-2.5 border-b border-line/50 py-2.5 last:border-none">
+                    <span className={`size-2 flex-none rounded-full ${num(pr.ai) >= 40 ? "bg-ai" : "bg-human"}`} />
+                    <span className="text-[12.5px]">{pr.title} <span className="font-mono text-faint">#{pr.number}</span></span>
+                    <span className={`ml-auto font-mono text-[12px] font-semibold ${num(pr.ai) >= 40 ? "text-ai" : "text-human"}`}>{num(pr.ai)}% AI</span>
+                  </div>
+                ))}
+                {prs.length === 0 && <div className="py-6 text-center text-[13px] text-faint">No pull requests yet.</div>}
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
     </>

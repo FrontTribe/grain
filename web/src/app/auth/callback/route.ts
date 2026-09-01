@@ -26,9 +26,13 @@ export async function GET(request: Request) {
           p_scope: "repo",
         });
       } else if (!isConnect) {
-        // Fresh sign-in with an empty workspace → run the onboarding wizard.
-        const { count } = await supabase.from("repos").select("id", { count: "exact", head: true });
-        if (!count) dest = "/connect";
+        if (next && next !== "/app") {
+          dest = next; // explicit destination (e.g. an invite link)
+        } else {
+          // Fresh sign-in with an empty workspace → run the onboarding wizard.
+          const { count } = await supabase.from("repos").select("id", { count: "exact", head: true });
+          if (!count) dest = "/connect";
+        }
       }
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocal = process.env.NODE_ENV === "development";

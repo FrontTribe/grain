@@ -5,12 +5,14 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 
-export async function signInWithGithub() {
+export async function signInWithGithub(formData?: FormData) {
+  const next = String(formData?.get("next") ?? "");
   const supabase = await createClient();
   const origin = (await headers()).get("origin") ?? "http://localhost:3000";
+  const nextQ = next && next.startsWith("/") ? `?next=${encodeURIComponent(next)}` : "";
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "github",
-    options: { redirectTo: `${origin}/auth/callback` },
+    options: { redirectTo: `${origin}/auth/callback${nextQ}` },
   });
   if (error) redirect(`/login?error=${encodeURIComponent(error.message)}`);
   if (data.url) redirect(data.url);
