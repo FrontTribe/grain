@@ -34,6 +34,8 @@ func main() {
 		err = cmdBadge(os.Args[2:])
 	case "explain":
 		err = cmdExplain(os.Args[2:])
+	case "push":
+		err = cmdPush(os.Args[2:])
 	case "init":
 		err = cmdInit(os.Args[2:])
 	case "version", "--version", "-v":
@@ -68,6 +70,7 @@ usage:
   grain check --range <a..b> [-C dir]            gate a change set; exit 1 on attention
   grain badge [-C dir]                           print the shields.io endpoint JSON
   grain explain <sha> [-C dir]                    why a commit was classified as it was
+  grain push [--url U] [--token T] [--file f]     push grain.json to Grain Cloud
   grain init [-C dir]                            write an example .grain.toml
   grain version
 

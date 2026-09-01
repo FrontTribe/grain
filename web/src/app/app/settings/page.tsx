@@ -1,11 +1,13 @@
 import { TopBar, Card } from "@/components/dashboard/ui";
-import { getUserAndOrg } from "@/lib/data";
+import { getUserAndOrg, getIngestTokens } from "@/lib/data";
+import { IngestTokens } from "@/components/dashboard/IngestTokens";
 import { members } from "@/lib/mock";
 
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
 
 export default async function Settings() {
   const { org } = await getUserAndOrg();
+  const tokens = await getIngestTokens();
   const name = org?.name ?? "Workspace";
   const slug = org?.slug ?? "workspace";
   const plan = org?.plan ?? "team";
@@ -59,6 +61,10 @@ export default async function Settings() {
                 ))}
               </tbody>
             </table>
+          </Card>
+
+          <Card className="p-6">
+            <IngestTokens tokens={tokens} />
           </Card>
 
           <div className="grid grid-cols-1 gap-[18px] md:grid-cols-2">

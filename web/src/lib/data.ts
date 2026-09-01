@@ -37,6 +37,20 @@ export async function getEvents(): Promise<EventRow[]> {
   return (data as EventRow[]) ?? [];
 }
 
+export type IngestToken = {
+  id: string; name: string; token_prefix: string;
+  created_at: string; last_used_at: string | null;
+};
+
+export async function getIngestTokens(): Promise<IngestToken[]> {
+  const s = await createClient();
+  const { data } = await s
+    .from("ingest_tokens")
+    .select("id,name,token_prefix,created_at,last_used_at")
+    .order("created_at", { ascending: false });
+  return (data as IngestToken[]) ?? [];
+}
+
 export async function getOrgPolicy() {
   const s = await createClient();
   const { data } = await s.from("org_policy").select("*").maybeSingle();
