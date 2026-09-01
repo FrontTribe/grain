@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { TopBar, Card, MiniBar } from "@/components/dashboard/ui";
 import { Fingerprint } from "@/components/Fingerprint";
@@ -30,7 +31,7 @@ export default async function RepoDetail({
               <input type="hidden" name="name" value={repo.name} />
               <button type="submit" className={`${btn} border border-line bg-surface text-muted`}>Re-scan</button>
             </form>
-            <span className={`${btn} bg-brand text-surface`}>Configure policy</span>
+            <Link href="/app/policy" className={`${btn} bg-brand text-surface`}>Configure policy</Link>
           </>
         }
       />

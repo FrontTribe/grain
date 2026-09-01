@@ -2,11 +2,13 @@ import { TopBar, Card } from "@/components/dashboard/ui";
 import { getUserAndOrg, getIngestTokens } from "@/lib/data";
 import { IngestTokens } from "@/components/dashboard/IngestTokens";
 import { GithubPanel } from "@/components/dashboard/GithubPanel";
+import { renameWorkspace } from "@/app/app/settings/general/actions";
 import { members } from "@/lib/mock";
 
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
 
-export default async function Settings() {
+export default async function Settings({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string }> }) {
+  const { saved, error } = await searchParams;
   const { org } = await getUserAndOrg();
   const tokens = await getIngestTokens();
   const name = org?.name ?? "Workspace";
@@ -24,20 +26,27 @@ export default async function Settings() {
 
       <div className="flex-1 overflow-y-auto p-7">
         <div className="flex max-w-[880px] flex-col gap-[18px]">
+          {(saved || error) && (
+            <div className={`rounded-[10px] border px-3.5 py-2.5 text-[13px] ${error ? "border-ai/40 bg-ai-soft text-ai" : "border-human/40 bg-human-soft text-human"}`}>
+              {error ? error : "Saved."}
+            </div>
+          )}
           <Card className="p-6">
-            <h3 className="font-display text-base font-bold">Workspace</h3>
-            <p className="mb-4 mt-1 text-[12.5px] text-muted">The name and URL your team sees.</p>
-            <div className="mb-3.5 flex items-center gap-4">
-              <label className="w-[150px] text-[13px] font-medium">Workspace name</label>
-              <div className="flex h-[42px] flex-1 items-center rounded-[9px] border border-line bg-surface px-3 text-sm">{name}</div>
-            </div>
-            <div className="flex items-center gap-4">
-              <label className="w-[150px] text-[13px] font-medium">URL</label>
-              <div className="flex h-[42px] flex-1 items-center rounded-[9px] border border-line bg-surface px-3 text-sm">
-                <span className="text-faint">grain.dev/</span>{slug}
+            <form action={renameWorkspace}>
+              <h3 className="font-display text-base font-bold">Workspace</h3>
+              <p className="mb-4 mt-1 text-[12.5px] text-muted">The name and URL your team sees.</p>
+              <div className="mb-3.5 flex items-center gap-4">
+                <label className="w-[150px] text-[13px] font-medium">Workspace name</label>
+                <input name="name" defaultValue={name} maxLength={60} className="h-[42px] flex-1 rounded-[9px] border border-line bg-surface px-3 text-sm outline-none focus:border-brand" />
               </div>
-            </div>
-            <div className="mt-4 flex justify-end"><span className={`${btn} bg-brand text-surface`}>Save changes</span></div>
+              <div className="flex items-center gap-4">
+                <label className="w-[150px] text-[13px] font-medium">URL</label>
+                <div className="flex h-[42px] flex-1 items-center rounded-[9px] border border-line bg-surface px-3 text-sm text-muted">
+                  <span className="text-faint">grain.dev/</span>{slug}
+                </div>
+              </div>
+              <div className="mt-4 flex justify-end"><button type="submit" className={`${btn} bg-brand text-surface`}>Save changes</button></div>
+            </form>
           </Card>
 
           <Card className="p-6">
