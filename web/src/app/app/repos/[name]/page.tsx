@@ -84,6 +84,36 @@ export default async function RepoDetail({
           </div>
         </Card>
 
+        {num(repo.ai) > 0 && (
+          <Card className="p-5">
+            <div className="mb-1 flex items-center justify-between">
+              <h3 className="font-display text-[15px] font-bold">Provenance basis</h3>
+              <span className="font-mono text-[11px] text-faint">how the {num(repo.ai)}% AI-assisted was determined</span>
+            </div>
+            <p className="mb-3 text-[12.5px] text-muted">
+              High-confidence (attested + declared) vs an inferred guess. Signals, not verdicts — inferred is capped, never certain.
+            </p>
+            {(() => {
+              const att = num(repo.ai_attested), dec = num(repo.ai_declared), inf = num(repo.ai_inferred);
+              const w = (v: number) => (num(repo.ai) > 0 ? (v / num(repo.ai)) * 100 : 0);
+              return (
+                <>
+                  <div className="flex h-3.5 gap-0.5 overflow-hidden rounded-lg border border-line-strong">
+                    <span className="bg-ai" style={{ width: `${w(att)}%` }} title="attested" />
+                    <span className="bg-ai/70" style={{ width: `${w(dec)}%` }} title="declared" />
+                    <span className="border border-dashed border-ai/50 bg-ai-soft" style={{ width: `${w(inf)}%` }} title="inferred (guess)" />
+                  </div>
+                  <div className="mt-2.5 flex flex-wrap gap-4 font-mono text-[12px] text-muted">
+                    <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-ai" />{att}% attested</span>
+                    <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-ai/70" />{dec}% declared</span>
+                    <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm border border-dashed border-ai/50 bg-ai-soft" />{inf}% inferred <span className="text-faint">(guess)</span></span>
+                  </div>
+                </>
+              );
+            })()}
+          </Card>
+        )}
+
         <Card className="p-5">
           <div className="mb-2.5 flex flex-wrap gap-3.5 font-mono text-[11px] text-muted">
             <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-human" />human</span>

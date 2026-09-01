@@ -37,6 +37,15 @@ type Summary struct {
 	Lines        int
 }
 
+// BasisAI decomposes the AI-assisted share by how it was determined: attested
+// (git note), declared (commit trailer/identity), or inferred (a capped guess).
+// The three are fractions of total lines and sum to Summary.AIAssisted.
+type BasisAI struct {
+	Attested float64
+	Declared float64
+	Inferred float64
+}
+
 type Report struct {
 	Repo        string
 	GeneratedAt string
@@ -44,6 +53,7 @@ type Report struct {
 	RangeTo     string
 	NumCommits  int
 	Summary     Summary
+	BasisAI     BasisAI
 	ByPath      []PathStat
 	Results     []score.Result
 	Weights     string // engine weights id (depends on detection config)
@@ -60,6 +70,7 @@ func (r Report) weightsID() string {
 // Build aggregates results (line-weighted) into a report.
 func Build(repo, generatedAt string, commits []gitlog.Commit, results []score.Result, cfg config.Config) Report {
 	byClass := map[string]int{}
+	basisAI := map[string]int{}
 	resBySHA := make(map[string]score.Result, len(results))
 	for _, r := range results {
 		w := r.Lines
@@ -71,6 +82,7 @@ func Build(repo, generatedAt string, commits []gitlog.Commit, results []score.Re
 			byClass["human"] += w
 		case r.IsAI():
 			byClass["ai"] += w
+			basisAI[r.Basis] += w
 		default:
 			byClass["uncl"] += w
 		}
@@ -136,6 +148,11 @@ func Build(repo, generatedAt string, commits []gitlog.Commit, results []score.Re
 			Unclassified: float64(byClass["uncl"]) / float64(total),
 			Lines:        total,
 		},
+		BasisAI: BasisAI{
+			Attested: float64(basisAI["attested"]) / float64(total),
+			Declared: float64(basisAI["declared"]) / float64(total),
+			Inferred: float64(basisAI["inferred"]) / float64(total),
+		},
 		ByPath:  paths,
 		Results: results,
 		Weights: score.EngineWeightsID(cfg),
@@ -154,11 +171,17 @@ func (r Report) WriteJSON(w io.Writer) error {
 		To      string `json:"to"`
 		Commits int    `json:"commits"`
 	}
+	type basisJSON struct {
+		Attested float64 `json:"attested"`
+		Declared float64 `json:"declared"`
+		Inferred float64 `json:"inferred"`
+	}
 	type sumJSON struct {
-		Human        float64 `json:"human"`
-		AIAssisted   float64 `json:"ai_assisted"`
-		Unclassified float64 `json:"unclassified"`
-		Lines        int     `json:"lines"`
+		Human        float64   `json:"human"`
+		AIAssisted   float64   `json:"ai_assisted"`
+		Unclassified float64   `json:"unclassified"`
+		Lines        int       `json:"lines"`
+		AIByBasis    basisJSON `json:"ai_by_basis"`
 	}
 	type pathJSON struct {
 		Path  string  `json:"path"`
@@ -191,7 +214,17 @@ func (r Report) WriteJSON(w io.Writer) error {
 		Repo:        r.Repo,
 		GeneratedAt: r.GeneratedAt,
 		Range:       rangeJSON{r.RangeFrom, r.RangeTo, r.NumCommits},
-		Summary:     sumJSON{round2(r.Summary.Human), round2(r.Summary.AIAssisted), round2(r.Summary.Unclassified), r.Summary.Lines},
+		Summary: sumJSON{
+			Human:        round2(r.Summary.Human),
+			AIAssisted:   round2(r.Summary.AIAssisted),
+			Unclassified: round2(r.Summary.Unclassified),
+			Lines:        r.Summary.Lines,
+			AIByBasis: basisJSON{
+				Attested: round2(r.BasisAI.Attested),
+				Declared: round2(r.BasisAI.Declared),
+				Inferred: round2(r.BasisAI.Inferred),
+			},
+		},
 	}
 	for _, p := range r.ByPath {
 		doc.ByPath = append(doc.ByPath, pathJSON{p.Path, round2(p.Human), round2(p.AI), p.Lines, p.HumanOwned})

@@ -11,7 +11,13 @@ export type GhReport = {
   repo: string;
   generated_at: string;
   range: { commits: number };
-  summary: { human: number; ai_assisted: number; unclassified: number; lines: number };
+  summary: {
+    human: number;
+    ai_assisted: number;
+    unclassified: number;
+    lines: number;
+    ai_by_basis: { attested: number; declared: number; inferred: number };
+  };
   by_path: never[];
 };
 
@@ -140,7 +146,14 @@ export async function scanGithubRepo(
     repo: `${owner}/${repo}`,
     generated_at: new Date().toISOString(),
     range: { commits: commits.length },
-    summary: { human: human / total, ai_assisted: ai / total, unclassified: 0, lines: 0 },
+    summary: {
+      human: human / total,
+      ai_assisted: ai / total,
+      unclassified: 0,
+      lines: 0,
+      // API scan classifies declared signals only → all AI is declared.
+      ai_by_basis: { attested: 0, declared: ai / total, inferred: 0 },
+    },
     by_path: [],
   };
   return {
