@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Mark } from "@/components/Mark";
-import { signup } from "@/app/auth/actions";
+import { signup, signInWithGithub } from "@/app/auth/actions";
 
 const check = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="mt-0.5 size-[18px] flex-none text-[#57C6A8]">
@@ -63,9 +63,9 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
             or
           </div>
 
-          <Link href="/connect" className="flex h-[46px] w-full items-center justify-center gap-2.5 rounded-[10px] bg-ink text-[14.5px] font-semibold text-ground">
+          <button type="submit" formAction={signInWithGithub} formNoValidate className="flex h-[46px] w-full items-center justify-center gap-2.5 rounded-[10px] bg-ink text-[14.5px] font-semibold text-ground">
             {gitIcon} Sign up with GitHub
-          </Link>
+          </button>
 
           <div className="mt-4 text-center text-[11.5px] text-faint">By creating an account you agree to the Terms and Privacy Policy.</div>
           <div className="mt-3 text-center text-[13.5px] text-muted">

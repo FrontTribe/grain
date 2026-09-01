@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Mark } from "@/components/Mark";
 import { Fingerprint } from "@/components/Fingerprint";
-import { login } from "@/app/auth/actions";
+import { login, signInWithGithub } from "@/app/auth/actions";
 
 const gitIcon = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="size-[18px]">
@@ -56,9 +56,9 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
             or
           </div>
 
-          <Link href="/connect" className="flex h-[46px] w-full items-center justify-center gap-2.5 rounded-[10px] bg-ink text-[14.5px] font-semibold text-ground">
+          <button type="submit" formAction={signInWithGithub} formNoValidate className="flex h-[46px] w-full items-center justify-center gap-2.5 rounded-[10px] bg-ink text-[14.5px] font-semibold text-ground">
             {gitIcon} Continue with GitHub
-          </Link>
+          </button>
 
           <div className="mt-6 text-center text-[13.5px] text-muted">
             New to Grain? <Link href="/signup" className="text-brand">Create an account</Link>
