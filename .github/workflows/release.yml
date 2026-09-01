@@ -84,3 +84,43 @@ jobs:
             git commit -m "grain ${GITHUB_REF_NAME}"
             git push
           fi
+
+  # Update the Scoop bucket (Windows). Requires a repo secret SCOOP_BUCKET_TOKEN
+  # (a PAT with contents:write on FrontTribe/scoop-bucket). Skips gracefully otherwise.
+  scoop:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Windows binaries
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p dist
+          gh release download "${GITHUB_REF_NAME}" -R "${GITHUB_REPOSITORY}" -p 'grain-windows-*' -D dist
+
+      - name: Generate manifest
+        run: GRAIN_ASSET_DIR="$PWD/dist" ./packaging/scoop/update-manifest.sh "${GITHUB_REF_NAME}"
+
+      - name: Push to scoop-bucket
+        env:
+          BUCKET_TOKEN: ${{ secrets.SCOOP_BUCKET_TOKEN }}
+        run: |
+          if [ -z "${BUCKET_TOKEN}" ]; then
+            echo "::warning::SCOOP_BUCKET_TOKEN is not set — skipping scoop update. Add the secret to enable auto-publish."
+            exit 0
+          fi
+          git clone "https://x-access-token:${BUCKET_TOKEN}@github.com/FrontTribe/scoop-bucket.git" bucket
+          mkdir -p bucket/bucket
+          cp packaging/scoop/grain.json bucket/bucket/grain.json
+          cd bucket
+          git config user.name "grain-release[bot]"
+          git config user.email "release@users.noreply.github.com"
+          git add bucket/grain.json
+          if git diff --cached --quiet; then
+            echo "Manifest unchanged — nothing to push."
+          else
+            git commit -m "grain ${GITHUB_REF_NAME}"
+            git push
+          fi

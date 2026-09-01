@@ -65,6 +65,13 @@ curl -fsSL https://raw.githubusercontent.com/FrontTribe/grain/main/install.sh | 
 brew install FrontTribe/tap/grain
 ```
 
+**Windows** (Scoop):
+
+```powershell
+scoop bucket add fronttribe https://github.com/FrontTribe/scoop-bucket
+scoop install grain
+```
+
 **Any platform** — via npm, or Go:
 
 ```bash
