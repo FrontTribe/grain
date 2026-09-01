@@ -25,6 +25,6 @@ jobs:
           comment: 'true'
           status_check: 'true'    # publishes a requireable "grain/provenance" check
           # Route review when an AI-heavy change hits a human-owned path:
-          request_review: 'false' # set true and list reviewers to enable
+          request_review: 'true'   # test: empty reviewers → graceful skip
           # reviewers: 'octocat, some-maintainer'
           # review_teams: 'platform-reviewers'
