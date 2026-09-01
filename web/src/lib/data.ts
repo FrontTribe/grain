@@ -49,6 +49,20 @@ export async function getRepoPolicies() {
   return (data ?? []) as unknown as { repo_id: string; threshold: number; enforcement: string; floor: number; paths: number; repos: { name: string } | null }[];
 }
 
+export type DirRow = { path: string; human: number; ai: number; owned: boolean; lines: number };
+export type PrRow = { number: number; title: string; ai: number; created_at: string };
+
+export async function getRepoDetail(name: string) {
+  const s = await createClient();
+  const { data: repo } = await s.from("repos").select("*").eq("name", name).maybeSingle();
+  if (!repo) return null;
+  const [{ data: dirs }, { data: prs }] = await Promise.all([
+    s.from("repo_dirs").select("path,human,ai,owned,lines").eq("repo_id", (repo as Repo).id).order("position", { ascending: true }),
+    s.from("pull_requests").select("number,title,ai,created_at").eq("repo_id", (repo as Repo).id).order("created_at", { ascending: false }),
+  ]);
+  return { repo: repo as Repo, dirs: (dirs as DirRow[]) ?? [], prs: (prs as PrRow[]) ?? [] };
+}
+
 // ---- shaping helpers ----
 
 export function ago(iso: string): string {
