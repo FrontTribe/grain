@@ -1,0 +1,207 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    .app { width: 1440px; height: 1040px; display: flex; background: #F4F2EC; color: #211E1A;
+      font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 14px; overflow: hidden; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+    h1,h2,h3 { font-family: "Bricolage Grotesque", sans-serif; margin: 0; letter-spacing: -.01em; }
+
+    /* sidebar */
+    .side { width: 244px; flex: none; background: #1A1712; color: #C9C2B3; display: flex; flex-direction: column; padding: 22px 16px; }
+    .side .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 4px; }
+    .side .brand .wm { font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 20px; color: #F1ECE0; letter-spacing: -.02em; }
+    .side .brand .tag { font-family: "IBM Plex Mono", monospace; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: #8A8272; border: 1px solid #35301f; border-radius: 4px; padding: 2px 6px; margin-left: 2px; }
+    .ws { display: flex; align-items: center; gap: 10px; background: #241F17; border: 1px solid #322c1f; border-radius: 10px; padding: 9px 12px; margin: 18px 0 20px; font-size: 13px; }
+    .ws .logo { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(150deg,#57C6A8,#E28A50); flex: none; }
+    .ws .nm { font-weight: 600; color: #ECE6D8; } .ws .cev { margin-left: auto; color: #6E6656; }
+    .nav { display: flex; flex-direction: column; gap: 2px; }
+    .nav a { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 8px; color: #A69E8D; font-size: 13.5px; text-decoration: none; }
+    .nav a svg { width: 18px; height: 18px; }
+    .nav a.active { background: #242c26; color: #7FD8BE; }
+    .nav a.active svg { color: #57C6A8; }
+    .nav .grp { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #6A6252; padding: 16px 12px 6px; }
+    .side .user { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px 8px 0; border-top: 1px solid #2a2519; }
+    .side .user .av { width: 30px; height: 30px; border-radius: 8px; background: #3a3323; flex: none; display: flex; align-items: center; justify-content: center; color: #C9C2B3; font-weight: 600; font-size: 12px; }
+    .side .user .nm { font-size: 13px; color: #E4DDCD; font-weight: 500; } .side .user .pl { font-size: 11px; color: #7C7462; }
+
+    /* main column */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .top { height: 62px; flex: none; border-bottom: 1px solid #E4E0D6; background: #FBFAF6; display: flex; align-items: center; gap: 16px; padding: 0 28px; }
+    .top h1 { font-size: 20px; font-weight: 700; }
+    .top .spacer { flex: 1; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #E4E0D6; border-radius: 8px; padding: 7px 12px; font-size: 13px; color: #4a453b; }
+    .chip.mono { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+    .content { flex: 1; overflow: hidden; padding: 24px 28px; display: flex; flex-direction: column; gap: 18px; }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+    .kpi { background: #fff; border: 1px solid #E7E3D9; border-radius: 14px; padding: 18px 20px; }
+    .kpi .lbl { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: #8A8272; }
+    .kpi .big { font-family: "Bricolage Grotesque"; font-weight: 700; font-size: 34px; letter-spacing: -.02em; margin-top: 8px; }
+    .kpi .big.h { color: #1F6E5B; } .kpi .big.a { color: #B0511C; }
+    .kpi .sub { font-size: 12.5px; color: #6E685D; margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+    .delta { font-family: "IBM Plex Mono", monospace; font-size: 12px; padding: 2px 7px; border-radius: 5px; }
+    .delta.up { background: #F6E7D9; color: #B0511C; } .delta.down { background: #E1EFE9; color: #1F6E5B; }
+    .provbar { display: flex; height: 8px; border-radius: 5px; overflow: hidden; margin-top: 12px; gap: 2px; }
+    .provbar i { display: block; height: 100%; border-radius: 2px; }
+
+    .row { display: grid; grid-template-columns: 1.9fr 1fr; gap: 16px; }
+    .card { background: #fff; border: 1px solid #E7E3D9; border-radius: 14px; padding: 18px 20px; }
+    .card .chead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .card h3 { font-size: 15px; font-weight: 700; }
+    .legend { display: flex; gap: 14px; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: #6E685D; }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; } .legend i { width: 9px; height: 9px; border-radius: 2px; }
+    .chartwrap svg { display: block; width: 100%; height: 210px; }
+
+    .feed { display: flex; flex-direction: column; gap: 2px; }
+    .fitem { display: flex; align-items: center; gap: 12px; padding: 9px 6px; border-bottom: 1px solid #F0EDE5; }
+    .fitem:last-child { border-bottom: none; }
+    .fitem .rp { font-size: 13px; font-weight: 500; } .fitem .rp small { color: #8A8272; font-family: "IBM Plex Mono", monospace; font-weight: 400; }
+    .fitem .pct { margin-left: auto; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: #B0511C; font-weight: 600; }
+    .fitem .tm { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: #9A9284; width: 42px; text-align: right; }
+    .adot { width: 8px; height: 8px; border-radius: 50%; background: #B0511C; flex: none; }
+
+    /* repo table */
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 11px 10px; border-bottom: 1px solid #F0EDE5; font-size: 13px; }
+    thead th { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: #8A8272; }
+    tbody tr:last-child td { border-bottom: none; }
+    td.repo { font-weight: 500; } td.repo small { color: #9A9284; font-family: "IBM Plex Mono", monospace; font-weight: 400; }
+    .minibar { display: inline-flex; width: 130px; height: 8px; border-radius: 5px; overflow: hidden; gap: 2px; vertical-align: middle; }
+    .minibar i { display: block; height: 100%; border-radius: 2px; }
+    td.num { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+    .pill { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; padding: 2px 8px; border-radius: 999px; }
+    .pill.ok { background: #E1EFE9; color: #1F6E5B; } .pill.att { background: #F6E7D9; color: #B0511C; }
+    .spark { vertical-align: middle; }
+  </style>
+</helmet>
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="side">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="28" width="11" height="64" rx="4.5" fill="#57C6A8"/><rect x="37" y="36" width="11" height="48" rx="4.5" fill="#E28A50"/><rect x="54" y="20" width="11" height="80" rx="4.5" fill="#57C6A8"/><rect x="71" y="38" width="11" height="44" rx="4.5" fill="#E28A50"/><rect x="88" y="31" width="11" height="58" rx="4.5" fill="#57C6A8"/></svg>
+      <span class="wm">grain</span><span class="tag">cloud</span>
+    </div>
+    <div class="ws"><span class="logo"></span><span class="nm">Acme Corp</span><span class="cev">▾</span></div>
+    <nav class="nav">
+      <a class="active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Overview</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="9" r="2.4"/><path d="M6 8.4v7.2M8.2 6h5.6a2 2 0 0 1 2 2v.6"/></svg> Repositories</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 15l5-5 4 3 6-7"/><path d="M4 20h16"/></svg> Trends</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg> Policy</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg> Activity</a>
+      <div class="grp">Workspace</div>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L16.2 2h-4l-.4 2.6a7 7 0 0 0-2 1.2L7.5 4.9l-2 3.4 2 1.5A7 7 0 0 0 5 12"/></svg> Settings</a>
+    </nav>
+    <div class="user">
+      <span class="av">MG</span>
+      <div><div class="nm">Maya G.</div><div class="pl">Team plan · 42 repos</div></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="top">
+      <h1>Overview</h1>
+      <div class="spacer"></div>
+      <span class="chip mono">Last 6 months ▾</span>
+      <span class="chip">Search repos…</span>
+    </div>
+
+    <div class="content">
+      <!-- KPIs -->
+      <div class="kpis">
+        <div class="kpi">
+          <div class="lbl">Org provenance</div>
+          <div class="big h">73%</div>
+          <div class="sub">human-authored across 42 repos</div>
+          <div class="provbar"><i style="width:73%;background:#1F6E5B"></i><i style="width:22%;background:#B0511C"></i><i style="width:5%;background:#C9C2B3"></i></div>
+        </div>
+        <div class="kpi">
+          <div class="lbl">AI-assisted</div>
+          <div class="big a">22%</div>
+          <div class="sub"><span class="delta up">▲ +3 pts</span> vs last month</div>
+        </div>
+        <div class="kpi">
+          <div class="lbl">Open attention</div>
+          <div class="big">7</div>
+          <div class="sub">PRs over policy in human-owned paths</div>
+        </div>
+        <div class="kpi">
+          <div class="lbl">Coverage</div>
+          <div class="big">42</div>
+          <div class="sub">repos tracked · 38 scanned today</div>
+        </div>
+      </div>
+
+      <!-- chart + feed -->
+      <div class="row">
+        <div class="card chartwrap">
+          <div class="chead">
+            <h3>Authorship over time</h3>
+            <div class="legend"><span><i style="background:#1F6E5B"></i>human</span><span><i style="background:#B0511C"></i>AI-assisted</span><span><i style="background:#C9C2B3"></i>policy 40%</span></div>
+          </div>
+          <svg viewBox="0 0 760 220" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- gridlines -->
+            <line x1="40" y1="20" x2="740" y2="20" stroke="#F0EDE5"/>
+            <line x1="40" y1="65" x2="740" y2="65" stroke="#F0EDE5"/>
+            <line x1="40" y1="110" x2="740" y2="110" stroke="#F0EDE5"/>
+            <line x1="40" y1="155" x2="740" y2="155" stroke="#F0EDE5"/>
+            <line x1="40" y1="200" x2="740" y2="200" stroke="#E4E0D6"/>
+            <!-- policy threshold at 40% (y = 200 - 40*1.8 = 128) -->
+            <line x1="40" y1="128" x2="740" y2="128" stroke="#C4BCAC" stroke-width="1.4" stroke-dasharray="5 5"/>
+            <!-- human area + line -->
+            <path d="M40 48.8 L180 50.6 L320 54.2 L460 57.8 L600 61.4 L740 63.2 L740 200 L40 200 Z" fill="#1F6E5B" fill-opacity="0.10"/>
+            <path d="M40 48.8 L180 50.6 L320 54.2 L460 57.8 L600 61.4 L740 63.2" fill="none" stroke="#1F6E5B" stroke-width="2.4"/>
+            <circle cx="740" cy="63.2" r="4.5" fill="#1F6E5B"/>
+            <!-- ai area + line -->
+            <path d="M40 171.2 L180 169.4 L320 165.8 L460 162.2 L600 158.6 L740 156.8 L740 200 L40 200 Z" fill="#B0511C" fill-opacity="0.12"/>
+            <path d="M40 171.2 L180 169.4 L320 165.8 L460 162.2 L600 158.6 L740 156.8" fill="none" stroke="#B0511C" stroke-width="2.4"/>
+            <circle cx="740" cy="156.8" r="4.5" fill="#B0511C"/>
+            <!-- direct labels -->
+            <text x="726" y="42" font-family="IBM Plex Mono" font-size="12" fill="#1F6E5B" text-anchor="end">76%</text>
+            <text x="726" y="150" font-family="IBM Plex Mono" font-size="12" fill="#B0511C" text-anchor="end">24%</text>
+          </svg>
+          <div class="mono" style="display:flex;justify-content:space-between;color:#9A9284;font-size:11px;padding:0 6px">
+            <span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span><span>Sep</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="chead"><h3>Needs attention</h3><span class="mono" style="font-size:11px;color:#9A9284">7 open</span></div>
+          <div class="feed">
+            <div class="fitem"><span class="adot"></span><span class="rp">payments-service <small>#482</small></span><span class="pct">62%</span><span class="tm">2h</span></div>
+            <div class="fitem"><span class="adot"></span><span class="rp">auth-gateway <small>#118</small></span><span class="pct">71%</span><span class="tm">5h</span></div>
+            <div class="fitem"><span class="adot"></span><span class="rp">billing-core <small>#340</small></span><span class="pct">58%</span><span class="tm">1d</span></div>
+            <div class="fitem"><span class="adot"></span><span class="rp">ledger-api <small>#77</small></span><span class="pct">55%</span><span class="tm">1d</span></div>
+            <div class="fitem"><span class="adot"></span><span class="rp">kyc-service <small>#203</small></span><span class="pct">49%</span><span class="tm">2d</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- repo table -->
+      <div class="card" style="padding-top:8px">
+        <table>
+          <thead><tr><th>Repository</th><th>Provenance mix</th><th>AI</th><th>30-day trend</th><th>Status</th><th>Last scan</th></tr></thead>
+          <tbody>
+            <tr><td class="repo">payments-service <small>acme/</small></td><td><span class="minibar"><i style="width:71%;background:#1F6E5B"></i><i style="width:24%;background:#B0511C"></i><i style="width:5%;background:#C9C2B3"></i></span></td><td class="num">24%</td><td><svg class="spark" width="70" height="22"><polyline points="0,16 14,15 28,13 42,12 56,9 70,8" fill="none" stroke="#B0511C" stroke-width="1.8"/></svg></td><td><span class="pill att">attention</span></td><td class="num" style="color:#8A8272">2h ago</td></tr>
+            <tr><td class="repo">auth-gateway <small>acme/</small></td><td><span class="minibar"><i style="width:88%;background:#1F6E5B"></i><i style="width:10%;background:#B0511C"></i><i style="width:2%;background:#C9C2B3"></i></span></td><td class="num">10%</td><td><svg class="spark" width="70" height="22"><polyline points="0,10 14,11 28,9 42,10 56,8 70,9" fill="none" stroke="#1F6E5B" stroke-width="1.8"/></svg></td><td><span class="pill ok">healthy</span></td><td class="num" style="color:#8A8272">5h ago</td></tr>
+            <tr><td class="repo">web-app <small>acme/</small></td><td><span class="minibar"><i style="width:52%;background:#1F6E5B"></i><i style="width:44%;background:#B0511C"></i><i style="width:4%;background:#C9C2B3"></i></span></td><td class="num">44%</td><td><svg class="spark" width="70" height="22"><polyline points="0,15 14,13 28,12 42,10 56,7 70,5" fill="none" stroke="#B0511C" stroke-width="1.8"/></svg></td><td><span class="pill att">attention</span></td><td class="num" style="color:#8A8272">1h ago</td></tr>
+            <tr><td class="repo">ledger-api <small>acme/</small></td><td><span class="minibar"><i style="width:80%;background:#1F6E5B"></i><i style="width:17%;background:#B0511C"></i><i style="width:3%;background:#C9C2B3"></i></span></td><td class="num">17%</td><td><svg class="spark" width="70" height="22"><polyline points="0,9 14,10 28,10 42,11 56,10 70,11" fill="none" stroke="#1F6E5B" stroke-width="1.8"/></svg></td><td><span class="pill ok">healthy</span></td><td class="num" style="color:#8A8272">1d ago</td></tr>
+            <tr><td class="repo">docs-site <small>acme/</small></td><td><span class="minibar"><i style="width:38%;background:#1F6E5B"></i><i style="width:58%;background:#B0511C"></i><i style="width:4%;background:#C9C2B3"></i></span></td><td class="num">58%</td><td><svg class="spark" width="70" height="22"><polyline points="0,14 14,12 28,11 42,9 56,8 70,6" fill="none" stroke="#B0511C" stroke-width="1.8"/></svg></td><td><span class="pill ok">healthy</span></td><td class="num" style="color:#8A8272">3h ago</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    .app { width: 1440px; height: 1040px; display: flex; background: #F4F2EC; color: #211E1A;
+      font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 14px; overflow: hidden; }
+    .mono { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+    h1,h2,h3 { font-family: "Bricolage Grotesque", sans-serif; margin: 0; letter-spacing: -.01em; }
+    .side { width: 244px; flex: none; background: #1A1712; color: #C9C2B3; display: flex; flex-direction: column; padding: 22px 16px; }
+    .side .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 4px; }
+    .side .brand .wm { font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 20px; color: #F1ECE0; letter-spacing: -.02em; }
+    .side .brand .tag { font-family: "IBM Plex Mono", monospace; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; color: #8A8272; border: 1px solid #35301f; border-radius: 4px; padding: 2px 6px; }
+    .ws { display: flex; align-items: center; gap: 10px; background: #241F17; border: 1px solid #322c1f; border-radius: 10px; padding: 9px 12px; margin: 18px 0 20px; font-size: 13px; }
+    .ws .logo { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(150deg,#57C6A8,#E28A50); flex: none; }
+    .ws .nm { font-weight: 600; color: #ECE6D8; } .ws .cev { margin-left: auto; color: #6E6656; }
+    .nav { display: flex; flex-direction: column; gap: 2px; }
+    .nav a { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 8px; color: #A69E8D; font-size: 13.5px; text-decoration: none; }
+    .nav a svg { width: 18px; height: 18px; }
+    .nav a.active { background: #242c26; color: #7FD8BE; } .nav a.active svg { color: #57C6A8; }
+    .nav .grp { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: #6A6252; padding: 16px 12px 6px; }
+    .side .user { margin-top: auto; display: flex; align-items: center; gap: 10px; padding: 10px 8px 0; border-top: 1px solid #2a2519; }
+    .side .user .av { width: 30px; height: 30px; border-radius: 8px; background: #3a3323; flex: none; display: flex; align-items: center; justify-content: center; color: #C9C2B3; font-weight: 600; font-size: 12px; }
+    .side .user .nm { font-size: 13px; color: #E4DDCD; font-weight: 500; } .side .user .pl { font-size: 11px; color: #7C7462; }
+
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .top { height: 62px; flex: none; border-bottom: 1px solid #E4E0D6; background: #FBFAF6; display: flex; align-items: center; gap: 12px; padding: 0 28px; }
+    .top h1 { font-size: 20px; font-weight: 700; }
+    .top .spacer { flex: 1; }
+    .btn { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; border-radius: 8px; padding: 8px 14px; border: 1px solid #E4E0D6; background: #fff; color: #4a453b; }
+    .btn.p { background: #1F6E5B; color: #fff; border-color: #1F6E5B; }
+    .content { flex: 1; overflow: hidden; padding: 24px 28px; display: grid; grid-template-columns: 1.1fr 1fr; gap: 18px; align-content: start; }
+
+    .card { background: #fff; border: 1px solid #E7E3D9; border-radius: 14px; padding: 20px 22px; }
+    .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .card .cd { font-size: 12.5px; color: #6E685D; margin-bottom: 16px; }
+    .field { margin-bottom: 20px; }
+    .field .flabel { font-size: 13px; font-weight: 500; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .field .flabel .v { font-family: "IBM Plex Mono", monospace; color: #B0511C; }
+    .slider { height: 8px; border-radius: 5px; background: #EFECE4; position: relative; }
+    .slider .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 40%; background: #B0511C; border-radius: 5px 0 0 5px; }
+    .slider .knob { position: absolute; left: 40%; top: 50%; width: 16px; height: 16px; border-radius: 50%; background: #fff; border: 2px solid #B0511C; transform: translate(-50%, -50%); }
+    .seg { display: flex; background: #F3F0E8; border: 1px solid #E7E3D9; border-radius: 9px; padding: 3px; gap: 3px; }
+    .seg button { flex: 1; font-family: "IBM Plex Sans"; font-size: 12.5px; border: none; background: transparent; color: #6E685D; padding: 8px; border-radius: 6px; cursor: pointer; }
+    .seg button.on { background: #fff; color: #1F6E5B; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+    .rule { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #F7F5EF; border: 1px solid #EDEAE2; border-radius: 9px; margin-bottom: 8px; }
+    .rule code { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: #211E1A; }
+    .rule .rm { margin-left: auto; color: #9A9284; font-family: "IBM Plex Mono", monospace; cursor: pointer; }
+    .addrow { display: flex; gap: 8px; margin-top: 4px; }
+    .addrow input { flex: 1; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; padding: 9px 12px; border: 1px solid #E4E0D6; border-radius: 8px; background: #fff; }
+    .addrow .add { background: #211E1A; color: #F4F2EC; border: none; border-radius: 8px; padding: 0 16px; font-size: 13px; cursor: pointer; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #F0EDE5; font-size: 12.5px; }
+    thead th { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #8A8272; }
+    tbody tr:last-child td { border-bottom: none; }
+    td.num { font-family: "IBM Plex Mono", monospace; }
+    .tag2 { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; padding: 2px 8px; border-radius: 999px; background: #F3F0E8; color: #6E685D; }
+    .tag2.block { background: #F6E7D9; color: #B0511C; } .tag2.comment { background: #E1EFE9; color: #1F6E5B; }
+    .note { grid-column: 1 / -1; display: flex; gap: 11px; align-items: flex-start; background: #EAF3EF; border: 1px solid #CDE5DA; border-left: 3px solid #1F6E5B; border-radius: 10px; padding: 13px 16px; }
+    .note .txt { font-size: 13px; color: #2b5346; } .note .txt b { color: #1F6E5B; }
+  </style>
+</helmet>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <svg width="26" height="26" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="28" width="11" height="64" rx="4.5" fill="#57C6A8"/><rect x="37" y="36" width="11" height="48" rx="4.5" fill="#E28A50"/><rect x="54" y="20" width="11" height="80" rx="4.5" fill="#57C6A8"/><rect x="71" y="38" width="11" height="44" rx="4.5" fill="#E28A50"/><rect x="88" y="31" width="11" height="58" rx="4.5" fill="#57C6A8"/></svg>
+      <span class="wm">grain</span><span class="tag">cloud</span>
+    </div>
+    <div class="ws"><span class="logo"></span><span class="nm">Acme Corp</span><span class="cev">▾</span></div>
+    <nav class="nav">
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Overview</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="9" r="2.4"/><path d="M6 8.4v7.2M8.2 6h5.6a2 2 0 0 1 2 2v.6"/></svg> Repositories</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 15l5-5 4 3 6-7"/><path d="M4 20h16"/></svg> Trends</a>
+      <a class="active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/></svg> Policy</a>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg> Activity</a>
+      <div class="grp">Workspace</div>
+      <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L16.2 2h-4l-.4 2.6a7 7 0 0 0-2 1.2L7.5 4.9l-2 3.4 2 1.5A7 7 0 0 0 5 12"/></svg> Settings</a>
+    </nav>
+    <div class="user"><span class="av">MG</span><div><div class="nm">Maya G.</div><div class="pl">Team plan · 42 repos</div></div></div>
+  </aside>
+
+  <div class="main">
+    <div class="top">
+      <h1>Policy</h1>
+      <div class="spacer"></div>
+      <span class="btn">Reset</span>
+      <span class="btn p">Save policy</span>
+    </div>
+
+    <div class="content">
+      <div class="card">
+        <h3>Organization defaults</h3>
+        <div class="cd">Applied to every repo unless overridden. Signals, never hard blocks by default.</div>
+
+        <div class="field">
+          <div class="flabel"><span>AI-assisted attention threshold</span><span class="v">40%</span></div>
+          <div class="slider"><div class="fill"></div><div class="knob"></div></div>
+        </div>
+
+        <div class="field">
+          <div class="flabel"><span>Enforcement on a flagged PR</span></div>
+          <div class="seg">
+            <button class="on">Comment only</button>
+            <button>Request review</button>
+            <button>Block merge</button>
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <div class="flabel"><span>Inference confidence floor</span><span class="v">0.50</span></div>
+          <div class="slider"><div class="fill" style="width:50%;background:#1F6E5B"></div><div class="knob" style="left:50%;border-color:#1F6E5B"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Human-owned paths</h3>
+        <div class="cd">AI-assisted changes to these paths raise an attention flag.</div>
+        <div class="rule"><code>src/auth/**</code><span class="rm">remove</span></div>
+        <div class="rule"><code>src/payments/**</code><span class="rm">remove</span></div>
+        <div class="rule"><code>infra/**</code><span class="rm">remove</span></div>
+        <div class="rule"><code>**/migrations/**</code><span class="rm">remove</span></div>
+        <div class="addrow"><input value="src/crypto/**" readonly><button class="add">Add path</button></div>
+      </div>
+
+      <div class="card" style="grid-column:1 / -1">
+        <h3>Per-repository overrides</h3>
+        <div class="cd">Repos with rules that differ from the organization defaults.</div>
+        <table>
+          <thead><tr><th>Repository</th><th>Threshold</th><th>Enforcement</th><th>Human-owned paths</th><th>Confidence floor</th></tr></thead>
+          <tbody>
+            <tr><td>payments-service</td><td class="num">30%</td><td><span class="tag2 block">block merge</span></td><td class="num">2 paths</td><td class="num">0.60</td></tr>
+            <tr><td>auth-gateway</td><td class="num">25%</td><td><span class="tag2 block">block merge</span></td><td class="num">3 paths</td><td class="num">0.60</td></tr>
+            <tr><td>web-app</td><td class="num">60%</td><td><span class="tag2 comment">comment only</span></td><td class="num">0 paths</td><td class="num">0.50</td></tr>
+            <tr><td>docs-site</td><td class="num">80%</td><td><span class="tag2 comment">comment only</span></td><td class="num">0 paths</td><td class="num">0.50</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="txt"><b>Signals, not verdicts.</b> Even "Block merge" is a review gate a maintainer can override — grain measures and surfaces, it never decides who to blame. Defaults ship as comment-only for exactly this reason.</span>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>
