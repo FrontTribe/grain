@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+  <style>
+    body { margin: 0; }
+    a { color: #1F6E5B; } a:hover { color: #17513f; }
+    .board { width: 1280px; height: 860px; background: #ECE9E1; color: #201D19;
+      font-family: "IBM Plex Sans", system-ui, sans-serif; padding: 60px 72px; display: flex; flex-direction: column; }
+    .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .head .bm { display: flex; align-items: center; gap: 10px; font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -.02em; }
+    .head .lbl { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: #6B655B; }
+    h2 { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 34px; letter-spacing: -.02em; margin: 0 0 4px; }
+    .sub { color: #6B655B; font-size: 16px; margin: 0 0 22px; max-width: 78ch; }
+    .k { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #B0511C; margin: 8px 0 12px; }
+    .mat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-bottom: 22px; }
+    .matcard { border-radius: 16px; padding: 24px 26px; display: flex; gap: 20px; align-items: center; }
+    .matcard.h { background: #DCEBE4; } .matcard.a { background: #F1E1D2; }
+    .matcard .dot { width: 66px; height: 66px; border-radius: 16px; flex: none; }
+    .matcard.h .dot { background: #1F6E5B; } .matcard.a .dot { background: #B0511C; }
+    .matcard .role { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 21px; }
+    .matcard.h .role { color: #1F6E5B; } .matcard.a .role { color: #B0511C; }
+    .matcard .hex { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: #201D19; margin-top: 5px; }
+    .matcard .d { font-size: 13px; color: #6B655B; margin-top: 6px; max-width: 34ch; }
+    .swrow { display: grid; grid-template-columns: repeat(8, 1fr); gap: 12px; flex-grow: 1; }
+    .sw { background: #FBFAF6; border: 1px solid #DCD6C9; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+    .sw .chip { height: 62px; border-bottom: 1px solid #DCD6C9; }
+    .sw .info { padding: 9px 10px; }
+    .sw .tok { font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 500; }
+    .sw .hx { font-family: "IBM Plex Mono", monospace; font-size: 9.5px; color: #6B655B; margin-top: 3px; line-height: 1.5; }
+    .note { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: #6B655B; margin-top: 16px; padding: 12px 16px; border-left: 3px solid #1F6E5B; background: #F3F0E8; border-radius: 0 8px 8px 0; }
+  </style>
+</helmet>
+<div class="board">
+  <div class="head">
+    <div class="bm">
+      <svg viewBox="0 0 120 120" width="26" height="26" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="28" width="11" height="64" rx="4.5" fill="#1F6E5B"/><rect x="37" y="36" width="11" height="48" rx="4.5" fill="#B0511C"/><rect x="54" y="20" width="11" height="80" rx="4.5" fill="#1F6E5B"/><rect x="71" y="38" width="11" height="44" rx="4.5" fill="#B0511C"/><rect x="88" y="31" width="11" height="58" rx="4.5" fill="#1F6E5B"/></svg>
+      grain
+    </div>
+    <div class="lbl">03 &mdash; Color</div>
+  </div>
+
+  <h2>Two materials, warm neutrals</h2>
+  <p class="sub">Human and AI are the only two data hues &mdash; they carry meaning and never decorate. Neutrals are warm putty, chosen not defaulted. Each hex is listed light&nbsp;/&nbsp;dark.</p>
+
+  <div class="k">Semantic &mdash; the two materials</div>
+  <div class="mat-row">
+    <div class="matcard h">
+      <div class="dot"></div>
+      <div>
+        <div class="role">Human</div>
+        <div class="hex">--human&nbsp;&nbsp;#1F6E5B&nbsp;/&nbsp;#57C6A8</div>
+        <div class="d">Deep viridian. Human authorship, and the interactive/brand accent.</div>
+      </div>
+    </div>
+    <div class="matcard a">
+      <div class="dot"></div>
+      <div>
+        <div class="role">AI-assisted</div>
+        <div class="hex">--ai&nbsp;&nbsp;#B0511C&nbsp;/&nbsp;#E28A50</div>
+        <div class="d">Burnt sienna. AI authorship, and the attention/warn tone. Never "error red".</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="k">Neutrals, surfaces &amp; soft fills</div>
+  <div class="swrow">
+    <div class="sw"><div class="chip" style="background:#ECE9E1"></div><div class="info"><div class="tok">--ground</div><div class="hx">#ECE9E1<br>#16140F</div></div></div>
+    <div class="sw"><div class="chip" style="background:#FBFAF6"></div><div class="info"><div class="tok">--surface</div><div class="hx">#FBFAF6<br>#201D16</div></div></div>
+    <div class="sw"><div class="chip" style="background:#F3F0E8"></div><div class="info"><div class="tok">--surface-2</div><div class="hx">#F3F0E8<br>#26221A</div></div></div>
+    <div class="sw"><div class="chip" style="background:#201D19"></div><div class="info"><div class="tok">--ink</div><div class="hx">#201D19<br>#ECE7DB</div></div></div>
+    <div class="sw"><div class="chip" style="background:#6B655B"></div><div class="info"><div class="tok">--muted</div><div class="hx">#6B655B<br>#9C9384</div></div></div>
+    <div class="sw"><div class="chip" style="background:#948D80"></div><div class="info"><div class="tok">--faint</div><div class="hx">#948D80<br>#736B5D</div></div></div>
+    <div class="sw"><div class="chip" style="background:#DCEBE4"></div><div class="info"><div class="tok">--human-soft</div><div class="hx">#DCEBE4<br>#16332B</div></div></div>
+    <div class="sw"><div class="chip" style="background:#F1E1D2"></div><div class="info"><div class="tok">--ai-soft</div><div class="hx">#F1E1D2<br>#35251A</div></div></div>
+  </div>
+
+  <div class="note">Rule &mdash; never introduce a third data hue. "Unclassified" uses --line-strong (#C4BCAC / #433C2E), deliberately colorless.</div>
+</div>
+</x-dc>
+</body>
+</html>
