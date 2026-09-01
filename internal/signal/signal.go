@@ -69,7 +69,11 @@ func Extract(c gitlog.Commit, cfg config.Config) Set {
 	for _, id := range []string{c.AuthorName, c.AuthorEmail, c.CommitterName, c.CommitterEmail} {
 		li := lower(id)
 		for _, m := range cfg.BotAuthors {
-			if m != "" && strings.Contains(li, strings.ToLower(m)) {
+			// Patterns may be globs like "*[bot]"; treat '*' as a wildcard so a
+			// bare-substring match works (the '*' was previously matched literally,
+			// so "*[bot]" never matched "dependabot[bot]").
+			pat := strings.ToLower(strings.Trim(m, "*"))
+			if pat != "" && strings.Contains(li, pat) {
 				s.DeclaredAI = true
 				s.Declared = append(s.Declared, "bot identity: "+id)
 				break

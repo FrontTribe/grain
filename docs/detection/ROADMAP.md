@@ -59,14 +59,20 @@ instead of a fake "99% detected". This ties the science directly to the
 
 ## Prioritized backlog (by leverage)
 
-| # | Item | Tier | Why now |
+| # | Item | Tier | Status / why |
 |---|------|------|---------|
-| **1** | **Content classifier v1** (AST/lexical features, calibrated on declared) | 3 | Biggest immediate lift; builds on what we have; stdlib-friendly. See `content-classifier-v1.md`. |
-| 2 | Self-improving loop (`grain eval` / calibrate on declared ground truth) | 3 | Turns declared data into measured accuracy; publishable trust. |
-| 3 | Perplexity via local code model (`grain-ml` sidecar) | 3 | Strong content signal; heavier (optional runtime), so v2. |
-| 4 | Editor telemetry integration (Copilot/Cursor accept events) | 1 | Line-level ground truth; needs plugin/API work. |
-| 5 | Per-author stylometry baseline (opt-in) | 3 | Catches AI deviations; privacy-sensitive. |
-| 6 | IDE plugin — authorship-time capture | 1 | The long-term moat / provenance standard. |
+| **1** | **Content classifier v1** (lexical features, logistic, calibrated) | 3 | ✅ **shipped** (opt-in, unvalidated). `internal/features` + `internal/classify` + `grain eval`. See `content-classifier-v1.md`. |
+| 2 | Self-improving loop (`grain eval --fit` → persist per-repo weights) | 3 | Harness ✅; persisting fitted weights waits on balanced data (else it overfits). |
+| 3 | **Expand DECLARED detection** (bot/agent PRs, git-notes sidecar) | 2 | **Reprioritized up** — cheap, high-accuracy; where the signal actually is. (Fixed `*[bot]` glob matching.) |
+| 4 | Perplexity via local code model (`grain-ml` sidecar) | 3 | Strong content signal; heavier (optional runtime), so v2. |
+| 5 | Editor telemetry integration (Copilot/Cursor accept events) | 1 | Line-level ground truth; needs plugin/API work. |
+| 6 | Per-author stylometry baseline (opt-in) | 3 | Catches AI deviations; privacy-sensitive. |
+| 7 | IDE plugin — authorship-time capture | 1 | The long-term moat / provenance standard. |
+
+**Learning from v1 (M5):** pure Tier-3 content inference hit a ceiling on
+AI-*assisted* (human-edited) code, and balanced labeled data is scarce. So the
+next leverage is **not** more Tier-3 machinery but **Tier 2 (declared) breadth**
+and **Tier 1 (attested) capture** — where accuracy is cheap and honest.
 
 ## Honest limits ⚠️
 

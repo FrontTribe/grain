@@ -1,5 +1,10 @@
 # Content classifier v1 — implementation plan
 
+> **Status: built & wired (M1–M4 shipped), opt-in, unvalidated.** Enable with
+> `.grain.toml [detection] content_classifier = true`. M5 (measured validation)
+> is blocked on balanced labeled data — see "Milestones" and the honest finding
+> below. Off by default; does not change existing behavior.
+
 **Goal.** Replace Grain's weak inferred heuristic (`inferFeatures`: a diff-size
 logistic) with a **content-based** classifier that reads the actual added code,
 extracts interpretable lexical/structural features, and outputs a *calibrated*
@@ -88,13 +93,31 @@ grain eval [-C dir] [--fit] [--report json|text]
 
 ## Milestones
 
-| M | Deliverable | Done when |
+| M | Deliverable | Status |
 |---|---|---|
-| M1 | `internal/features` + tests | features extract for Go/JS/TS/Py, deterministic |
-| M2 | `internal/classify` logistic + calibration + defaults | scores a feature vector, capped |
-| M3 | `grain eval` harness | reports AUC/PR/ECE vs baseline on a repo's declared set |
-| M4 | wire into `score.Classify` behind flag; bump WeightsID; `grain explain` | end-to-end, reproducible |
-| M5 | validate on grain itself + 3–5 OSS repos; tune default weights | AUC beats baseline; report published |
+| M1 | `internal/features` + tests | ✅ 10 features, Go/JS/TS/Py, deterministic, tested |
+| M2 | `internal/classify` logistic + calibration + defaults | ✅ capped, contributions, `Fit`, tested |
+| M3 | `grain eval` harness (+ `gitlog.ReadAddedLines`) | ✅ AUC/PR/ECE/F1 vs baseline, `--fit`, imbalance guard |
+| M4 | wire into `score.Classify` behind flag; WeightsID; `grain explain` | ✅ opt-in, `w2-content/f1`, reproducible |
+| M5 | validate on real repos; tune default weights | ⚠️ blocked on balanced labeled data (see below) |
+
+## Honest finding (M5)
+
+Running `grain eval` on grain itself: **45 AI-declared : 1 human** — too imbalanced
+to measure (AUC/ECE meaningless; `--fit` overfits a bias of "everything is AI").
+The harness is correct and *warns* when class balance is too skewed — we hold our
+own metrics to "signals, not verdicts". Two real conclusions:
+
+1. **Balanced labeled data is scarce.** Declared-AI commits are rare in the wild
+   and over-represented here. This improves as `Co-Authored-By` adoption grows.
+2. **Content inference has a ceiling on AI-*assisted* code.** Real AI-assisted
+   commits are heavily human-edited, so surface features are weak — they under-score.
+   This is exactly why the roadmap treats **attested capture (Tier 1)** and the
+   **self-improving loop** as necessary, not optional. Pure Tier-3 inference is a
+   floor, never proof.
+
+Net: v1 is a correct, honest, opt-in *floor*. Do not turn it on by default or trust
+its numbers until measured on a balanced repo.
 
 ## Success metrics
 
