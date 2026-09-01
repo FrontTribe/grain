@@ -1,0 +1,24 @@
+# Grain runs on its own pull requests (dogfood). Copy this into your repo to
+# get a provenance comment on every PR.
+name: Grain
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write   # needed to post the sticky comment
+
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # grain needs base..head history
+
+      - name: Grain provenance
+        uses: ./            # in your repo: kresimirgalic/grain@v1
+        with:
+          fail_on: never    # comment only; set to "policy" to gate merges
+          comment: 'true'

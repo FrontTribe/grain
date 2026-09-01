@@ -99,6 +99,34 @@ The full design work lives in [`docs/`](./docs) (open the HTML files in a browse
 
 Design tokens as plain CSS: [`design/tokens.css`](./design/tokens.css).
 
+## GitHub Action
+
+Grain ships a composite action that comments on every PR with a provenance
+report, and can optionally gate the merge. Add `.github/workflows/grain.yml`:
+
+```yaml
+name: Grain
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write   # to post the sticky comment
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0        # grain needs base..head history
+      - uses: kresimirgalic/grain@v1
+        with:
+          fail_on: never        # comment only; "policy" fails the check on attention
+```
+
+Inputs: `fail_on` (`never` | `policy`), `comment` (`true` | `false`),
+`range`, `config`, `go-version`. The comment is a single sticky comment that
+updates in place. The action lives in [`action.yml`](./action.yml); this repo
+dogfoods it via [`.github/workflows/grain.yml`](./.github/workflows/grain.yml).
+
 ## Tech (planned)
 
 - **Language:** Go (single static binary; `go-git` for history).

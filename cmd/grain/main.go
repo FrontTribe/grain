@@ -142,6 +142,7 @@ func cmdCheck(args []string) error {
 	dir := fs.String("C", ".", "run in this directory")
 	rev := fs.String("range", "", "commit range to check, e.g. main..HEAD")
 	max := fs.Int("max", 50, "cap commits when no range is given")
+	format := fs.String("format", "text", "output format: text | md")
 	noColor := fs.Bool("no-color", false, "disable colored output")
 	fs.Parse(args)
 
@@ -162,32 +163,31 @@ func cmdCheck(args []string) error {
 		return nil
 	}
 	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg), cfg)
+	flagged, over := rep.Attention(cfg.AIThreshold)
 
-	c := useColor(*noColor)
-	rep.WriteText(os.Stdout, c)
-
-	// Policy: attention when AI share exceeds the threshold in a human-owned path.
-	var flagged []string
-	for _, p := range rep.ByPath {
-		if p.HumanOwned && p.AI > cfg.AIThreshold {
-			flagged = append(flagged, p.Path)
+	if *format == "md" {
+		rep.WriteCheckMarkdown(os.Stdout, cfg.AIThreshold, flagged, over)
+	} else {
+		rep.WriteText(os.Stdout, useColor(*noColor))
+		switch {
+		case len(flagged) > 0:
+			fmt.Printf("  ⚠ human-owned paths above %.0f%% AI: %v\n", cfg.AIThreshold*100, flagged)
+			fmt.Println("  → 1 human review requested (signal, not a block)")
+		case over:
+			fmt.Printf("  ⚠ change set is %d%% AI-assisted (over %.0f%% threshold)\n", pctInt(rep.Summary.AIAssisted), cfg.AIThreshold*100)
+			fmt.Println("  → review suggested (signal, not a block)")
+		default:
+			fmt.Println("  ✓ within policy")
 		}
 	}
-	overAll := rep.Summary.AIAssisted > cfg.AIThreshold
 
-	if len(flagged) > 0 {
-		fmt.Printf("  ⚠ human-owned paths above %.0f%% AI: %v\n", cfg.AIThreshold*100, flagged)
-		fmt.Println("  → 1 human review requested (signal, not a block)")
+	if len(flagged) > 0 || over {
 		return policyExit(1)
 	}
-	if overAll {
-		fmt.Printf("  ⚠ change set is %d%% AI-assisted (over %.0f%% threshold)\n", int(rep.Summary.AIAssisted*100+0.5), cfg.AIThreshold*100)
-		fmt.Println("  → review suggested (signal, not a block)")
-		return policyExit(1)
-	}
-	fmt.Println("  ✓ within policy")
 	return nil
 }
+
+func pctInt(f float64) int { return int(f*100 + 0.5) }
 
 func cmdBadge(args []string) error {
 	fs := flag.NewFlagSet("badge", flag.ExitOnError)

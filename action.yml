@@ -1,0 +1,90 @@
+name: 'Grain provenance'
+description: 'Report human vs AI authorship on a pull request. Signals, not verdicts.'
+author: 'grain'
+branding:
+  icon: 'git-commit'
+  color: 'green'
+
+inputs:
+  fail_on:
+    description: 'When to fail the check run: "never" (comment only) or "policy".'
+    required: false
+    default: 'never'
+  config:
+    description: 'Path to .grain.toml (relative to the repo root).'
+    required: false
+    default: '.grain.toml'
+  range:
+    description: 'Commit range to check. Defaults to the PR base..head.'
+    required: false
+    default: ''
+  comment:
+    description: 'Post/update a sticky PR comment ("true" or "false").'
+    required: false
+    default: 'true'
+  go-version:
+    description: 'Go version used to build grain.'
+    required: false
+    default: '1.23'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+
+    - name: Build grain
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: go build -o "$RUNNER_TEMP/grain" ./cmd/grain
+
+    - name: Run grain check
+      id: grain
+      shell: bash
+      run: |
+        set +e
+        RANGE="${{ inputs.range }}"
+        BASE="${{ github.event.pull_request.base.sha }}"
+        HEAD="${{ github.event.pull_request.head.sha }}"
+        if [ -z "$RANGE" ] && [ -n "$BASE" ] && [ -n "$HEAD" ]; then
+          RANGE="$BASE..$HEAD"
+        fi
+        echo "Checking range: ${RANGE:-<recent commits>}"
+        "$RUNNER_TEMP/grain" check ${RANGE:+--range "$RANGE"} --format md --no-color \
+          > "$RUNNER_TEMP/grain-comment.md"
+        CODE=$?
+        set -e
+        echo "exit_code=$CODE" >> "$GITHUB_OUTPUT"
+        echo "--- grain report ---"
+        cat "$RUNNER_TEMP/grain-comment.md"
+
+    - name: Post PR comment
+      if: ${{ inputs.comment == 'true' && github.event_name == 'pull_request' }}
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = `${process.env.RUNNER_TEMP}/grain-comment.md`;
+          if (!fs.existsSync(path)) { core.info('grain: no comment body'); return; }
+          const body = fs.readFileSync(path, 'utf8');
+          const marker = '<!-- grain-provenance -->';
+          const { owner, repo } = context.repo;
+          const issue_number = context.payload.pull_request.number;
+          const comments = await github.paginate(github.rest.issues.listComments, {
+            owner, repo, issue_number,
+          });
+          const existing = comments.find(c => c.body && c.body.includes(marker));
+          if (existing) {
+            await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+          } else {
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+          }
+
+    - name: Enforce policy
+      if: ${{ inputs.fail_on == 'policy' && steps.grain.outputs.exit_code != '0' }}
+      shell: bash
+      run: |
+        echo "::error title=grain::AI-assisted share exceeds the policy threshold (see the PR comment)."
+        exit 1

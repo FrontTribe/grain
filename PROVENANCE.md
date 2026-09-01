@@ -1,6 +1,6 @@
 # Provenance
 
-Authorship mix for **kresimirgalic/grain**, measured from 3 commits. Signals, not verdicts.
+Authorship mix for **kresimirgalic/grain**, measured from 4 commits. Signals, not verdicts.
 
 | | Share |
 |---|---|
@@ -15,8 +15,11 @@ Authorship mix for **kresimirgalic/grain**, measured from 3 commits. Signals, no
 | `docs/` | 0% | 100% | 1689 |  |
 | `design/brand/` | 0% | 100% | 647 |  |
 | `design/outputs/` | 0% | 100% | 413 |  |
-| `(root)` | 0% | 100% | 147 |  |
-| `design/` | 0% | 100% | 77 |  |
+| `internal/report/` | 0% | 100% | 322 |  |
+| `cmd/grain/` | 0% | 100% | 317 |  |
+| `(root)` | 0% | 100% | 240 |  |
+| `internal/gitlog/` | 0% | 100% | 206 |  |
+| `internal/score/` | 0% | 100% | 188 |  |
 
 > **How this is measured:** declared signals (`Co-Authored-By`, bot commits, explicit tags) dominate; behavioral inference is capped at 0.70 confidence and never stated as fact.
 
