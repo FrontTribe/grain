@@ -1,0 +1,21 @@
+# Go
+/bin/
+/dist/
+*.exe
+*.test
+*.out
+vendor/
+
+# Grain output (generated)
+grain.json
+# PROVENANCE.md is intentionally committable — do not ignore it
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Env / secrets
+.env
+.env.local

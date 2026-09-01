@@ -1,0 +1,25 @@
+# Grain configuration — example.
+# Copy to your repo root and adjust. All fields are optional; shown values are defaults.
+
+[policy]
+# PR attention threshold: flag when AI-assisted share of a change exceeds this.
+ai_threshold        = 0.40
+require_review_over  = 0.40
+# Paths considered human-owned. An AI-assisted change here raises an attention flag.
+human_owned         = ["src/auth/**", "src/payments/**"]
+
+[detection]
+# Turn behavioral inference on/off. Declared signals always run.
+inference   = true
+# Local model pass for ambiguous diffs: "off" | "local" | "<path-to-gguf>". Runs client-side.
+local_model = "off"
+# Known AI agents recognized in Co-Authored-By / trailers.
+agents      = ["claude", "copilot", "cursor", "codex", "devin"]
+# Author patterns treated as bots.
+bot_authors = ["*[bot]"]
+
+[report]
+# Badge mode: "mix" (e.g. 24% AI-assisted) | "owned" | "policy".
+badge  = "mix"
+# Where the human-readable report is written.
+output = "PROVENANCE.md"

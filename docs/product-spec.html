@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Grain Product Spec</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #ECE9E1;
+    --surface: #FBFAF6;
+    --surface-2: #F3F0E8;
+    --code-bg: #F4F1E9;
+    --ink: #201D19;
+    --muted: #6B655B;
+    --faint: #948D80;
+    --line: #DCD6C9;
+    --line-strong: #C4BCAC;
+    --human: #1F6E5B;
+    --human-soft: #DCEBE4;
+    --ai: #B0511C;
+    --ai-soft: #F1E1D2;
+    --brand: #1F6E5B;
+    --warn: #B0511C;
+    --radius: 12px;
+  }
+  :root:not([data-theme="light"]) { @media (prefers-color-scheme: dark) {
+    --ground: #16140F; --surface: #201D16; --surface-2: #26221A; --code-bg: #1B180F;
+    --ink: #ECE7DB; --muted: #9C9384; --faint: #736B5D; --line: #322D23; --line-strong: #433C2E;
+    --human: #57C6A8; --human-soft: #16332B; --ai: #E28A50; --ai-soft: #35251A; --brand: #57C6A8; --warn: #E28A50;
+  } }
+  :root[data-theme="dark"] {
+    --ground: #16140F; --surface: #201D16; --surface-2: #26221A; --code-bg: #1B180F;
+    --ink: #ECE7DB; --muted: #9C9384; --faint: #736B5D; --line: #322D23; --line-strong: #433C2E;
+    --human: #57C6A8; --human-soft: #16332B; --ai: #E28A50; --ai-soft: #35251A; --brand: #57C6A8; --warn: #E28A50;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--ground); color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif; font-size: 16px; line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  h1,h2,h3,h4 { font-family: "Bricolage Grotesque", system-ui, sans-serif; text-wrap: balance; line-height: 1.12; letter-spacing: -.01em; margin: 0; }
+  a { color: var(--brand); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code:not(pre code) { font-family: "IBM Plex Mono", monospace; font-size: .87em; background: var(--surface-2); border: 1px solid var(--line); border-radius: 5px; padding: .06em .4em; color: var(--ink); }
+
+  /* top bar */
+  .topbar { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--ground) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  .topbar .in { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 26px; max-width: 1240px; margin: 0 auto; }
+  .brand { display: flex; align-items: center; gap: 9px; font-family: "Bricolage Grotesque"; font-weight: 800; font-size: 17px; letter-spacing: -.02em; }
+  .brand .seed { width: 20px; height: 20px; border-radius: 6px; background: linear-gradient(150deg, var(--human), var(--ai)); }
+  .brand .doc { color: var(--muted); font-weight: 600; }
+  .theme-btn { font-family: "IBM Plex Mono", monospace; font-size: 12px; background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: 999px; padding: 5px 12px; cursor: pointer; }
+  .theme-btn:hover { border-color: var(--brand); }
+
+  /* layout */
+  .shell { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: 250px minmax(0,1fr); gap: 0; }
+  .toc { position: sticky; top: 56px; align-self: start; height: calc(100vh - 56px); overflow-y: auto; padding: 30px 20px 60px 26px; border-right: 1px solid var(--line); }
+  .toc .lbl { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--faint); margin: 18px 0 8px; }
+  .toc a { display: block; font-size: 13.5px; color: var(--muted); padding: 3px 0 3px 12px; border-left: 2px solid transparent; }
+  .toc a:hover { color: var(--ink); text-decoration: none; }
+  .toc a.active { color: var(--brand); border-left-color: var(--brand); }
+  .toc a .n { font-family: "IBM Plex Mono", monospace; font-size: 11px; color: var(--faint); margin-right: 7px; }
+
+  main { padding: 40px 52px 120px; min-width: 0; }
+
+  /* doc header */
+  .dochead { border-bottom: 1px solid var(--line); padding-bottom: 26px; margin-bottom: 40px; }
+  .kicker { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ai); }
+  .dochead h1 { font-size: clamp(32px, 5vw, 46px); font-weight: 800; letter-spacing: -.03em; margin: 14px 0 10px; }
+  .dochead .sub { font-size: 18px; color: var(--muted); max-width: 62ch; }
+  .metaline { display: flex; flex-wrap: wrap; gap: 8px 10px; margin-top: 22px; }
+  .pill { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted); }
+  .pill b { color: var(--ink); font-weight: 600; }
+  .pill.on { background: var(--human-soft); border-color: transparent; color: var(--human); }
+
+  section { padding-top: 30px; margin-top: 24px; border-top: 1px solid var(--line); scroll-margin-top: 74px; }
+  section:first-of-type { border-top: none; }
+  section > h2 { font-size: 26px; font-weight: 700; display: flex; align-items: baseline; gap: 12px; }
+  section > h2 .sn { font-family: "IBM Plex Mono", monospace; font-size: 15px; color: var(--ai); font-weight: 500; }
+  h3 { font-size: 18.5px; margin: 26px 0 8px; }
+  h4 { font-size: 15px; margin: 18px 0 6px; font-family: "IBM Plex Sans"; font-weight: 600; letter-spacing: 0; }
+  p { margin: 10px 0; max-width: 72ch; }
+  ul, ol { max-width: 72ch; padding-left: 22px; }
+  li { margin: 5px 0; }
+  .lede-p { font-size: 17px; color: var(--ink); }
+
+  table { border-collapse: collapse; width: 100%; margin: 16px 0; font-size: 14px; }
+  .twrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); margin: 16px 0; }
+  .twrap table { margin: 0; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  thead th { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); }
+  tbody tr:last-child td { border-bottom: none; }
+  td .mono, th .mono { font-size: 12.5px; }
+  td code { white-space: nowrap; }
+
+  pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; overflow-x: auto; font-family: "IBM Plex Mono", monospace; font-size: 12.8px; line-height: 1.62; margin: 14px 0; }
+  pre .c { color: var(--faint); }
+  pre .k { color: var(--ai); }
+  pre .s { color: var(--human); }
+
+  .callout { border-radius: var(--radius); padding: 16px 18px; margin: 18px 0; font-size: 14.5px; border: 1px solid var(--line); background: var(--surface); }
+  .callout .ct { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
+  .callout.principle { border-left: 3px solid var(--brand); background: var(--surface-2); }
+  .callout.principle .ct { color: var(--brand); }
+  .callout.warn { border-left: 3px solid var(--ai); }
+  .callout.warn .ct { color: var(--ai); }
+  .callout.decision { border-left: 3px solid var(--faint); }
+  .callout.decision .ct { color: var(--muted); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; }
+  .box h4 { margin-top: 0; }
+  .box.goal { border-top: 3px solid var(--human); }
+  .box.nongoal { border-top: 3px solid var(--ai); }
+  .box ul { padding-left: 18px; margin: 8px 0 0; }
+  .box li { font-size: 14px; }
+
+  .conf { display: inline-block; font-family: "IBM Plex Mono", monospace; font-size: 11px; padding: 2px 7px; border-radius: 4px; }
+  .conf.hi { background: var(--human-soft); color: var(--human); }
+  .conf.lo { background: var(--ai-soft); color: var(--ai); }
+
+  .steps-flow { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0; font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+  .steps-flow .s { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 7px 11px; }
+  .steps-flow .ar { color: var(--faint); }
+
+  .mile { display: grid; grid-template-columns: 90px 1fr; gap: 0; }
+  .mile .v { font-family: "IBM Plex Mono", monospace; font-weight: 600; color: var(--ai); padding: 16px 0; border-top: 1px solid var(--line); }
+  .mile .d { padding: 16px 0 16px 18px; border-top: 1px solid var(--line); }
+  .mile .d h4 { margin: 0 0 4px; }
+  .mile .d p { margin: 0; font-size: 14px; color: var(--muted); }
+
+  footer { border-top: 1px solid var(--line); padding: 30px 52px; color: var(--muted); font-family: "IBM Plex Mono", monospace; font-size: 12px; max-width: 1240px; margin: 0 auto; }
+  .disc { color: var(--faint); font-size: 11.5px; margin-top: 8px; max-width: 70ch; line-height: 1.5; }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .toc { display: none; }
+    main { padding: 30px 24px 90px; }
+    .grid2 { grid-template-columns: 1fr; }
+    .mile { grid-template-columns: 70px 1fr; }
+    footer { padding: 24px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  html { scroll-behavior: smooth; }
+</style>
+
+<div class="topbar">
+  <div class="in">
+    <div class="brand"><span class="seed"></span> grain <span class="doc">/ product spec</span></div>
+    <button class="theme-btn" id="themeBtn">◐ theme</button>
+  </div>
+</div>
+
+<div class="shell">
+  <nav class="toc" id="toc">
+    <div class="lbl">Contents</div>
+    <a href="#overview"><span class="n">00</span>Overview</a>
+    <a href="#problem"><span class="n">01</span>Problem &amp; why now</a>
+    <a href="#users"><span class="n">02</span>Users &amp; personas</a>
+    <a href="#goals"><span class="n">03</span>Goals &amp; non-goals</a>
+    <a href="#concepts"><span class="n">04</span>Core concepts</a>
+    <a href="#engine"><span class="n">05</span>Detection engine</a>
+    <a href="#outputs"><span class="n">06</span>Outputs</a>
+    <a href="#cli"><span class="n">07</span>CLI spec</a>
+    <a href="#action"><span class="n">08</span>GitHub Action</a>
+    <a href="#schema"><span class="n">09</span>Data model</a>
+    <a href="#arch"><span class="n">10</span>Architecture</a>
+    <a href="#trust"><span class="n">11</span>Trust &amp; privacy</a>
+    <a href="#threat"><span class="n">12</span>Threat model</a>
+    <a href="#opencore"><span class="n">13</span>Open core</a>
+    <a href="#metrics"><span class="n">14</span>Success metrics</a>
+    <a href="#roadmap"><span class="n">15</span>Roadmap</a>
+    <a href="#risks"><span class="n">16</span>Risks</a>
+    <a href="#questions"><span class="n">17</span>Open questions</a>
+  </nav>
+
+  <main>
+    <div class="dochead">
+      <div class="kicker">Product Specification</div>
+      <h1>Grain — code provenance layer</h1>
+      <p class="sub">A tool that shows how much of a repository was human-written, how much was AI-assisted, and whether changes followed the project's own rules. Signals, not verdicts.</p>
+      <div class="metaline">
+        <span class="pill"><b>Version</b> 0.1 draft</span>
+        <span class="pill"><b>Status</b> pre-MVP</span>
+        <span class="pill"><b>Owner</b> solo / open source</span>
+        <span class="pill on">MIT core</span>
+        <span class="pill"><b>Target MVP</b> ~2 weeks</span>
+      </div>
+    </div>
+
+    <!-- 00 -->
+    <section id="overview">
+      <h2><span class="sn">00</span> Overview</h2>
+      <p class="lede-p">Grain reads a git history and produces a provenance report: the share of code that is human-authored vs AI-assisted, broken down by directory and change, with a confidence level on every claim. It ships as a single-binary CLI plus a GitHub Action, and surfaces its findings where developers already look — a README badge, a PR check, and a <code>PROVENANCE.md</code> file committed to the repo.</p>
+      <h4>Positioning in one line</h4>
+      <p><em>"See the grain of your codebase — how it was made, not just what it is."</em> Grain is to authorship what a coverage badge is to tests: a lightweight, in-repo signal that becomes a norm because it is free, fast, and visible.</p>
+      <h4>Elevator context</h4>
+      <p>In 2026 autonomous agents commit directly to repos and maintainers have grown wary of undeclared AI code. Between "AI writes freely" and "maintainers demand transparency" sits an unmet need: a neutral instrument to <em>measure</em> provenance. Grain is that instrument. It does not judge, block by default, or accuse — it reports what the history shows, with honest uncertainty.</p>
+    </section>
+
+    <!-- 01 -->
+    <section id="problem">
+      <h2><span class="sn">01</span> Problem &amp; why now</h2>
+      <p>Two independently-true trends collided this year, and their intersection is the product wedge:</p>
+      <div class="grid2">
+        <div class="box nongoal">
+          <h4>Trend A — AI commits autonomously</h4>
+          <ul>
+            <li>Agents open PRs, log tool activity, and push commits directly.</li>
+            <li>A diff in a tree is no longer presumed human.</li>
+            <li>Reviewers lack a fast way to see "how much of this is generated."</li>
+          </ul>
+        </div>
+        <div class="box goal">
+          <h4>Trend B — Maintainers turned wary</h4>
+          <ul>
+            <li>Projects are rewriting contribution policy to require AI disclosure.</li>
+            <li>The stated sentiment is explicitly "AI-skeptical / wary."</li>
+            <li>But policy has no tooling — disclosure is honor-system today.</li>
+          </ul>
+        </div>
+      </div>
+      <p><strong>The gap is trust, and trust needs measurement.</strong> Grain gives policy a set of eyes: it turns "please disclose AI use" from an honor-system request into an automatic, visible signal.</p>
+      <div class="callout warn">
+        <div class="ct">Why a solo dev can win this</div>
+        The core is git-native and heuristic-first — buildable in weeks, not quarters. It is culturally charged (great launch energy), self-distributing (every badge markets it), and has a clean open-core seam (single-repo local = free; org-wide policy + compliance = paid).
+      </div>
+    </section>
+
+    <!-- 02 -->
+    <section id="users">
+      <h2><span class="sn">02</span> Users &amp; personas</h2>
+      <div class="twrap"><table>
+        <thead><tr><th>Persona</th><th>Context</th><th>What Grain gives them</th><th>Primary surface</th></tr></thead>
+        <tbody>
+          <tr><td><b>OSS maintainer</b><br><span class="mono" style="color:var(--faint)">"Maya"</span></td><td>Reviews PRs from strangers, some AI-generated, wants transparency without hostility.</td><td>A PR check that flags AI share + convention deviations, framed as signal not accusation.</td><td>GitHub Action / PR check</td></tr>
+          <tr><td><b>Indie / solo dev</b><br><span class="mono" style="color:var(--faint)">"you"</span></td><td>Ships with agents daily, wants a credible "human-in-the-loop" signal on their own repos.</td><td>A badge + PROVENANCE.md that shows honest human/AI mix.</td><td>README badge</td></tr>
+          <tr><td><b>Eng lead / EM</b><br><span class="mono" style="color:var(--faint)">"Dan"</span></td><td>Team of 8 using Copilot/Claude Code, wants policy without micromanaging.</td><td>Org dashboard, trend over time, merge policy on sensitive paths. <b>(Cloud)</b></td><td>Dashboard</td></tr>
+          <tr><td><b>Compliance / security</b><br><span class="mono" style="color:var(--faint)">"Reg"</span></td><td>Needs auditable records of AI involvement for EU AI Act / SOC2.</td><td>Signed provenance ledger + export. <b>(Audit)</b></td><td>Export / API</td></tr>
+        </tbody>
+      </table></div>
+      <p><strong>MVP serves Maya and you.</strong> Dan and Reg are the monetization path, deliberately deferred to v0.3+.</p>
+    </section>
+
+    <!-- 03 -->
+    <section id="goals">
+      <h2><span class="sn">03</span> Goals &amp; non-goals</h2>
+      <div class="grid2">
+        <div class="box goal">
+          <h4>Goals</h4>
+          <ul>
+            <li>Measure and communicate code provenance <em>honestly</em>, with confidence levels.</li>
+            <li>Zero-friction adoption: one command, one Action, one badge.</li>
+            <li>Privacy-first: the free tool runs fully local; code never leaves the machine.</li>
+            <li>Become a norm — the "coverage badge" of the AI era.</li>
+            <li>Give maintainers a calm, neutral transparency signal.</li>
+          </ul>
+        </div>
+        <div class="box nongoal">
+          <h4>Non-goals</h4>
+          <ul>
+            <li>Not an anti-cheat / plagiarism detector, and not marketed as one.</li>
+            <li>Not a surveillance tool for punishing developers.</li>
+            <li>Not a code-quality linter (orthogonal to correctness).</li>
+            <li>Not a hard merge-blocker by default (opt-in only).</li>
+            <li>Not a claim of certainty from inference — ever.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="callout principle">
+        <div class="ct">North-star principle</div>
+        Grain reports <b>signals, not verdicts</b>. Copy, output, and defaults all reinforce this. It is the single decision that separates adoption from backlash.
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section id="concepts">
+      <h2><span class="sn">04</span> Core concepts &amp; terminology</h2>
+      <div class="twrap"><table>
+        <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+        <tbody>
+          <tr><td><b>Provenance</b></td><td>The origin story of a change: who/what authored it and under what process.</td></tr>
+          <tr><td><b>Unit of analysis</b></td><td>The <b>commit</b>. Scores aggregate up to file → directory → PR → repo, weighted by lines changed.</td></tr>
+          <tr><td><b>ai_likelihood</b></td><td>A 0–1 estimate that a unit was AI-generated/assisted.</td></tr>
+          <tr><td><b>basis</b></td><td>How the estimate was reached: <code>declared</code> (explicit signal) or <code>inferred</code> (behavioral).</td></tr>
+          <tr><td><b>confidence</b></td><td>0–1 trust in the estimate. Declared → up to 1.0. Inferred → <b>capped</b> (default 0.7). A hard product rule.</td></tr>
+          <tr><td><b>class</b></td><td>Bucketed label for display: <code>human</code>, <code>ai_assisted</code>, <code>ai_authored</code>, <code>unclassified</code>.</td></tr>
+          <tr><td><b>grain mix</b></td><td>Repo-level summary percentages (e.g. 71% human / 24% AI / 5% unclassified).</td></tr>
+          <tr><td><b>attention flag</b></td><td>A contextual concern (e.g. AI touched a human-owned path) — separate from ai_likelihood.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 05 -->
+    <section id="engine">
+      <h2><span class="sn">05</span> Detection engine</h2>
+      <p>The engine extracts <b>signals</b> from each commit, scores an <code>ai_likelihood</code> and <code>confidence</code>, then aggregates. Signals are grouped in three tiers by trustworthiness.</p>
+
+      <h3>5.1 — Tier A: declared signals <span class="conf hi">high confidence</span></h3>
+      <p>Deterministic, machine-declared evidence. When present, they dominate the score.</p>
+      <ul>
+        <li><code>Co-Authored-By:</code> trailer matching a known agent (Claude, Copilot, Cursor, Codex, Devin, …).</li>
+        <li>Author/committer is a known bot account (<code>*[bot]</code>, configurable allow/deny list).</li>
+        <li>Explicit trailers: <code>Generated-by:</code>, <code>Assisted-by:</code>, <code>AI-Assisted: true</code>.</li>
+        <li>Self-declaration labels on a PR/commit (<code>grain:ai</code>, <code>grain:human</code>) — manual override.</li>
+      </ul>
+
+      <h3>5.2 — Tier B: inferred behavioral signals <span class="conf lo">inferred · capped</span></h3>
+      <p>Probabilistic tells from the shape of the change. They <em>never</em> push confidence past the cap.</p>
+      <div class="twrap"><table>
+        <thead><tr><th>Signal</th><th>What it looks at</th><th>Direction</th></tr></thead>
+        <tbody>
+          <tr><td>Diff uniformity</td><td>Entropy of the diff; AI edits tend to be uniform, complete, comment-dense.</td><td>↑ AI</td></tr>
+          <tr><td>Burst timing</td><td>Large diff after a short session; many commits in a tight window.</td><td>↑ AI</td></tr>
+          <tr><td>Message style</td><td>Perfectly-formed conventional commits, generic bodies, telltale phrasing.</td><td>↑ AI (weak)</td></tr>
+          <tr><td>Net-new vs edit</td><td>Large greenfield files vs incremental hand-edits.</td><td>↑ AI</td></tr>
+          <tr><td>Formatting regularity</td><td>Whitespace / structural consistency beyond repo norm.</td><td>↑ AI (weak)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout decision">
+        <div class="ct">Decision — inference is honest by design</div>
+        Tier B is intentionally weak and clearly labeled. If Tier A is absent, Grain says "inferred, low confidence" rather than pretending to know. This protects real humans who happen to write clean code.
+      </div>
+
+      <h3>5.3 — Tier C: contextual modifiers (attention, not classification)</h3>
+      <ul>
+        <li><b>CODEOWNERS check</b> — an <code>ai_assisted</code> change touching a human-owned path raises an <em>attention flag</em>, not the AI score.</li>
+        <li><b>Convention deviation</b> — the change departs from the repo's own learned style baseline.</li>
+      </ul>
+
+      <h3>5.4 — Scoring model</h3>
+      <div class="steps-flow">
+        <span class="s">extract signals</span><span class="ar">→</span>
+        <span class="s">declared? set score+conf</span><span class="ar">→</span>
+        <span class="s">else infer (cap conf)</span><span class="ar">→</span>
+        <span class="s">bucket class</span><span class="ar">→</span>
+        <span class="s">aggregate by lines</span>
+      </div>
+      <pre><span class="c"># per-commit, pseudocode</span>
+<span class="k">if</span> declared_signals:
+    ai_likelihood = max(weight(s) <span class="k">for</span> s <span class="k">in</span> declared_signals)  <span class="c"># e.g. 0.98</span>
+    confidence    = <span class="s">0.95</span>
+    basis         = <span class="s">"declared"</span>
+<span class="k">else</span>:
+    ai_likelihood = logistic(Σ wᵢ · featureᵢ)                <span class="c"># Tier B</span>
+    confidence    = min(inferred_confidence, <span class="s">CAP</span>)          <span class="c"># CAP=0.70</span>
+    basis         = <span class="s">"inferred"</span>
+
+class = bucket(ai_likelihood, confidence)                     <span class="c"># human / ai_assisted / ai_authored / unclassified</span>
+<span class="c"># unclassified when confidence is too low to bucket</span></pre>
+      <p>Repo/dir/PR aggregates are line-weighted means of member commits, carrying a blended confidence. MVP uses hand-tuned weights; weights are versioned in the schema so scores are reproducible and explainable.</p>
+
+      <h3>5.5 — Optional local model pass</h3>
+      <p>For ambiguous diffs only, an optional small classifier (local GGUF via an embedded runtime, or a heuristic-only fallback) can refine Tier B. <b>It runs client-side; code never leaves the machine.</b> Off by default in MVP; the heuristic engine stands alone.</p>
+    </section>
+
+    <!-- 06 -->
+    <section id="outputs">
+      <h2><span class="sn">06</span> Outputs</h2>
+      <p>One input (a repo or a diff), three outputs. No dashboard required for the free tool.</p>
+
+      <h3>6.1 — The badge</h3>
+      <p>A shields.io-compatible endpoint (JSON) or static SVG. Modes: <code>mix</code> (e.g. "24% AI-assisted"), <code>owned</code> ("human-owned"), <code>policy</code> ("review needed"). Every badge in a README is a distribution surface.</p>
+      <pre><span class="c"># README.md</span>
+![grain](https://img.shields.io/endpoint?url=https://.../grain.json)</pre>
+
+      <h3>6.2 — The PR check</h3>
+      <p>Posted by <code>grain[bot]</code> as a PR comment + a status check. Calm, itemized, framed as signals.</p>
+      <pre>grain report · PR #482
+› <span class="k">62%</span> of +214 lines carry AI-authorship signals  <span class="c">(1 Co-Authored-By: Claude)</span>
+› 2 files touch <span class="s">src/auth/</span> — human-owned per CODEOWNERS
+› convention check: 3 deviations from repo style
+policy: AI share &gt; 40% in a human-owned path → 1 human review requested</pre>
+
+      <h3>6.3 — PROVENANCE.md (the nutrition label)</h3>
+      <p>A generated, committable file: repo-level mix, per-directory breakdown, generation timestamp + engine version. Human-readable and diff-friendly so provenance itself is versioned.</p>
+      <div class="callout decision"><div class="ct">Decision — machine format alongside</div> Each run also emits <code>grain.json</code> (see §09) as the machine source of truth; <code>PROVENANCE.md</code> is the human render of it.</div>
+    </section>
+
+    <!-- 07 -->
+    <section id="cli">
+      <h2><span class="sn">07</span> CLI specification</h2>
+      <p>Single static binary, no runtime deps for the user. Distributed as a Go binary via Homebrew / <code>go install</code> / curl script, plus a thin npm wrapper so <code>npx grain</code> works.</p>
+      <div class="twrap"><table>
+        <thead><tr><th>Command</th><th>Purpose</th><th>Exit</th></tr></thead>
+        <tbody>
+          <tr><td><code>grain scan</code></td><td>Scan repo/range → write <code>PROVENANCE.md</code> + <code>grain.json</code>, print summary.</td><td>0</td></tr>
+          <tr><td><code>grain check</code></td><td>CI/PR mode: analyze the diff, print PR markdown, exit non-zero on policy breach.</td><td>0 / 1</td></tr>
+          <tr><td><code>grain badge</code></td><td>Emit shields endpoint JSON or SVG.</td><td>0</td></tr>
+          <tr><td><code>grain explain &lt;sha&gt;</code></td><td>Show which signals classified a commit and why.</td><td>0</td></tr>
+          <tr><td><code>grain init</code></td><td>Scaffold <code>.grain.toml</code>.</td><td>0</td></tr>
+        </tbody>
+      </table></div>
+      <h4>Key flags</h4>
+      <p><code>--since &lt;date&gt;</code> · <code>--range &lt;a..b&gt;</code> · <code>--format json|md|text</code> · <code>--config &lt;path&gt;</code> · <code>--model off|local|&lt;path&gt;</code> · <code>--fail-on &lt;rule&gt;</code> · <code>--no-inference</code></p>
+      <h4>Config — <code>.grain.toml</code></h4>
+      <pre><span class="k">[policy]</span>
+ai_threshold        = <span class="s">0.40</span>            <span class="c"># PR attention threshold</span>
+require_review_over = <span class="s">0.40</span>
+human_owned         = [<span class="s">"src/auth/**"</span>, <span class="s">"src/payments/**"</span>]
+
+<span class="k">[detection]</span>
+inference   = <span class="s">true</span>
+local_model = <span class="s">"off"</span>                   <span class="c"># off | local | &lt;gguf path&gt;</span>
+agents      = [<span class="s">"claude"</span>, <span class="s">"copilot"</span>, <span class="s">"cursor"</span>, <span class="s">"codex"</span>, <span class="s">"devin"</span>]
+bot_authors = [<span class="s">"*[bot]"</span>]
+
+<span class="k">[report]</span>
+badge  = <span class="s">"mix"</span>                       <span class="c"># mix | owned | policy</span>
+output = <span class="s">"PROVENANCE.md"</span></pre>
+      <p>Exit codes: <code>0</code> ok · <code>1</code> policy violation (for CI gating) · <code>2</code> error.</p>
+    </section>
+
+    <!-- 08 -->
+    <section id="action">
+      <h2><span class="sn">08</span> GitHub Action</h2>
+      <p>A thin wrapper around <code>grain check</code>. Runs on <code>pull_request</code>, posts/updates one sticky comment, sets a status check, and can refresh the badge endpoint on <code>main</code>.</p>
+      <pre><span class="k">- uses:</span> grain-dev/grain-action@v1
+  <span class="k">with:</span>
+    fail_on: <span class="s">policy</span>        <span class="c"># comment-only by default; opt-in to gating</span>
+    config:  <span class="s">.grain.toml</span></pre>
+      <div class="callout warn"><div class="ct">Default posture</div> The Action <b>comments, does not block</b>, out of the box. Gating is a deliberate opt-in (<code>fail_on</code>). This keeps first contact non-hostile.</div>
+    </section>
+
+    <!-- 09 -->
+    <section id="schema">
+      <h2><span class="sn">09</span> Data model — <code>grain.json</code></h2>
+      <p>The machine source of truth. Versioned schema; every score is reproducible from it.</p>
+      <pre>{
+  <span class="k">"schema"</span>: <span class="s">"grain/v0.1"</span>,
+  <span class="k">"engine"</span>: { <span class="k">"version"</span>: <span class="s">"0.1.0"</span>, <span class="k">"weights"</span>: <span class="s">"w1"</span> },
+  <span class="k">"repo"</span>: <span class="s">"acme/payments-service"</span>,
+  <span class="k">"generated_at"</span>: <span class="s">"2026-09-01T10:20:00Z"</span>,
+  <span class="k">"range"</span>: { <span class="k">"from"</span>: <span class="s">"…"</span>, <span class="k">"to"</span>: <span class="s">"HEAD"</span>, <span class="k">"commits"</span>: 400 },
+  <span class="k">"summary"</span>: { <span class="k">"human"</span>: 0.71, <span class="k">"ai_assisted"</span>: 0.24, <span class="k">"unclassified"</span>: 0.05, <span class="k">"lines"</span>: 48213 },
+  <span class="k">"by_path"</span>: [
+    { <span class="k">"path"</span>: <span class="s">"src/auth/"</span>, <span class="k">"human"</span>: 0.94, <span class="k">"ai"</span>: 0.06, <span class="k">"lines"</span>: 3120 }
+  ],
+  <span class="k">"commits"</span>: [
+    { <span class="k">"sha"</span>: <span class="s">"9f3a…"</span>, <span class="k">"ai_likelihood"</span>: 0.98, <span class="k">"basis"</span>: <span class="s">"declared"</span>,
+      <span class="k">"confidence"</span>: 0.97, <span class="k">"class"</span>: <span class="s">"ai_authored"</span>,
+      <span class="k">"signals"</span>: [<span class="s">"co-authored-by:claude"</span>], <span class="k">"lines"</span>: 214,
+      <span class="k">"flags"</span>: [<span class="s">"human_owned_path"</span>] }
+  ]
+}</pre>
+    </section>
+
+    <!-- 10 -->
+    <section id="arch">
+      <h2><span class="sn">10</span> Architecture (MVP)</h2>
+      <div class="steps-flow">
+        <span class="s">git (go-git)</span><span class="ar">→</span>
+        <span class="s">commit iterator</span><span class="ar">→</span>
+        <span class="s">signal extractors</span><span class="ar">→</span>
+        <span class="s">scorer</span><span class="ar">→</span>
+        <span class="s">aggregator</span><span class="ar">→</span>
+        <span class="s">renderers (md · json · badge · pr)</span>
+      </div>
+      <ul>
+        <li><b>Language:</b> Go — static binary, fast, trivial to ship as CLI + Action. <span class="conf lo">decision · Rust is the alternative</span></li>
+        <li><b>Git access:</b> <code>go-git</code> (pure Go, no libgit2 dependency).</li>
+        <li><b>No server in MVP.</b> Everything runs in the repo/CI. The badge is a static JSON committed or served from Pages.</li>
+        <li><b>Extensible signals:</b> each extractor is an interface, so new agents/tells are additive.</li>
+        <li><b>Optional model:</b> pluggable local inference behind a flag; heuristics work standalone.</li>
+      </ul>
+    </section>
+
+    <!-- 11 -->
+    <section id="trust">
+      <h2><span class="sn">11</span> Trust &amp; privacy principles</h2>
+      <ul>
+        <li><b>Local-first.</b> The free tool never transmits source code. All analysis is on-device / in-CI.</li>
+        <li><b>Signals, not verdicts.</b> Output language is probabilistic and non-accusatory by contract.</li>
+        <li><b>Confidence caps on inference.</b> Grain refuses to sound certain when it is guessing.</li>
+        <li><b>Explainability.</b> <code>grain explain</code> shows the exact signals behind any classification.</li>
+        <li><b>Reproducibility.</b> Scores are pinned to an engine + weights version in <code>grain.json</code>.</li>
+        <li><b>Human override.</b> A <code>grain:human</code> / <code>grain:ai</code> declaration always wins over inference.</li>
+      </ul>
+    </section>
+
+    <!-- 12 -->
+    <section id="threat">
+      <h2><span class="sn">12</span> Threat model &amp; honest limits</h2>
+      <div class="twrap"><table>
+        <thead><tr><th>Concern</th><th>Reality</th><th>Response</th></tr></thead>
+        <tbody>
+          <tr><td>Stripping <code>Co-Authored-By</code> to hide AI use</td><td>Trivially possible; falls back to weak inference.</td><td>Grain is a transparency tool for <em>cooperative</em> repos, not anti-cheat. Stated plainly in docs; never over-claimed.</td></tr>
+          <tr><td>False positives on clean human code</td><td>Real risk with inference alone.</td><td>Confidence cap + "signals" framing + never block by default. Declared signals preferred.</td></tr>
+          <tr><td>"Surveillance tool" perception</td><td>Reputational, could kill adoption.</td><td>Non-goals are explicit; defaults are comment-only; positioning is maintainer-transparency, not dev-policing.</td></tr>
+          <tr><td>Adversarial rewriting to defeat heuristics</td><td>Possible with effort.</td><td>Out of scope by design; Grain measures the honest signal that exists, not a guarantee.</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout principle"><div class="ct">Honesty as a feature</div> Naming these limits openly is part of the product. Overclaiming (an "AI detector that catches cheaters") is exactly what would trigger backlash and false-positive drama. Grain wins by being trustworthy, not omniscient.</div>
+    </section>
+
+    <!-- 13 -->
+    <section id="opencore">
+      <h2><span class="sn">13</span> Open-core boundary</h2>
+      <p><b>The line:</b> anything that runs on a single repo, locally, is MIT and free. Anything server-side, multi-repo, persistent, or policy-as-a-service is paid.</p>
+      <div class="twrap"><table>
+        <thead><tr><th>Tier</th><th>Price</th><th>Includes</th><th>For</th></tr></thead>
+        <tbody>
+          <tr><td><b>grain CLI</b></td><td><span class="conf hi">MIT · free</span></td><td>CLI, Action, badge, PROVENANCE.md, local scan/check/explain, full engine.</td><td>Solo devs, OSS maintainers</td></tr>
+          <tr><td><b>grain Cloud</b></td><td>$ / seat</td><td>Org dashboard, trend history, merge-policy engine, multi-repo rollups, Slack/PR gating.</td><td>Teams shipping with agents</td></tr>
+          <tr><td><b>grain Audit</b></td><td>$$</td><td>Signed provenance ledger, EU AI Act / SOC2 export, SSO, retention, on-prem.</td><td>Regulated / enterprise</td></tr>
+        </tbody>
+      </table></div>
+      <p><b>Licensing:</b> core MIT (maximizes adoption + trust). Cloud/Audit are proprietary hosted services. The engine staying fully open is a feature, not a giveaway — it is what makes the numbers credible.</p>
+    </section>
+
+    <!-- 14 -->
+    <section id="metrics">
+      <h2><span class="sn">14</span> Success metrics</h2>
+      <div class="twrap"><table>
+        <thead><tr><th>Horizon</th><th>Signal</th><th>Rough target</th></tr></thead>
+        <tbody>
+          <tr><td>Launch week</td><td>Show HN front page + GitHub stars</td><td>Front page; 1k+ stars</td></tr>
+          <tr><td>Month 1</td><td>Badges in the wild (repos rendering a grain badge)</td><td>100+ repos</td></tr>
+          <tr><td>Month 1</td><td>Action installs</td><td>250+ repos</td></tr>
+          <tr><td>Month 3</td><td>Cloud waitlist signups</td><td>500+</td></tr>
+          <tr><td>Ongoing</td><td>False-positive complaints per 1k scans</td><td>Trending to zero</td></tr>
+        </tbody>
+      </table></div>
+      <p>The leading indicator that matters most is <b>badges in the wild</b> — it proves the norm is forming and is the compounding distribution loop.</p>
+    </section>
+
+    <!-- 15 -->
+    <section id="roadmap">
+      <h2><span class="sn">15</span> Roadmap</h2>
+      <div class="mile">
+        <div class="v">v0.1</div>
+        <div class="d"><h4>MVP · ~2 weeks · launch</h4><p>CLI (scan/check/badge), declared + basic inferred signals, PROVENANCE.md, grain.json, GitHub Action, README badge. → Show HN.</p></div>
+        <div class="v">v0.2</div>
+        <div class="d"><h4>Depth</h4><p><code>grain explain</code>, convention diffing + CODEOWNERS attention flags, policy config, optional local model.</p></div>
+        <div class="v">v0.3</div>
+        <div class="d"><h4>Cloud alpha</h4><p>Hosted dashboard, multi-repo rollups, trend history, waitlist → paid.</p></div>
+        <div class="v">v1.0</div>
+        <div class="d"><h4>Policy &amp; compliance</h4><p>Merge-policy engine, signed provenance ledger, EU AI Act / SOC2 export, SSO.</p></div>
+      </div>
+    </section>
+
+    <!-- 16 -->
+    <section id="risks">
+      <h2><span class="sn">16</span> Risks &amp; mitigations</h2>
+      <div class="twrap"><table>
+        <thead><tr><th>Risk</th><th>Severity</th><th>Mitigation</th></tr></thead>
+        <tbody>
+          <tr><td>False-positive backlash</td><td>High</td><td>Confidence caps, "signals" framing, comment-only defaults, prefer declared signals.</td></tr>
+          <tr><td>Perceived as surveillance</td><td>High</td><td>Explicit non-goals, maintainer-transparency positioning, dev-friendly copy.</td></tr>
+          <tr><td>GitHub/forge builds it in</td><td>Medium</td><td>Move fast, own the norm + brand; differentiate on policy engine + compliance depth.</td></tr>
+          <tr><td>Low willingness to pay</td><td>Medium</td><td>Monetize the org/compliance layer where budgets exist, not the individual.</td></tr>
+          <tr><td>Heuristics easily gamed</td><td>Low (by design)</td><td>Scope honestly to cooperative repos; lean on declared signals + ecosystem norms.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 17 -->
+    <section id="questions">
+      <h2><span class="sn">17</span> Open questions (need your call)</h2>
+      <ol>
+        <li><b>Language:</b> Go (default) vs Rust. Go = faster to ship + easy Action; Rust = perf + a local model story. <span class="conf hi">recommend Go</span></li>
+        <li><b>Forge scope for MVP:</b> GitHub-only (default) vs also GitLab/Gitea day one. <span class="conf hi">recommend GitHub-first, git-native core</span></li>
+        <li><b>Local model in MVP:</b> ship heuristics-only v0.1 (default) and add model in v0.2, or include from day one? <span class="conf hi">recommend defer</span></li>
+        <li><b>Name &amp; domain:</b> confirm <code>grain</code>; check npm/crates/GitHub org + <code>grain.dev</code> / <code>getgrain.dev</code> availability. Fallbacks: <code>attest</code>, <code>vellum</code>, <code>papertrace</code>.</li>
+        <li><b>Badge hosting:</b> shields.io endpoint pointing at a committed <code>grain.json</code> (default) vs a tiny hosted endpoint from day one.</li>
+        <li><b>Monetization timing:</b> waitlist at launch (default) vs stay pure-OSS until traction is proven.</li>
+      </ol>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  🌾 grain · product spec v0.1 draft · illustrative figures
+  <div class="disc">A working specification for discussion, not a finished commitment. Percentages, repo names, and quotes shown are illustrative; maintainer sentiment referenced in §01 is drawn from public GitHub discussions surfaced during research.</div>
+</footer>
+
+<script>
+  (function () {
+    var root = document.documentElement, btn = document.getElementById('themeBtn'), KEY = 'grain-theme';
+    try { var s = localStorage.getItem(KEY); if (s) root.setAttribute('data-theme', s); } catch (e) {}
+    btn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme');
+      var isDark = cur ? cur === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      var next = isDark ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+    });
+  })();
+  // TOC scroll-spy
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var map = {};
+    links.forEach(function (a) { var id = a.getAttribute('href').slice(1); map[id] = a; });
+    var secs = Array.prototype.slice.call(document.querySelectorAll('main section'));
+    if (!('IntersectionObserver' in window)) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          links.forEach(function (l) { l.classList.remove('active'); });
+          var a = map[e.target.id]; if (a) a.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    secs.forEach(function (s) { io.observe(s); });
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Grain Provenance</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground: #ECE9E1;
+    --surface: #FBFAF6;
+    --surface-2: #F3F0E8;
+    --ink: #201D19;
+    --muted: #6B655B;
+    --faint: #948D80;
+    --line: #D9D3C6;
+    --line-strong: #C4BCAC;
+    --human: #1F6E5B;
+    --human-soft: #DCEBE4;
+    --ai: #B0511C;
+    --ai-soft: #F1E1D2;
+    --brand: #1F6E5B;
+    --warn: #B0511C;
+    --shadow: 0 1px 2px rgba(32,29,25,.05), 0 8px 28px rgba(32,29,25,.07);
+    --radius: 14px;
+    --maxw: 1080px;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --ground: #17150F;
+      --surface: #201D16;
+      --surface-2: #26221A;
+      --ink: #ECE7DB;
+      --muted: #9C9384;
+      --faint: #736B5D;
+      --line: #332E24;
+      --line-strong: #423B2E;
+      --human: #57C6A8;
+      --human-soft: #16332B;
+      --ai: #E28A50;
+      --ai-soft: #35251A;
+      --brand: #57C6A8;
+      --warn: #E28A50;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #17150F;
+    --surface: #201D16;
+    --surface-2: #26221A;
+    --ink: #ECE7DB;
+    --muted: #9C9384;
+    --faint: #736B5D;
+    --line: #332E24;
+    --line-strong: #423B2E;
+    --human: #57C6A8;
+    --human-soft: #16332B;
+    --ai: #E28A50;
+    --ai-soft: #35251A;
+    --brand: #57C6A8;
+    --warn: #E28A50;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.4);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  h1, h2, h3 { font-family: "Bricolage Grotesque", system-ui, sans-serif; font-weight: 700; text-wrap: balance; line-height: 1.05; margin: 0; letter-spacing: -.01em; }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12.5px; font-weight: 500;
+    letter-spacing: .16em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  a { color: var(--brand); }
+
+  /* ---- top bar ---- */
+  .topbar {
+    position: sticky; top: 0; z-index: 20;
+    background: color-mix(in srgb, var(--ground) 86%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 19px; letter-spacing: -.02em; }
+  .brand .seed { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(150deg, var(--human), var(--ai)); display: inline-block; }
+  .topbar .meta { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--muted); }
+  .theme-btn {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px;
+    background: var(--surface); color: var(--ink);
+    border: 1px solid var(--line-strong); border-radius: 999px;
+    padding: 6px 13px; cursor: pointer; letter-spacing: .04em;
+  }
+  .theme-btn:hover { border-color: var(--brand); }
+
+  /* ---- hero ---- */
+  .hero { padding: 74px 0 30px; }
+  .hero-tag { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px; }
+  .hero-tag .dot-h { width: 9px; height: 9px; border-radius: 50%; background: var(--human); }
+  .hero-tag .dot-a { width: 9px; height: 9px; border-radius: 50%; background: var(--ai); }
+  .hero h1 { font-size: clamp(40px, 7vw, 76px); font-weight: 800; letter-spacing: -.035em; }
+  .hero h1 .em-h { color: var(--human); }
+  .hero h1 .em-a { color: var(--ai); }
+  .hero .lede { font-size: clamp(18px, 2.3vw, 22px); color: var(--muted); max-width: 46ch; margin: 22px 0 0; line-height: 1.5; }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 30px; align-items: center; }
+  .btn {
+    font-family: "IBM Plex Mono", monospace; font-size: 14px; font-weight: 500;
+    border-radius: 10px; padding: 12px 18px; cursor: pointer; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 9px; border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--ink); color: var(--ground); }
+  .btn-primary:hover { transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+  .btn-ghost:hover { border-color: var(--brand); color: var(--brand); }
+  .install { font-family: "IBM Plex Mono", monospace; font-size: 13.5px; color: var(--muted); }
+  .install b { color: var(--ink); font-weight: 600; }
+
+  /* ---- grain fingerprint ---- */
+  .fingerprint {
+    margin-top: 46px; background: var(--surface); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+  }
+  .fp-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap; gap: 8px; }
+  .fp-head .repo { font-family: "IBM Plex Mono", monospace; font-size: 13.5px; color: var(--ink); font-weight: 500; }
+  .fp-head .repo .path { color: var(--faint); }
+  .legend { display: flex; gap: 16px; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+  #grainCanvas { display: block; width: 100%; height: 92px; }
+  .fp-foot { display: flex; gap: 26px; padding: 14px 20px; border-top: 1px solid var(--line); flex-wrap: wrap; }
+  .stat .n { font-family: "Bricolage Grotesque", sans-serif; font-weight: 700; font-size: 25px; letter-spacing: -.02em; }
+  .stat .n.h { color: var(--human); }
+  .stat .n.a { color: var(--ai); }
+  .stat .l { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+
+  /* ---- generic section ---- */
+  section { padding: 56px 0; }
+  .section-head { max-width: 60ch; margin-bottom: 34px; }
+  .section-head h2 { font-size: clamp(27px, 4vw, 38px); margin-top: 12px; }
+  .section-head p { color: var(--muted); font-size: 18px; margin: 14px 0 0; }
+  .divider { border: none; border-top: 1px solid var(--line); margin: 0; }
+
+  /* ---- problem: two trends ---- */
+  .trends { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .trend {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 26px; position: relative; overflow: hidden;
+  }
+  .trend::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; }
+  .trend.t-ai::before { background: var(--ai); }
+  .trend.t-human::before { background: var(--human); }
+  .trend .k { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .trend h3 { font-size: 21px; margin: 12px 0 8px; }
+  .trend p { margin: 0; color: var(--muted); font-size: 15.5px; }
+  .trend .quote { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line-strong); font-size: 14px; color: var(--ink); font-style: italic; }
+  .trend .quote cite { display: block; margin-top: 6px; font-style: normal; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--faint); }
+  .collide { text-align: center; margin-top: 22px; font-family: "IBM Plex Mono", monospace; font-size: 13.5px; color: var(--ink); }
+  .collide b { color: var(--brand); }
+
+  /* ---- artifacts: badge / PR / report ---- */
+  .artifacts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .card-label { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--line); font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .card-label .num { color: var(--faint); }
+  .card-body { padding: 20px; }
+  .span-2 { grid-column: 1 / -1; }
+
+  /* badge mock */
+  .badges { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .shield { display: inline-flex; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; border-radius: 5px; overflow: hidden; border: 1px solid var(--line-strong); }
+  .shield .lft { background: var(--ink); color: var(--ground); padding: 5px 9px; display: flex; align-items: center; gap: 6px; }
+  .shield .rgt { padding: 5px 9px; font-weight: 600; }
+  .shield .rgt.mix { background: var(--surface-2); color: var(--ink); }
+  .shield .rgt.warnb { background: var(--ai-soft); color: var(--ai); }
+  .shield .rgt.okb { background: var(--human-soft); color: var(--human); }
+  .badge-note { margin: 16px 0 0; font-size: 14px; color: var(--muted); }
+
+  /* PR comment mock */
+  .pr { font-family: "IBM Plex Sans", sans-serif; }
+  .pr-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .pr-av { width: 30px; height: 30px; border-radius: 7px; background: linear-gradient(150deg, var(--human), var(--ai)); flex: none; }
+  .pr-top .who { font-size: 14px; }
+  .pr-top .who b { font-weight: 600; }
+  .pr-top .who .bot { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 4px; padding: 1px 6px; color: var(--muted); margin-left: 4px; }
+  .pr-top .when { margin-left: auto; font-size: 12px; color: var(--faint); font-family: "IBM Plex Mono", monospace; }
+  .pr-body { font-family: "IBM Plex Mono", monospace; font-size: 13px; line-height: 1.7; }
+  .pr-body .row { display: flex; gap: 10px; }
+  .pr-body .row .mk { color: var(--faint); flex: none; }
+  .pr-body .hl-a { color: var(--ai); font-weight: 600; }
+  .pr-body .hl-h { color: var(--human); font-weight: 600; }
+  .pr-verdict { margin-top: 14px; padding: 11px 14px; border-radius: 9px; background: var(--ai-soft); color: var(--ai); font-family: "IBM Plex Mono", monospace; font-size: 12.5px; display: flex; gap: 9px; align-items: flex-start; }
+
+  /* report / nutrition label */
+  .report-grid { display: grid; grid-template-columns: 200px 1fr; gap: 26px; align-items: center; }
+  .bigpct { font-family: "Bricolage Grotesque", sans-serif; font-weight: 800; font-size: 58px; line-height: 1; letter-spacing: -.03em; color: var(--human); }
+  .bigpct small { display: block; font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 8px; }
+  .bars { display: flex; flex-direction: column; gap: 13px; }
+  .bar-row { display: grid; grid-template-columns: 130px 1fr 42px; gap: 12px; align-items: center; }
+  .bar-row .dir { font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--ink); }
+  .bar-track { height: 9px; border-radius: 5px; background: var(--surface-2); overflow: hidden; display: flex; }
+  .bar-track .fh { background: var(--human); height: 100%; }
+  .bar-track .fa { background: var(--ai); height: 100%; }
+  .bar-row .val { font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* ---- how it works ---- */
+  .steps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; counter-reset: s; }
+  .step { display: flex; gap: 16px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 22px; }
+  .step .idx { counter-increment: s; font-family: "IBM Plex Mono", monospace; font-size: 12px; color: var(--brand); font-weight: 600; flex: none; padding-top: 3px; }
+  .step .idx::before { content: counter(s, decimal-leading-zero); }
+  .step h3 { font-size: 17px; margin-bottom: 6px; }
+  .step p { margin: 0; font-size: 14.5px; color: var(--muted); }
+  .step .tag { display: inline-block; margin-top: 9px; font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; }
+  .tag.strong { background: var(--human-soft); color: var(--human); }
+  .tag.soft { background: var(--surface-2); color: var(--muted); }
+  .principle { margin-top: 20px; padding: 18px 22px; border-left: 3px solid var(--brand); background: var(--surface-2); border-radius: 0 10px 10px 0; font-size: 15.5px; }
+  .principle b { color: var(--ink); }
+
+  /* ---- open core ---- */
+  .tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .tier { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; display: flex; flex-direction: column; }
+  .tier.feature { border-color: var(--brand); box-shadow: var(--shadow); }
+  .tier .price { font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .tier h3 { font-size: 20px; margin: 8px 0 4px; }
+  .tier .who { font-size: 13.5px; color: var(--muted); margin-bottom: 16px; }
+  .tier ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; }
+  .tier li { font-size: 14px; padding-left: 22px; position: relative; color: var(--ink); }
+  .tier li::before { content: "→"; position: absolute; left: 0; color: var(--brand); font-family: "IBM Plex Mono", monospace; }
+  .tier .oss-badge { margin-top: auto; padding-top: 16px; font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--faint); }
+
+  /* ---- launch ---- */
+  .launch { background: var(--ink); color: var(--ground); border-radius: 20px; padding: 44px; }
+  .launch .eyebrow { color: color-mix(in srgb, var(--ground) 62%, transparent); }
+  .launch h2 { color: var(--ground); font-size: clamp(24px, 3.4vw, 33px); margin: 12px 0 24px; }
+  .hn {
+    background: color-mix(in srgb, var(--ground) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ground) 20%, transparent);
+    border-radius: 12px; padding: 18px 20px; font-family: "IBM Plex Mono", monospace;
+  }
+  .hn .kicker { color: #ff9d5c; font-size: 12.5px; letter-spacing: .04em; }
+  .hn .title { color: var(--ground); font-size: 17px; margin-top: 6px; line-height: 1.4; }
+  .hn .sub { color: color-mix(in srgb, var(--ground) 55%, transparent); font-size: 12.5px; margin-top: 10px; }
+  .launch .alt { margin-top: 18px; font-family: "IBM Plex Mono", monospace; font-size: 13px; color: color-mix(in srgb, var(--ground) 60%, transparent); line-height: 1.9; }
+  .launch .alt b { color: var(--ground); }
+
+  footer { padding: 40px 0 64px; border-top: 1px solid var(--line); margin-top: 20px; }
+  footer .wrap { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--muted); }
+  .disclaimer { font-size: 11.5px; color: var(--faint); max-width: 52ch; line-height: 1.5; }
+
+  @media (max-width: 780px) {
+    .trends, .artifacts, .steps, .tiers { grid-template-columns: 1fr; }
+    .report-grid { grid-template-columns: 1fr; gap: 18px; }
+    .bar-row { grid-template-columns: 96px 1fr 40px; }
+    .hero { padding: 46px 0 20px; }
+    .launch { padding: 30px 22px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="brand"><span class="seed"></span> grain</div>
+    <div style="display:flex;align-items:center;gap:14px">
+      <span class="meta">concept · v0.1</span>
+      <button class="theme-btn" id="themeBtn" aria-label="Toggle theme">◐ theme</button>
+    </div>
+  </div>
+</div>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-tag eyebrow"><span class="dot-h"></span><span class="dot-a"></span> code provenance layer</div>
+    <h1>See the <span class="em-h">human</span> and the <span class="em-a">AI</span> grain in your code.</h1>
+    <p class="lede">An open-source layer that labels how much of a repository was human-written, how much was AI-assisted, and whether it followed the project's own rules. Signals, not verdicts.</p>
+    <div class="hero-cta">
+      <a class="btn btn-primary" href="#launch">▶ Read the pitch</a>
+      <a class="btn btn-ghost" href="#artifacts">See what it outputs</a>
+    </div>
+    <p class="install" style="margin-top:18px">$ <b>npx grain scan</b> &nbsp;·&nbsp; adds a badge + PR check in one command</p>
+
+    <div class="fingerprint">
+      <div class="fp-head">
+        <div class="repo">◆ acme/<span class="path">payments-service</span> · last 400 commits</div>
+        <div class="legend">
+          <span><i style="background:var(--human)"></i> human</span>
+          <span><i style="background:var(--ai)"></i> AI-assisted</span>
+          <span><i style="background:var(--line-strong)"></i> unclassified</span>
+        </div>
+      </div>
+      <canvas id="grainCanvas" width="1040" height="92" aria-label="Commit provenance fingerprint: a barcode of commits colored by authorship"></canvas>
+      <div class="fp-foot">
+        <div class="stat"><div class="n h">71%</div><div class="l">human-authored</div></div>
+        <div class="stat"><div class="n a">24%</div><div class="l">AI-assisted</div></div>
+        <div class="stat"><div class="n" style="color:var(--faint)">5%</div><div class="l">unclassified</div></div>
+        <div class="stat"><div class="n">400</div><div class="l">commits read</div></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">why now</div>
+      <h2>Two trends just collided in every repo.</h2>
+      <p>The signal came from watching maintainer communities this month. Both of these are real, and together they make an unmet need.</p>
+    </div>
+    <div class="trends">
+      <div class="trend t-ai">
+        <div class="k">Trend 01</div>
+        <h3>AI now commits on its own</h3>
+        <p>Autonomous agents open PRs, keep tool-activity logs, and push commits directly into repos. Code in a tree is no longer obviously human.</p>
+        <div class="quote">"@OmniBlocks/boxy peace was never an option"<cite>— a developer replying to an AI bot working his repo, GitHub</cite></div>
+      </div>
+      <div class="trend t-human">
+        <div class="k">Trend 02</div>
+        <h3>Maintainers turned wary</h3>
+        <p>Projects are rewriting contribution policy to demand transparency about what an AI wrote and who stands behind it.</p>
+        <div class="quote">"To better reflect the community's AI-skeptical ('wary') sentiment, the text of the policy itself has changed."<cite>— maintainer, Bevy engine policy PR</cite></div>
+      </div>
+    </div>
+    <p class="collide">The gap between them is <b>trust</b>. Grain is the instrument that measures it.</p>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section id="artifacts">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">what it outputs</div>
+      <h2>One command in. Three things out.</h2>
+      <p>No dashboard to learn. Grain meets developers where they already look — the badge, the PR, and a file in the repo.</p>
+    </div>
+    <div class="artifacts">
+
+      <div class="card">
+        <div class="card-label"><span class="num">01 /</span> the badge</div>
+        <div class="card-body">
+          <div class="badges">
+            <span class="shield"><span class="lft">🌾 grain</span><span class="rgt mix">24% AI-assisted</span></span>
+            <span class="shield"><span class="lft">🌾 grain</span><span class="rgt okb">human-owned</span></span>
+            <span class="shield"><span class="lft">🌾 grain</span><span class="rgt warnb">review needed</span></span>
+          </div>
+          <p class="badge-note">A README badge that renders the repo's provenance mix — the way a coverage badge renders tests. Every badge on someone else's repo is free distribution.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label"><span class="num">02 /</span> the PR check</div>
+        <div class="card-body pr">
+          <div class="pr-top">
+            <span class="pr-av"></span>
+            <span class="who"><b>grain</b><span class="bot">bot</span></span>
+            <span class="when">on #482</span>
+          </div>
+          <div class="pr-body">
+            <div class="row"><span class="mk">›</span><span><span class="hl-a">62%</span> of +214 lines carry AI-authorship signals</span></div>
+            <div class="row"><span class="mk">›</span><span>2 files touch <span class="hl-h">src/auth/</span> — human-owned per CODEOWNERS</span></div>
+            <div class="row"><span class="mk">›</span><span>convention check: 3 deviations from repo style</span></div>
+            <div class="row"><span class="mk">›</span><span>provenance: 4 commits · 1 <span class="mono">Co-Authored-By: Claude</span> tag</span></div>
+          </div>
+          <div class="pr-verdict"><span>⚠</span><span>policy: AI-assisted share above 40% in a human-owned path — 1 human review requested.</span></div>
+        </div>
+      </div>
+
+      <div class="card span-2">
+        <div class="card-label"><span class="num">03 /</span> PROVENANCE.md — the nutrition label</div>
+        <div class="card-body">
+          <div class="report-grid">
+            <div>
+              <div class="bigpct">71%<small>human-authored</small></div>
+            </div>
+            <div class="bars">
+              <div class="bar-row"><span class="dir">src/auth/</span><span class="bar-track"><span class="fh" style="width:94%"></span><span class="fa" style="width:6%"></span></span><span class="val">94/6</span></div>
+              <div class="bar-row"><span class="dir">src/api/</span><span class="bar-track"><span class="fh" style="width:68%"></span><span class="fa" style="width:32%"></span></span><span class="val">68/32</span></div>
+              <div class="bar-row"><span class="dir">src/ui/</span><span class="bar-track"><span class="fh" style="width:41%"></span><span class="fa" style="width:59%"></span></span><span class="val">41/59</span></div>
+              <div class="bar-row"><span class="dir">tests/</span><span class="bar-track"><span class="fh" style="width:33%"></span><span class="fa" style="width:67%"></span></span><span class="val">33/67</span></div>
+              <div class="bar-row"><span class="dir">scripts/</span><span class="bar-track"><span class="fh" style="width:80%"></span><span class="fa" style="width:20%"></span></span><span class="val">80/20</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">how it reads the grain</div>
+      <h2>Forensics, ranked by confidence.</h2>
+      <p>Grain starts from hard evidence and only falls back to inference — and it reports a confidence score, never an accusation.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><span class="idx"></span><div><h3>Explicit signals</h3><p>Co-Authored-By trailers, agent commit signatures, <span class="mono">*[bot]</span> accounts, PR labels. Ground truth.</p><span class="tag strong">high confidence</span></div></div>
+      <div class="step"><span class="idx"></span><div><h3>Commit forensics</h3><p>Burst timing, diff uniformity, size-to-message ratio — the "all at once" shape typical of agent output.</p><span class="tag soft">inferred</span></div></div>
+      <div class="step"><span class="idx"></span><div><h3>Convention diffing</h3><p>Does the change respect the repo's own style and CODEOWNERS? An AI touching a human-owned path is the signal that matters.</p><span class="tag soft">inferred</span></div></div>
+      <div class="step"><span class="idx"></span><div><h3>Local model pass</h3><p>Only for ambiguous diffs, and it runs client-side. Your code never leaves the machine.</p><span class="tag strong">privacy-first</span></div></div>
+    </div>
+    <div class="principle"><b>Design principle:</b> Grain reports <b>signals, not verdicts</b>. "62% of these lines carry AI signals" — never "this person cheated." That single choice is the difference between adoption and backlash.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">the business, honestly</div>
+      <h2>Open core. The instrument is free; the org tooling is paid.</h2>
+      <p>The CLI is genuinely useful and genuinely MIT. Money lives where teams need policy, history, and compliance across many repos.</p>
+    </div>
+    <div class="tiers">
+      <div class="tier">
+        <div class="price">MIT · free forever</div>
+        <h3>grain CLI</h3>
+        <div class="who">Solo devs & OSS maintainers</div>
+        <ul>
+          <li>Single-binary CLI</li>
+          <li>GitHub Action</li>
+          <li>README badge</li>
+          <li>Local PROVENANCE.md</li>
+        </ul>
+        <div class="oss-badge">// the whole engine, in the open</div>
+      </div>
+      <div class="tier feature">
+        <div class="price" style="color:var(--brand)">Team · $ / seat</div>
+        <h3>grain Cloud</h3>
+        <div class="who">Teams shipping with agents</div>
+        <ul>
+          <li>Org dashboard & trends</li>
+          <li>Merge-policy engine</li>
+          <li>Multi-repo rollups</li>
+          <li>Slack / PR gating</li>
+        </ul>
+        <div class="oss-badge">// where the workflow lives</div>
+      </div>
+      <div class="tier">
+        <div class="price">Compliance · $$</div>
+        <h3>grain Audit</h3>
+        <div class="who">Regulated & enterprise</div>
+        <ul>
+          <li>EU AI Act / SOC2 export</li>
+          <li>SSO & retention policy</li>
+          <li>Signed provenance ledger</li>
+          <li>On-prem option</li>
+        </ul>
+        <div class="oss-badge">// the moat, long-term</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="launch">
+  <div class="wrap">
+    <div class="launch">
+      <div class="eyebrow">the moment</div>
+      <h2>Built to be launched, not just shipped.</h2>
+      <div class="hn">
+        <div class="kicker">▲ Show HN</div>
+        <div class="title">Show HN: Grain – see how much of your codebase was written by AI vs humans</div>
+        <div class="sub">github.com/you/grain · MIT · one npx command</div>
+      </div>
+      <div class="alt">
+        <b>Alt 1 —</b> Grain: a provenance layer that labels AI-assisted code in your repo<br>
+        <b>Alt 2 —</b> I built a "nutrition label" for AI vs human code in Git<br>
+        <b>Why it travels —</b> culturally charged + instantly clear + zero buzzwords. The badge does the marketing.
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>🌾 grain — concept</span>
+    <span class="disclaimer">A concept mockup. Names, percentages, and quotes shown in the UI are illustrative; the two maintainer quotes are drawn from public GitHub discussions surfaced during research.</span>
+  </div>
+</footer>
+
+<script>
+  // Theme toggle (light / dark), guarded.
+  (function () {
+    var root = document.documentElement, btn = document.getElementById('themeBtn');
+    var KEY = 'grain-theme';
+    try { var s = localStorage.getItem(KEY); if (s) root.setAttribute('data-theme', s); } catch (e) {}
+    btn.addEventListener('click', function () {
+      var cur = root.getAttribute('data-theme');
+      var isDark = cur ? cur === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      var next = isDark ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      try { localStorage.setItem(KEY, next); } catch (e) {}
+    });
+  })();
+
+  // Grain fingerprint: deterministic barcode of commits colored by authorship.
+  (function () {
+    var canvas = document.getElementById('grainCanvas');
+    if (!canvas || !canvas.getContext) return;
+    var ctx = canvas.getContext('2d');
+    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function css(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+    // deterministic pseudo-random from an integer seed (no Math.random — stable across renders)
+    function rnd(n) { var x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); }
+
+    var N = 130;
+    // precompute each commit's class + height deterministically
+    var bars = [];
+    for (var i = 0; i < N; i++) {
+      var r = rnd(i + 1);
+      var cls; // weighted: ~71% human, ~24% ai, ~5% unclassified, with clustering
+      var cluster = rnd(Math.floor(i / 6) + 100); // bias runs of commits
+      var p = r * 0.6 + cluster * 0.4;
+      if (p < 0.62) cls = 'h'; else if (p < 0.93) cls = 'a'; else cls = 'u';
+      bars.push({ cls: cls, h: 0.45 + rnd(i + 50) * 0.55 });
+    }
+
+    function draw(progress) {
+      var W = canvas.width, H = canvas.height;
+      ctx.clearRect(0, 0, W, H);
+      var human = css('--human'), ai = css('--ai'), unc = css('--line-strong');
+      var gap = 2, bw = (W - gap * (N - 1)) / N;
+      var shown = Math.floor(N * progress);
+      for (var i = 0; i < N; i++) {
+        var b = bars[i];
+        ctx.globalAlpha = i < shown ? 1 : (i === shown ? (N * progress - shown) : 0);
+        ctx.fillStyle = b.cls === 'h' ? human : b.cls === 'a' ? ai : unc;
+        var bh = H * b.h, x = i * (bw + gap), y = (H - bh) / 2;
+        var r = Math.min(bw / 2, 2);
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(x, y, bw, bh, r); else ctx.rect(x, y, bw, bh);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // hi-dpi
+    function resize() {
+      var ratio = Math.min(window.devicePixelRatio || 1, 2);
+      var cssW = canvas.clientWidth || 1040, cssH = 92;
+      canvas.width = cssW * ratio; canvas.height = cssH * ratio;
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      canvas.width = cssW * ratio; canvas.height = cssH * ratio;
+      // note: drawing uses canvas.width/height directly, so recompute in device px
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+    resize();
+
+    if (reduce) { draw(1); }
+    else {
+      var start = null, DUR = 900;
+      function step(ts) {
+        if (start === null) start = ts;
+        var t = Math.min((ts - start) / DUR, 1);
+        var eased = 1 - Math.pow(1 - t, 3);
+        draw(eased);
+        if (t < 1) requestAnimationFrame(step);
+      }
+      requestAnimationFrame(step);
+    }
+    // redraw on theme change so colors stay in sync
+    new MutationObserver(function () { draw(1); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    window.addEventListener('resize', function () { resize(); draw(1); });
+  })();
+</script>
+
+</body>
+</html>

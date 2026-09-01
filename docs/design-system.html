@@ -1,0 +1,482 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Grain Design System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ground:#ECE9E1; --surface:#FBFAF6; --surface-2:#F3F0E8; --code-bg:#F4F1E9;
+    --ink:#201D19; --muted:#6B655B; --faint:#948D80;
+    --line:#DCD6C9; --line-strong:#C4BCAC;
+    --human:#1F6E5B; --human-soft:#DCEBE4; --ai:#B0511C; --ai-soft:#F1E1D2;
+    --brand:#1F6E5B; --warn:#B0511C;
+    --sp1:4px; --sp2:8px; --sp3:12px; --sp4:16px; --sp5:24px; --sp6:36px; --sp7:56px;
+    --r-chip:5px; --r-btn:10px; --r-card:14px; --r-pill:999px;
+    --shadow:0 1px 2px rgba(32,29,25,.05), 0 8px 28px rgba(32,29,25,.07);
+  }
+  :root:not([data-theme="light"]) { @media (prefers-color-scheme: dark) {
+    --ground:#16140F; --surface:#201D16; --surface-2:#26221A; --code-bg:#1B180F;
+    --ink:#ECE7DB; --muted:#9C9384; --faint:#736B5D; --line:#322D23; --line-strong:#433C2E;
+    --human:#57C6A8; --human-soft:#16332B; --ai:#E28A50; --ai-soft:#35251A; --brand:#57C6A8; --warn:#E28A50;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.42);
+  } }
+  :root[data-theme="dark"] {
+    --ground:#16140F; --surface:#201D16; --surface-2:#26221A; --code-bg:#1B180F;
+    --ink:#ECE7DB; --muted:#9C9384; --faint:#736B5D; --line:#322D23; --line-strong:#433C2E;
+    --human:#57C6A8; --human-soft:#16332B; --ai:#E28A50; --ai-soft:#35251A; --brand:#57C6A8; --warn:#E28A50;
+    --shadow:0 1px 2px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.42);
+  }
+
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--ground); color:var(--ink); font-family:"IBM Plex Sans",system-ui,sans-serif; font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased; }
+  .mono { font-family:"IBM Plex Mono",ui-monospace,monospace; }
+  h1,h2,h3,h4 { font-family:"Bricolage Grotesque",system-ui,sans-serif; text-wrap:balance; line-height:1.1; letter-spacing:-.01em; margin:0; }
+  a { color:var(--brand); text-decoration:none; }
+  code:not(pre code){ font-family:"IBM Plex Mono",monospace; font-size:.86em; background:var(--surface-2); border:1px solid var(--line); border-radius:5px; padding:.05em .4em; }
+
+  .topbar { position:sticky; top:0; z-index:30; background:color-mix(in srgb,var(--ground) 88%,transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); }
+  .topbar .in { display:flex; align-items:center; justify-content:space-between; height:56px; padding:0 26px; max-width:1240px; margin:0 auto; }
+  .brand { display:flex; align-items:center; gap:9px; font-family:"Bricolage Grotesque"; font-weight:800; font-size:17px; letter-spacing:-.02em; }
+  .brand .seed { width:20px; height:20px; border-radius:6px; background:linear-gradient(150deg,var(--human),var(--ai)); }
+  .brand .doc { color:var(--muted); font-weight:600; }
+  .theme-btn { font-family:"IBM Plex Mono",monospace; font-size:12px; background:var(--surface); color:var(--ink); border:1px solid var(--line-strong); border-radius:999px; padding:5px 12px; cursor:pointer; }
+  .theme-btn:hover { border-color:var(--brand); }
+
+  .shell { max-width:1240px; margin:0 auto; display:grid; grid-template-columns:230px minmax(0,1fr); }
+  .toc { position:sticky; top:56px; align-self:start; height:calc(100vh - 56px); overflow-y:auto; padding:30px 18px 60px 26px; border-right:1px solid var(--line); }
+  .toc .lbl { font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); margin:0 0 10px; }
+  .toc a { display:block; font-size:13.5px; color:var(--muted); padding:4px 0 4px 12px; border-left:2px solid transparent; }
+  .toc a:hover { color:var(--ink); }
+  .toc a.active { color:var(--brand); border-left-color:var(--brand); }
+  .toc a .n { font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); margin-right:7px; }
+
+  main { padding:40px 52px 120px; min-width:0; }
+  .dochead { border-bottom:1px solid var(--line); padding-bottom:26px; margin-bottom:12px; }
+  .kicker { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.14em; text-transform:uppercase; color:var(--ai); }
+  .dochead h1 { font-size:clamp(32px,5vw,46px); font-weight:800; letter-spacing:-.03em; margin:14px 0 10px; }
+  .dochead .sub { font-size:18px; color:var(--muted); max-width:60ch; }
+
+  section { padding-top:34px; margin-top:30px; border-top:1px solid var(--line); scroll-margin-top:74px; }
+  section > h2 { font-size:25px; font-weight:700; display:flex; align-items:baseline; gap:12px; }
+  section > h2 .sn { font-family:"IBM Plex Mono",monospace; font-size:14px; color:var(--ai); font-weight:500; }
+  section > .intro { color:var(--muted); max-width:66ch; margin:10px 0 4px; }
+  h3 { font-size:16px; margin:28px 0 12px; font-family:"IBM Plex Sans"; font-weight:600; letter-spacing:0; color:var(--ink); }
+  h3 .h3n { font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--faint); margin-right:8px; }
+
+  /* utility */
+  pre { background:var(--code-bg); border:1px solid var(--line); border-radius:var(--r-card); padding:16px 18px; overflow-x:auto; font-family:"IBM Plex Mono",monospace; font-size:12.6px; line-height:1.6; }
+  pre .c { color:var(--faint); } pre .k { color:var(--ai); } pre .v { color:var(--human); }
+  .twrap { overflow-x:auto; border:1px solid var(--line); border-radius:var(--r-card); }
+  table { border-collapse:collapse; width:100%; font-size:13.5px; }
+  th,td { text-align:left; padding:9px 13px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  thead th { font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); background:var(--surface-2); }
+  tbody tr:last-child td { border-bottom:none; }
+
+  /* ---- color ---- */
+  .swatches { display:grid; grid-template-columns:repeat(auto-fill,minmax(158px,1fr)); gap:14px; margin-top:6px; }
+  .sw { border:1px solid var(--line); border-radius:var(--r-card); overflow:hidden; background:var(--surface); }
+  .sw .chip { height:66px; border-bottom:1px solid var(--line); }
+  .sw .meta { padding:10px 12px; }
+  .sw .tok { font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:500; }
+  .sw .hex { font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted); margin-top:2px; }
+  .sw .role { font-size:11.5px; color:var(--faint); margin-top:5px; line-height:1.4; }
+  .dualnote { font-size:13px; color:var(--muted); margin:8px 0 18px; }
+
+  /* semantic duotone hero strip */
+  .thesis { display:grid; grid-template-columns:1fr 1fr; gap:0; border:1px solid var(--line); border-radius:var(--r-card); overflow:hidden; margin:14px 0 4px; }
+  .thesis .half { padding:22px 24px; }
+  .thesis .human-h { background:var(--human-soft); }
+  .thesis .ai-h { background:var(--ai-soft); }
+  .thesis .tag { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.1em; text-transform:uppercase; }
+  .thesis .human-h .tag { color:var(--human); } .thesis .ai-h .tag { color:var(--ai); }
+  .thesis h4 { margin:8px 0 4px; font-family:"Bricolage Grotesque"; font-size:19px; }
+  .thesis .human-h h4 { color:var(--human); } .thesis .ai-h h4 { color:var(--ai); }
+  .thesis p { margin:0; font-size:13px; color:var(--ink); }
+
+  /* ---- type ---- */
+  .specimen { border:1px solid var(--line); border-radius:var(--r-card); padding:22px 24px; background:var(--surface); margin-bottom:14px; }
+  .specimen .role { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--faint); margin-bottom:12px; }
+  .specimen .big-display { font-family:"Bricolage Grotesque"; font-weight:800; font-size:44px; letter-spacing:-.03em; line-height:1.02; }
+  .specimen .big-body { font-family:"IBM Plex Sans"; font-size:22px; }
+  .specimen .big-mono { font-family:"IBM Plex Mono"; font-size:20px; }
+  .specimen .charset { color:var(--muted); font-size:13px; margin-top:12px; }
+  .scale-row { display:flex; align-items:baseline; gap:16px; padding:9px 0; border-bottom:1px dashed var(--line); }
+  .scale-row:last-child { border-bottom:none; }
+  .scale-row .lbl { font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--faint); width:130px; flex:none; }
+
+  /* ---- motif ---- */
+  .motif-card { border:1px solid var(--line); border-radius:var(--r-card); background:var(--surface); box-shadow:var(--shadow); overflow:hidden; }
+  .motif-head { display:flex; justify-content:space-between; align-items:center; padding:12px 18px; border-bottom:1px solid var(--line); flex-wrap:wrap; gap:6px; }
+  .motif-head .repo { font-family:"IBM Plex Mono",monospace; font-size:12.5px; }
+  .legend { display:flex; gap:14px; font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--muted); }
+  .legend span { display:inline-flex; align-items:center; gap:6px; }
+  .legend i { width:9px; height:9px; border-radius:2px; }
+  #grainCanvas { display:block; width:100%; height:80px; }
+  .provbar { display:flex; height:12px; border-radius:6px; overflow:hidden; border:1px solid var(--line-strong); margin-top:6px; }
+  .provbar .fh { background:var(--human); } .provbar .fa { background:var(--ai); } .provbar .fu { background:var(--line-strong); }
+
+  /* ---- components gallery ---- */
+  .demo { border:1px solid var(--line); border-radius:var(--r-card); background:var(--surface); padding:22px; display:flex; flex-wrap:wrap; gap:14px; align-items:center; }
+  .demo.col { flex-direction:column; align-items:stretch; }
+  .comp-label { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); margin:22px 0 8px; }
+
+  .shield { display:inline-flex; font-family:"IBM Plex Mono",monospace; font-size:12.5px; border-radius:5px; overflow:hidden; border:1px solid var(--line-strong); }
+  .shield .lft { background:var(--ink); color:var(--ground); padding:5px 9px; display:flex; align-items:center; gap:6px; }
+  .shield .rgt { padding:5px 9px; font-weight:600; }
+  .shield .rgt.mix { background:var(--surface-2); color:var(--ink); }
+  .shield .rgt.ok { background:var(--human-soft); color:var(--human); }
+  .shield .rgt.warn { background:var(--ai-soft); color:var(--ai); }
+
+  .pill { font-family:"IBM Plex Mono",monospace; font-size:11.5px; padding:4px 11px; border-radius:var(--r-pill); border:1px solid var(--line-strong); color:var(--muted); }
+  .pill.human { background:var(--human-soft); border-color:transparent; color:var(--human); }
+  .pill.ai { background:var(--ai-soft); border-color:transparent; color:var(--ai); }
+  .conf { font-family:"IBM Plex Mono",monospace; font-size:11px; padding:2px 8px; border-radius:4px; }
+  .conf.hi { background:var(--human-soft); color:var(--human); }
+  .conf.lo { background:var(--ai-soft); color:var(--ai); }
+  .conf.un { background:var(--surface-2); color:var(--muted); }
+
+  .btn { font-family:"IBM Plex Mono",monospace; font-size:13.5px; font-weight:500; border-radius:var(--r-btn); padding:10px 16px; cursor:pointer; border:1px solid transparent; display:inline-flex; align-items:center; gap:8px; }
+  .btn-primary { background:var(--ink); color:var(--ground); }
+  .btn-brand { background:var(--brand); color:var(--surface); }
+  .btn-ghost { background:transparent; color:var(--ink); border-color:var(--line-strong); }
+  .btn-ghost:hover { border-color:var(--brand); color:var(--brand); }
+
+  .callout { border-radius:var(--r-card); padding:15px 17px; font-size:14px; border:1px solid var(--line); background:var(--surface); flex:1 1 260px; }
+  .callout .ct { font-family:"IBM Plex Mono",monospace; font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; margin-bottom:5px; }
+  .callout.principle { border-left:3px solid var(--brand); background:var(--surface-2); } .callout.principle .ct { color:var(--brand); }
+  .callout.warn { border-left:3px solid var(--ai); } .callout.warn .ct { color:var(--ai); }
+
+  .statb { display:flex; gap:26px; flex-wrap:wrap; }
+  .stat .n { font-family:"Bricolage Grotesque"; font-weight:700; font-size:26px; letter-spacing:-.02em; }
+  .stat .n.h { color:var(--human); } .stat .n.a { color:var(--ai); }
+  .stat .l { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+
+  .prc { font-family:"IBM Plex Mono",monospace; font-size:12.5px; line-height:1.75; width:100%; }
+  .prc .top { display:flex; align-items:center; gap:9px; margin-bottom:8px; font-family:"IBM Plex Sans"; }
+  .prc .av { width:26px; height:26px; border-radius:6px; background:linear-gradient(150deg,var(--human),var(--ai)); }
+  .prc .bot { font-size:10px; background:var(--surface-2); border:1px solid var(--line); border-radius:4px; padding:1px 6px; color:var(--muted); }
+  .prc .ha { color:var(--ai); font-weight:600; } .prc .hh { color:var(--human); font-weight:600; }
+  .prc .verdict { margin-top:10px; padding:9px 12px; border-radius:8px; background:var(--ai-soft); color:var(--ai); font-size:12px; }
+
+  /* do / dont */
+  .dd { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .ddcol { border:1px solid var(--line); border-radius:var(--r-card); padding:18px 20px; background:var(--surface); }
+  .ddcol.do { border-top:3px solid var(--human); } .ddcol.dont { border-top:3px solid var(--ai); }
+  .ddcol h4 { font-family:"IBM Plex Sans"; font-weight:600; font-size:14px; margin:0 0 10px; }
+  .ddcol.do h4 { color:var(--human); } .ddcol.dont h4 { color:var(--ai); }
+  .ddcol ul { margin:0; padding-left:18px; } .ddcol li { font-size:13.5px; margin:6px 0; }
+
+  footer { border-top:1px solid var(--line); padding:30px 52px; color:var(--muted); font-family:"IBM Plex Mono",monospace; font-size:12px; max-width:1240px; margin:0 auto; }
+
+  @media (max-width:900px){
+    .shell { grid-template-columns:1fr; } .toc { display:none; }
+    main { padding:30px 24px 90px; } .thesis,.dd { grid-template-columns:1fr; }
+    footer { padding:24px; }
+  }
+  @media (prefers-reduced-motion:reduce){ html{scroll-behavior:auto;} }
+  html { scroll-behavior:smooth; }
+</style>
+
+<div class="topbar"><div class="in">
+  <div class="brand"><span class="seed"></span> grain <span class="doc">/ design system</span></div>
+  <button class="theme-btn" id="themeBtn">◐ theme</button>
+</div></div>
+
+<div class="shell">
+  <nav class="toc" id="toc">
+    <div class="lbl">System</div>
+    <a href="#foundation"><span class="n">00</span>Foundation</a>
+    <a href="#color"><span class="n">01</span>Color</a>
+    <a href="#type"><span class="n">02</span>Typography</a>
+    <a href="#motif"><span class="n">03</span>The grain motif</a>
+    <a href="#space"><span class="n">04</span>Space &amp; shape</a>
+    <a href="#components"><span class="n">05</span>Components</a>
+    <a href="#voice"><span class="n">06</span>Voice &amp; tone</a>
+    <a href="#dodont"><span class="n">07</span>Do &amp; don't</a>
+    <a href="#tokens"><span class="n">08</span>Token dump</a>
+  </nav>
+
+  <main>
+    <div class="dochead">
+      <div class="kicker">Design System · v0.1</div>
+      <h1>Grain design system</h1>
+      <p class="sub">The visual language of a provenance tool. Its whole thesis is a duotone: <b style="color:var(--human)">human</b> and <b style="color:var(--ai)">AI</b> as two materials in one grain. Everything derives from that.</p>
+    </div>
+
+    <!-- 00 -->
+    <section id="foundation">
+      <h2><span class="sn">00</span> Foundation</h2>
+      <p class="intro">Grain doesn't borrow the default dev-tool look (near-black + acid green, or a purple gradient hero). It reads like a precise engineering ledger printed on warm stock: measured, material, trustworthy. The duotone is not decoration — it is the data.</p>
+      <div class="thesis">
+        <div class="half human-h"><div class="tag">material 01</div><h4>Human</h4><p>Deep viridian. Steady, crafted, owned. The default and the ground truth.</p></div>
+        <div class="half ai-h"><div class="tag">material 02</div><h4>AI-assisted</h4><p>Burnt sienna. Warm, generated, fast. Never framed as "bad" — just different grain.</p></div>
+      </div>
+      <div class="dualnote">The mark is a rounded square with a human→AI gradient — a "seed" from which the grain grows. Wordmark is Bricolage Grotesque 800, lowercase, tight tracking: <span class="brand" style="display:inline-flex"><span class="seed"></span>&nbsp;grain</span></div>
+    </section>
+
+    <!-- 01 -->
+    <section id="color">
+      <h2><span class="sn">01</span> Color</h2>
+      <p class="intro">Neutrals are warm putty, not grey — chosen, biased slightly toward the accent. Two semantic hues (human / AI) carry meaning and must never be swapped for decoration. Every token is defined for both themes; swatches below render in the current theme, hexes list both.</p>
+
+      <h3><span class="h3n">1.1</span> Semantic — the two materials</h3>
+      <div class="swatches">
+        <div class="sw"><div class="chip" style="background:var(--human)"></div><div class="meta"><div class="tok">--human</div><div class="hex">#1F6E5B / #57C6A8</div><div class="role">Human authorship. Also --brand for interactive/accent.</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--human-soft)"></div><div class="meta"><div class="tok">--human-soft</div><div class="hex">#DCEBE4 / #16332B</div><div class="role">Human fill: chips, badges, bar backgrounds.</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--ai)"></div><div class="meta"><div class="tok">--ai</div><div class="hex">#B0511C / #E28A50</div><div class="role">AI authorship. Also --warn (attention), never "error red".</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--ai-soft)"></div><div class="meta"><div class="tok">--ai-soft</div><div class="hex">#F1E1D2 / #35251A</div><div class="role">AI fill: chips, verdict banners, bar backgrounds.</div></div></div>
+      </div>
+
+      <h3><span class="h3n">1.2</span> Neutrals &amp; surfaces</h3>
+      <div class="swatches">
+        <div class="sw"><div class="chip" style="background:var(--ground)"></div><div class="meta"><div class="tok">--ground</div><div class="hex">#ECE9E1 / #16140F</div><div class="role">Page background (warm putty).</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--surface)"></div><div class="meta"><div class="tok">--surface</div><div class="hex">#FBFAF6 / #201D16</div><div class="role">Cards, panels.</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--surface-2)"></div><div class="meta"><div class="tok">--surface-2</div><div class="hex">#F3F0E8 / #26221A</div><div class="role">Insets, table headers, subtle fills.</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--ink)"></div><div class="meta"><div class="tok">--ink</div><div class="hex">#201D19 / #ECE7DB</div><div class="role">Primary text, primary button.</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--muted)"></div><div class="meta"><div class="tok">--muted</div><div class="hex">#6B655B / #9C9384</div><div class="role">Secondary text.</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--faint)"></div><div class="meta"><div class="tok">--faint</div><div class="hex">#948D80 / #736B5D</div><div class="role">Captions, meta, disabled.</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--line)"></div><div class="meta"><div class="tok">--line</div><div class="hex">#DCD6C9 / #322D23</div><div class="role">Hairline borders, dividers.</div></div></div>
+        <div class="sw"><div class="chip" style="background:var(--line-strong)"></div><div class="meta"><div class="tok">--line-strong</div><div class="hex">#C4BCAC / #433C2E</div><div class="role">Strong borders, "unclassified" grain.</div></div></div>
+      </div>
+      <div class="callout principle" style="margin-top:16px"><div class="ct">Color rule</div>--human and --ai encode meaning. Do not use them as generic accents, and do not introduce a third data hue. "Unclassified" uses --line-strong, deliberately colorless.</div>
+    </section>
+
+    <!-- 02 -->
+    <section id="type">
+      <h2><span class="sn">02</span> Typography</h2>
+      <p class="intro">Three roles, three faces. A characterful grotesque for display, a humanist sans for reading, and a mono for everything that is data — badges, tokens, labels, code. The mono is not just for code; it is the "instrument readout" voice of the product.</p>
+      <div class="specimen"><div class="role">Display · Bricolage Grotesque · 700–800</div><div class="big-display">See the grain.</div><div class="charset">Headlines, wordmark, big numbers. Tight tracking (-.02 to -.03em), weight 800 for hero, 700 for sections.</div></div>
+      <div class="specimen"><div class="role">Body · IBM Plex Sans · 400–600</div><div class="big-body">Provenance, measured honestly — with a confidence level on every claim.</div><div class="charset">Running text at ~16px, 65ch measure. 500/600 for emphasis and UI labels.</div></div>
+      <div class="specimen"><div class="role">Data · IBM Plex Mono · 400–600</div><div class="big-mono">24% ai-assisted · conf 0.70 · #9f3a1c</div><div class="charset">Badges, chips, table headers, code, %s, SHAs, eyebrows. Letter-spacing .06–.16em when uppercased.</div></div>
+      <h3><span class="h3n">2.1</span> Type scale</h3>
+      <div class="specimen" style="padding-top:8px">
+        <div class="scale-row"><span class="lbl">hero · 46/800</span><span style="font-family:'Bricolage Grotesque';font-weight:800;font-size:34px;letter-spacing:-.03em">Aa grain</span></div>
+        <div class="scale-row"><span class="lbl">h2 · 26/700</span><span style="font-family:'Bricolage Grotesque';font-weight:700;font-size:24px">Aa section</span></div>
+        <div class="scale-row"><span class="lbl">h3 · 16/600</span><span style="font-weight:600;font-size:16px">Aa subsection</span></div>
+        <div class="scale-row"><span class="lbl">body · 16/400</span><span style="font-size:16px">Aa the quick brown commit</span></div>
+        <div class="scale-row"><span class="lbl">small · 13.5/400</span><span style="font-size:13.5px">Aa secondary detail</span></div>
+        <div class="scale-row"><span class="lbl">mono/label · 11–12</span><span class="mono" style="font-size:11.5px;letter-spacing:.1em;text-transform:uppercase">Aa · high confidence</span></div>
+      </div>
+    </section>
+
+    <!-- 03 -->
+    <section id="motif">
+      <h2><span class="sn">03</span> The grain motif</h2>
+      <p class="intro">The signature graphic: a commit history rendered as a barcode of thin bars, each colored by authorship. It is grain's equivalent of a fingerprint — instantly recognizable, and it doubles as real data viz. A simpler stacked bar (the "provenance bar") is its compact form.</p>
+      <div class="motif-card">
+        <div class="motif-head">
+          <span class="repo">◆ acme/<span style="color:var(--faint)">payments-service</span> · 400 commits</span>
+          <span class="legend"><span><i style="background:var(--human)"></i>human</span><span><i style="background:var(--ai)"></i>AI</span><span><i style="background:var(--line-strong)"></i>unclassified</span></span>
+        </div>
+        <canvas id="grainCanvas" width="1000" height="80" aria-label="Grain fingerprint: commits as a barcode colored by authorship"></canvas>
+      </div>
+      <div class="comp-label">Provenance bar — compact form</div>
+      <div class="provbar"><span class="fh" style="width:71%"></span><span class="fa" style="width:24%"></span><span class="fu" style="width:5%"></span></div>
+      <div class="mono" style="font-size:11.5px;color:var(--muted);margin-top:6px">71% human · 24% AI · 5% unclassified</div>
+    </section>
+
+    <!-- 04 -->
+    <section id="space">
+      <h2><span class="sn">04</span> Space &amp; shape</h2>
+      <p class="intro">A 4px base grid. Radii step by role — small for chips, medium for buttons, larger for cards, full for pills. Elevation is restrained: one soft shadow token, used only on the hero fingerprint card and floating surfaces.</p>
+      <div class="twrap"><table>
+        <thead><tr><th>Scale</th><th>Token</th><th>Value</th><th>Use</th></tr></thead>
+        <tbody>
+          <tr><td>Space</td><td class="mono">--sp1 … --sp7</td><td class="mono">4 · 8 · 12 · 16 · 24 · 36 · 56</td><td>Gaps, padding — always from the grid.</td></tr>
+          <tr><td>Radius</td><td class="mono">--r-chip</td><td class="mono">5px</td><td>Shields, confidence chips.</td></tr>
+          <tr><td>Radius</td><td class="mono">--r-btn</td><td class="mono">10px</td><td>Buttons.</td></tr>
+          <tr><td>Radius</td><td class="mono">--r-card</td><td class="mono">14px</td><td>Cards, panels, code blocks.</td></tr>
+          <tr><td>Radius</td><td class="mono">--r-pill</td><td class="mono">999px</td><td>Pills, tags, theme toggle.</td></tr>
+          <tr><td>Elevation</td><td class="mono">--shadow</td><td class="mono">soft, warm</td><td>Sparingly — hero card, popovers.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 05 -->
+    <section id="components">
+      <h2><span class="sn">05</span> Components</h2>
+      <p class="intro">The working parts. Each is built from the tokens above, so they retheme automatically. This is the library the CLI outputs, the Action, the docs, and the Cloud dashboard all draw from.</p>
+
+      <div class="comp-label">Badge / shield — the distribution surface</div>
+      <div class="demo">
+        <span class="shield"><span class="lft">🌾 grain</span><span class="rgt mix">24% AI-assisted</span></span>
+        <span class="shield"><span class="lft">🌾 grain</span><span class="rgt ok">human-owned</span></span>
+        <span class="shield"><span class="lft">🌾 grain</span><span class="rgt warn">review needed</span></span>
+      </div>
+
+      <div class="comp-label">Pills &amp; confidence chips</div>
+      <div class="demo">
+        <span class="pill">unclassified</span>
+        <span class="pill human">human</span>
+        <span class="pill ai">ai-assisted</span>
+        <span class="conf hi">conf 0.97 · declared</span>
+        <span class="conf lo">conf 0.61 · inferred</span>
+        <span class="conf un">low confidence</span>
+      </div>
+
+      <div class="comp-label">Buttons</div>
+      <div class="demo">
+        <button class="btn btn-primary">▶ Read the pitch</button>
+        <button class="btn btn-brand">Scan repo</button>
+        <button class="btn btn-ghost">See output</button>
+      </div>
+
+      <div class="comp-label">Stat block</div>
+      <div class="demo"><div class="statb">
+        <div class="stat"><div class="n h">71%</div><div class="l">human-authored</div></div>
+        <div class="stat"><div class="n a">24%</div><div class="l">AI-assisted</div></div>
+        <div class="stat"><div class="n" style="color:var(--faint)">5%</div><div class="l">unclassified</div></div>
+        <div class="stat"><div class="n">400</div><div class="l">commits read</div></div>
+      </div></div>
+
+      <div class="comp-label">Callouts</div>
+      <div class="demo">
+        <div class="callout principle"><div class="ct">Principle</div>Grain reports signals, not verdicts.</div>
+        <div class="callout warn"><div class="ct">Attention</div>AI-assisted change in a human-owned path.</div>
+      </div>
+
+      <div class="comp-label">PR check block</div>
+      <div class="demo col">
+        <div class="prc">
+          <div class="top"><span class="av"></span><span><b>grain</b> <span class="bot mono">bot</span></span><span style="margin-left:auto;color:var(--faint)" class="mono">on #482</span></div>
+          › <span class="ha">62%</span> of +214 lines carry AI signals <span style="color:var(--faint)">(1 Co-Authored-By: Claude)</span><br>
+          › 2 files touch <span class="hh">src/auth/</span> — human-owned per CODEOWNERS<br>
+          › convention check: 3 deviations from repo style
+          <div class="verdict">⚠ policy: AI share &gt; 40% in a human-owned path → 1 human review requested</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06 -->
+    <section id="voice">
+      <h2><span class="sn">06</span> Voice &amp; tone</h2>
+      <p class="intro">For a provenance tool, copy is part of the design system — the wrong word turns a signal into an accusation. The voice is a calm instrument reading a measurement: precise, probabilistic, never moralizing.</p>
+      <div class="twrap"><table>
+        <thead><tr><th>Principle</th><th>Say</th><th>Never</th></tr></thead>
+        <tbody>
+          <tr><td>Signals, not verdicts</td><td class="mono" style="color:var(--human)">"62% of lines carry AI signals"</td><td class="mono" style="color:var(--ai)">"this PR is AI-written / faked"</td></tr>
+          <tr><td>Own the uncertainty</td><td class="mono" style="color:var(--human)">"inferred · confidence 0.6"</td><td class="mono" style="color:var(--ai)">"detected AI code"</td></tr>
+          <tr><td>Neutral about AI</td><td class="mono" style="color:var(--human)">"AI-assisted"</td><td class="mono" style="color:var(--ai)">"contaminated / suspicious"</td></tr>
+          <tr><td>Actionable, calm</td><td class="mono" style="color:var(--human)">"1 human review requested"</td><td class="mono" style="color:var(--ai)">"BLOCKED — violation"</td></tr>
+          <tr><td>People, not policing</td><td class="mono" style="color:var(--human)">"transparency for maintainers"</td><td class="mono" style="color:var(--ai)">"catch developers cheating"</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- 07 -->
+    <section id="dodont">
+      <h2><span class="sn">07</span> Do &amp; don't</h2>
+      <div class="dd">
+        <div class="ddcol do">
+          <h4>Do</h4>
+          <ul>
+            <li>Keep human = viridian, AI = sienna, everywhere. Consistency is comprehension.</li>
+            <li>Use mono for any number, %, SHA, or label — it is the instrument voice.</li>
+            <li>Let the warm putty ground breathe; whitespace is a feature.</li>
+            <li>Reserve the shadow + fingerprint for one hero moment per view.</li>
+            <li>Pair every inferred claim with its confidence.</li>
+          </ul>
+        </div>
+        <div class="ddcol dont">
+          <h4>Don't</h4>
+          <ul>
+            <li>Don't use red/green as pass/fail — AI is not "fail". Sienna ≠ error.</li>
+            <li>Don't add a third data hue or a gradient background hero.</li>
+            <li>Don't center everything or scatter emoji as section markers.</li>
+            <li>Don't state an inferred result as fact — no naked "AI detected".</li>
+            <li>Don't let the mark's gradient leak into UI fills; it is for the seed only.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 08 -->
+    <section id="tokens">
+      <h2><span class="sn">08</span> Token dump</h2>
+      <p class="intro">Copy-paste the whole system. Drop into <code>:root</code> plus the dark overrides and every component above retheme s automatically.</p>
+      <pre><span class="c">/* light — the chosen defaults */</span>
+<span class="k">:root</span> {
+  --ground:<span class="v">#ECE9E1</span>; --surface:<span class="v">#FBFAF6</span>; --surface-2:<span class="v">#F3F0E8</span>; --code-bg:<span class="v">#F4F1E9</span>;
+  --ink:<span class="v">#201D19</span>; --muted:<span class="v">#6B655B</span>; --faint:<span class="v">#948D80</span>;
+  --line:<span class="v">#DCD6C9</span>; --line-strong:<span class="v">#C4BCAC</span>;
+  --human:<span class="v">#1F6E5B</span>; --human-soft:<span class="v">#DCEBE4</span>;
+  --ai:<span class="v">#B0511C</span>; --ai-soft:<span class="v">#F1E1D2</span>;
+  --brand:<span class="v">#1F6E5B</span>; --warn:<span class="v">#B0511C</span>;
+}
+<span class="c">/* dark — swap only the tokens */</span>
+<span class="k">:root[data-theme="dark"]</span> {
+  --ground:<span class="v">#16140F</span>; --surface:<span class="v">#201D16</span>; --surface-2:<span class="v">#26221A</span>; --code-bg:<span class="v">#1B180F</span>;
+  --ink:<span class="v">#ECE7DB</span>; --muted:<span class="v">#9C9384</span>; --faint:<span class="v">#736B5D</span>;
+  --line:<span class="v">#322D23</span>; --line-strong:<span class="v">#433C2E</span>;
+  --human:<span class="v">#57C6A8</span>; --human-soft:<span class="v">#16332B</span>;
+  --ai:<span class="v">#E28A50</span>; --ai-soft:<span class="v">#35251A</span>;
+  --brand:<span class="v">#57C6A8</span>; --warn:<span class="v">#E28A50</span>;
+}
+<span class="c">/* fonts: Bricolage Grotesque · IBM Plex Sans · IBM Plex Mono (Google Fonts) */</span></pre>
+    </section>
+
+  </main>
+</div>
+
+<footer>🌾 grain · design system v0.1 · human = viridian · AI = sienna · warm putty ground</footer>
+
+<script>
+  (function(){
+    var root=document.documentElement, btn=document.getElementById('themeBtn'), KEY='grain-theme';
+    try{var s=localStorage.getItem(KEY); if(s) root.setAttribute('data-theme',s);}catch(e){}
+    btn.addEventListener('click',function(){
+      var cur=root.getAttribute('data-theme');
+      var isDark=cur?cur==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+      var next=isDark?'light':'dark';
+      root.setAttribute('data-theme',next);
+      try{localStorage.setItem(KEY,next);}catch(e){}
+      if(window.__drawGrain) window.__drawGrain();
+    });
+  })();
+  (function(){
+    var links=[].slice.call(document.querySelectorAll('#toc a')), map={};
+    links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+    if(!('IntersectionObserver'in window))return;
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){
+      if(e.isIntersecting){links.forEach(function(l){l.classList.remove('active');}); var a=map[e.target.id]; if(a)a.classList.add('active');}
+    });},{rootMargin:'-40% 0px -55% 0px'});
+    document.querySelectorAll('main section').forEach(function(s){io.observe(s);});
+  })();
+  (function(){
+    var canvas=document.getElementById('grainCanvas'); if(!canvas||!canvas.getContext)return;
+    var ctx=canvas.getContext('2d');
+    function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+    function rnd(n){var x=Math.sin(n*12.9898)*43758.5453; return x-Math.floor(x);}
+    var N=120, bars=[];
+    for(var i=0;i<N;i++){
+      var r=rnd(i+1), cl=rnd(Math.floor(i/6)+100), p=r*0.6+cl*0.4, cls;
+      if(p<0.62)cls='h'; else if(p<0.93)cls='a'; else cls='u';
+      bars.push({cls:cls,h:0.45+rnd(i+50)*0.55});
+    }
+    function draw(prog){
+      var W=canvas.width,H=canvas.height; ctx.clearRect(0,0,W,H);
+      var human=css('--human'),ai=css('--ai'),unc=css('--line-strong');
+      var gap=2, bw=(W-gap*(N-1))/N, shown=Math.floor(N*prog);
+      for(var i=0;i<N;i++){var b=bars[i];
+        ctx.globalAlpha=i<shown?1:(i===shown?(N*prog-shown):0);
+        ctx.fillStyle=b.cls==='h'?human:b.cls==='a'?ai:unc;
+        var bh=H*b.h,x=i*(bw+gap),y=(H-bh)/2,rr=Math.min(bw/2,2);
+        ctx.beginPath(); if(ctx.roundRect)ctx.roundRect(x,y,bw,bh,rr); else ctx.rect(x,y,bw,bh); ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
+    function fit(){var ratio=Math.min(window.devicePixelRatio||1,2),w=canvas.clientWidth||1000; canvas.width=w*ratio; canvas.height=80*ratio;}
+    fit(); window.__drawGrain=function(){draw(1);};
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){draw(1);}
+    else{var start=null; requestAnimationFrame(function step(ts){if(start===null)start=ts; var t=Math.min((ts-start)/850,1); draw(1-Math.pow(1-t,3)); if(t<1)requestAnimationFrame(step);});}
+    new MutationObserver(function(){draw(1);}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+    window.addEventListener('resize',function(){fit();draw(1);});
+  })();
+</script>
+
+</body>
+</html>

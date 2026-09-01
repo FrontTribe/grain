@@ -1,0 +1,77 @@
+/* Grain design tokens — v0.1
+ * human = viridian, AI = sienna, warm putty ground.
+ * Drop into :root plus the dark override; every component rethemes automatically.
+ * Fonts: Bricolage Grotesque (display) · IBM Plex Sans (body) · IBM Plex Mono (data). */
+
+:root {
+  /* neutrals & surfaces */
+  --ground: #ECE9E1;
+  --surface: #FBFAF6;
+  --surface-2: #F3F0E8;
+  --code-bg: #F4F1E9;
+  --ink: #201D19;
+  --muted: #6B655B;
+  --faint: #948D80;
+  --line: #DCD6C9;
+  --line-strong: #C4BCAC;
+
+  /* semantic — the two materials */
+  --human: #1F6E5B;
+  --human-soft: #DCEBE4;
+  --ai: #B0511C;
+  --ai-soft: #F1E1D2;
+  --brand: #1F6E5B; /* = human */
+  --warn: #B0511C;  /* = ai; attention, never "error red" */
+
+  /* space (4px grid) */
+  --sp1: 4px; --sp2: 8px; --sp3: 12px; --sp4: 16px;
+  --sp5: 24px; --sp6: 36px; --sp7: 56px;
+
+  /* radius */
+  --r-chip: 5px; --r-btn: 10px; --r-card: 14px; --r-pill: 999px;
+
+  /* elevation */
+  --shadow: 0 1px 2px rgba(32,29,25,.05), 0 8px 28px rgba(32,29,25,.07);
+}
+
+/* dark — swap only the tokens. Guard so an explicit light choice wins over dark OS. */
+:root:not([data-theme="light"]) {
+  @media (prefers-color-scheme: dark) {
+    --ground: #16140F;
+    --surface: #201D16;
+    --surface-2: #26221A;
+    --code-bg: #1B180F;
+    --ink: #ECE7DB;
+    --muted: #9C9384;
+    --faint: #736B5D;
+    --line: #322D23;
+    --line-strong: #433C2E;
+    --human: #57C6A8;
+    --human-soft: #16332B;
+    --ai: #E28A50;
+    --ai-soft: #35251A;
+    --brand: #57C6A8;
+    --warn: #E28A50;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.42);
+  }
+}
+
+/* explicit dark toggle wins in the other direction too */
+:root[data-theme="dark"] {
+  --ground: #16140F;
+  --surface: #201D16;
+  --surface-2: #26221A;
+  --code-bg: #1B180F;
+  --ink: #ECE7DB;
+  --muted: #9C9384;
+  --faint: #736B5D;
+  --line: #322D23;
+  --line-strong: #433C2E;
+  --human: #57C6A8;
+  --human-soft: #16332B;
+  --ai: #E28A50;
+  --ai-soft: #35251A;
+  --brand: #57C6A8;
+  --warn: #E28A50;
+  --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 34px rgba(0,0,0,.42);
+}
