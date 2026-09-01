@@ -2,11 +2,19 @@ import { notFound } from "next/navigation";
 import { TopBar, Card, MiniBar } from "@/components/dashboard/ui";
 import { Fingerprint } from "@/components/Fingerprint";
 import { getRepoDetail, ago, num } from "@/lib/data";
+import { rescanRepo } from "@/app/app/integrations/actions";
 
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
 
-export default async function RepoDetail({ params }: { params: Promise<{ name: string }> }) {
+export default async function RepoDetail({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ name: string }>;
+  searchParams: Promise<{ error?: string; rescanned?: string }>;
+}) {
   const { name } = await params;
+  const { error, rescanned } = await searchParams;
   const data = await getRepoDetail(name);
   if (!data) notFound();
   const { repo, dirs, prs } = data;
@@ -17,11 +25,20 @@ export default async function RepoDetail({ params }: { params: Promise<{ name: s
         title=""
         right={
           <>
-            <span className={`${btn} border border-line bg-surface text-muted`}>Re-scan</span>
+            <form action={rescanRepo}>
+              <input type="hidden" name="full_name" value={repo.full_name ?? ""} />
+              <input type="hidden" name="name" value={repo.name} />
+              <button type="submit" className={`${btn} border border-line bg-surface text-muted`}>Re-scan</button>
+            </form>
             <span className={`${btn} bg-brand text-surface`}>Configure policy</span>
           </>
         }
       />
+      {(error || rescanned) && (
+        <div className={`mx-7 mt-4 rounded-[10px] border px-3.5 py-2.5 text-[13px] ${error ? "border-ai/40 bg-ai-soft text-ai" : "border-human/40 bg-human-soft text-human"}`}>
+          {error ? error : "Re-scanned from GitHub — provenance updated."}
+        </div>
+      )}
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-7">
         <div className="-mt-2 font-mono text-sm text-muted">
           Repositories / <span className="font-display text-lg font-bold text-ink">{repo.name}</span>

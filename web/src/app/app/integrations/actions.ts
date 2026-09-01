@@ -72,6 +72,28 @@ export async function onboardScan(formData: FormData) {
   redirect("/onboarding");
 }
 
+// Re-scan a repo already in the workspace by re-fetching it from GitHub.
+export async function rescanRepo(formData: FormData) {
+  const full = String(formData.get("full_name") ?? "");
+  const name = String(formData.get("name") ?? "");
+  const base = `/app/repos/${encodeURIComponent(name)}`;
+  const p = parseRepoInput(full);
+  if (!p) redirect(`${base}?error=${encodeURIComponent("This repo has no GitHub source to re-scan.")}`);
+
+  const supabase = await createClient();
+  const { data: token } = await supabase.rpc("get_github_token");
+  let err = "";
+  try {
+    const scan = await scanGithubRepo(p.owner, p.repo, { token: token ?? undefined, max: 100 });
+    await supabase.rpc("ingest_grain_member", { p_payload: scan.report });
+  } catch (e) {
+    err = e instanceof GithubScanError ? e.message : "Re-scan failed — try again.";
+  }
+  revalidatePath(base);
+  revalidatePath("/app");
+  redirect(err ? `${base}?error=${encodeURIComponent(err)}` : `${base}?rescanned=1`);
+}
+
 export async function disconnectGithub() {
   const supabase = await createClient();
   await supabase.rpc("disconnect_github");
