@@ -15,8 +15,9 @@ type Config struct {
 	HumanOwned  []string // glob-ish paths that should stay human-authored
 	Agents      []string // AI agent names recognized in trailers/authors
 	BotAuthors  []string // author patterns treated as bots
-	Inference   bool     // whether behavioral inference runs
-	Output      string   // human-readable report filename
+	Inference        bool   // whether behavioral inference runs
+	ContentClassifier bool  // use the content classifier for the inferred path
+	Output           string // human-readable report filename
 }
 
 // Default returns grain's built-in defaults, used when no .grain.toml is found.
@@ -70,6 +71,8 @@ func Load(root string) (Config, error) {
 			}
 		case "inference":
 			cfg.Inference = val == "true"
+		case "content_classifier":
+			cfg.ContentClassifier = val == "true"
 		case "output":
 			cfg.Output = unquote(val)
 		}

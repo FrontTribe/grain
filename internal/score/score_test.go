@@ -8,9 +8,9 @@ import (
 	"github.com/FrontTribe/grain/internal/signal"
 )
 
-func classify(c gitlog.Commit) Result {
+func scoreCommit(c gitlog.Commit) Result {
 	cfg := config.Default()
-	return Classify(c, signal.Extract(c, cfg), cfg)
+	return Classify(c, signal.Extract(c, cfg), cfg, nil)
 }
 
 func TestDeclaredAI(t *testing.T) {
@@ -20,7 +20,7 @@ func TestDeclaredAI(t *testing.T) {
 		Body:    "Some body.\n\nCo-Authored-By: Claude <noreply@anthropic.com>",
 		Files:   []gitlog.FileChange{{Path: "src/a.go", Added: 40, Deleted: 2}},
 	}
-	r := classify(c)
+	r := scoreCommit(c)
 	if r.Basis != "declared" {
 		t.Fatalf("basis = %q, want declared", r.Basis)
 	}
@@ -40,7 +40,7 @@ func TestBotAuthorDeclared(t *testing.T) {
 		Subject:     "chore: bump deps",
 		Files:       []gitlog.FileChange{{Path: "go.mod", Added: 3, Deleted: 3}},
 	}
-	if r := classify(c); !r.IsAI() || r.Basis != "declared" {
+	if r := scoreCommit(c); !r.IsAI() || r.Basis != "declared" {
 		t.Fatalf("bot author not detected: class=%q basis=%q", r.Class, r.Basis)
 	}
 }
@@ -51,7 +51,7 @@ func TestSmallHumanCommitInferred(t *testing.T) {
 		Subject: "tweak copy",
 		Files:   []gitlog.FileChange{{Path: "README.md", Added: 4, Deleted: 1}},
 	}
-	r := classify(c)
+	r := scoreCommit(c)
 	if r.Class != Human {
 		t.Fatalf("small no-signal commit class = %q, want human", r.Class)
 	}
@@ -67,7 +67,7 @@ func TestHumanCoauthorIsNotAI(t *testing.T) {
 		Body:    "Co-Authored-By: Maya Dev <maya@example.com>",
 		Files:   []gitlog.FileChange{{Path: "src/a.go", Added: 10, Deleted: 4}},
 	}
-	if r := classify(c); r.IsAI() {
+	if r := scoreCommit(c); r.IsAI() {
 		t.Fatalf("human co-author misclassified as AI: %q", r.Class)
 	}
 }

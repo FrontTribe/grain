@@ -53,7 +53,8 @@ func cmdPush(args []string) error {
 		if len(commits) == 0 {
 			return fmt.Errorf("no commits found")
 		}
-		rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg), cfg)
+		added := addedFor(root, "", *max, cfg)
+		rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg, added), cfg)
 		var buf bytes.Buffer
 		if err := rep.WriteJSON(&buf); err != nil {
 			return err

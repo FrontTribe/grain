@@ -4,11 +4,15 @@
 package score
 
 import (
+	"fmt"
 	"math"
 	"regexp"
+	"sort"
 	"strings"
 
+	"github.com/FrontTribe/grain/internal/classify"
 	"github.com/FrontTribe/grain/internal/config"
+	"github.com/FrontTribe/grain/internal/features"
 	"github.com/FrontTribe/grain/internal/gitlog"
 	"github.com/FrontTribe/grain/internal/signal"
 )
@@ -39,10 +43,20 @@ type Result struct {
 // IsAI reports whether the class counts as AI for aggregation.
 func (r Result) IsAI() bool { return r.Class == AIAssisted || r.Class == AIAuthored }
 
+// EngineWeightsID identifies the weights used, so grain.json stays reproducible:
+// the content classifier's id when enabled, else the behavioral baseline "w1".
+func EngineWeightsID(cfg config.Config) string {
+	if cfg.ContentClassifier {
+		return classify.DefaultModel().WeightsID()
+	}
+	return "w1"
+}
+
 var conventional = regexp.MustCompile(`^(feat|fix|chore|docs|refactor|test|build|ci|perf|style)(\([^)]+\))?!?: .+`)
 
-// Classify scores a single commit.
-func Classify(c gitlog.Commit, s signal.Set, cfg config.Config) Result {
+// Classify scores a single commit. `added` is the commit's added lines by file
+// path (nil unless the content classifier is enabled), used by the inferred path.
+func Classify(c gitlog.Commit, s signal.Set, cfg config.Config, added map[string][]string) Result {
 	r := Result{SHA: c.SHA, Lines: c.Lines(), Signals: s.Declared}
 
 	if s.DeclaredAI {
@@ -62,6 +76,20 @@ func Classify(c gitlog.Commit, s signal.Set, cfg config.Config) Result {
 		return r
 	}
 
+	// Content classifier (opt-in): score the actual added code. Confidence is
+	// already capped at the inferred ceiling by classify.
+	if cfg.ContentClassifier {
+		if fv, ok := features.Aggregate(added); ok {
+			res := classify.DefaultModel().Score(fv)
+			r.AILikelihood = res.AILikelihood
+			r.Confidence = res.Confidence
+			r.Basis = "inferred"
+			r.Signals = topContribs(res, 3)
+			r.Class = bucket(r.AILikelihood, r.Confidence)
+			return r
+		}
+	}
+
 	// Behavioral inference — deliberately weak, and capped.
 	f := inferFeatures(c)
 	r.AILikelihood = logistic(f - 1.0) // small commits land well below 0.5
@@ -69,6 +97,22 @@ func Classify(c gitlog.Commit, s signal.Set, cfg config.Config) Result {
 	r.Basis = "inferred"
 	r.Class = bucket(r.AILikelihood, r.Confidence)
 	return r
+}
+
+// topContribs renders the n most influential feature contributions as signals,
+// e.g. "docstring_completeness +0.31" (toward AI) / "-0.12" (toward human).
+func topContribs(res classify.Result, n int) []string {
+	cs := make([]classify.Contribution, len(res.Contributions))
+	copy(cs, res.Contributions)
+	sort.SliceStable(cs, func(i, j int) bool { return math.Abs(cs[i].Effect) > math.Abs(cs[j].Effect) })
+	var out []string
+	for _, c := range cs {
+		if len(out) >= n || math.Abs(c.Effect) < 0.02 {
+			break
+		}
+		out = append(out, fmt.Sprintf("%s %+.2f", c.Feature, c.Effect))
+	}
+	return out
 }
 
 // inferFeatures returns a small positive score; larger = more AI-like.

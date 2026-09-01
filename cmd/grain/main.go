@@ -97,12 +97,25 @@ func repoName(root string) string {
 	return filepath.Base(root)
 }
 
-func classifyAll(commits []gitlog.Commit, cfg config.Config) []score.Result {
+func classifyAll(commits []gitlog.Commit, cfg config.Config, added map[string]map[string][]string) []score.Result {
 	out := make([]score.Result, 0, len(commits))
 	for _, c := range commits {
-		out = append(out, score.Classify(c, signal.Extract(c, cfg), cfg))
+		out = append(out, score.Classify(c, signal.Extract(c, cfg), cfg, added[c.SHA]))
 	}
 	return out
+}
+
+// addedFor reads per-commit added lines when the content classifier is enabled.
+// Best-effort: a git error falls back to nil (behavioral heuristic).
+func addedFor(root, rev string, max int, cfg config.Config) map[string]map[string][]string {
+	if !cfg.ContentClassifier {
+		return nil
+	}
+	m, err := gitlog.ReadAddedLines(root, rev, max)
+	if err != nil {
+		return nil
+	}
+	return m
 }
 
 func today() string { return time.Now().UTC().Format("2006-01-02") }
@@ -129,7 +142,8 @@ func cmdScan(args []string) error {
 	if len(commits) == 0 {
 		return fmt.Errorf("no commits found")
 	}
-	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg), cfg)
+	added := addedFor(root, "", *max, cfg)
+	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg, added), cfg)
 
 	if err := writeFile(filepath.Join(root, cfg.Output), rep.WriteMarkdown); err != nil {
 		return err
@@ -168,7 +182,8 @@ func cmdCheck(args []string) error {
 		fmt.Println("grain: no commits in range — nothing to check")
 		return nil
 	}
-	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg), cfg)
+	added := addedFor(root, *rev, capN, cfg)
+	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg, added), cfg)
 	flagged, over := rep.Attention(cfg.AIThreshold)
 
 	if *format == "md" {
@@ -209,7 +224,8 @@ func cmdBadge(args []string) error {
 	if err != nil {
 		return err
 	}
-	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg), cfg)
+	added := addedFor(root, "", *max, cfg)
+	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg, added), cfg)
 	return rep.WriteBadge(os.Stdout)
 }
 
@@ -234,7 +250,7 @@ func cmdExplain(args []string) error {
 		return fmt.Errorf("commit %s not found", sha)
 	}
 	c := commits[0]
-	res := score.Classify(c, signal.Extract(c, cfg), cfg)
+	res := score.Classify(c, signal.Extract(c, cfg), cfg, addedFor(root, sha, 1, cfg)[c.SHA])
 
 	short := c.SHA
 	if len(short) > 7 {
@@ -312,7 +328,8 @@ ai_threshold = 0.40
 human_owned  = ["src/auth/**", "src/payments/**"]
 
 [detection]
-inference   = true
+inference          = true
+content_classifier = false   # score inferred commits from code content (experimental)
 local_model = "off"
 agents      = ["claude", "copilot", "cursor", "codex", "devin"]
 bot_authors = ["*[bot]"]

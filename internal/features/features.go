@@ -144,6 +144,29 @@ func DetectLanguage(path string) Language {
 	}
 }
 
+// Aggregate builds one commit-level feature vector from its added lines grouped
+// by file path, line-weighted across files. Returns ok=false when there is no
+// substantive added content. Shared by `grain scan` and `grain eval`.
+func Aggregate(added map[string][]string) (Features, bool) {
+	agg := make([]float64, len(Keys))
+	wsum := 0
+	for path, lns := range added {
+		fv := Extract(path, lns).Vector()
+		w := len(lns)
+		for j := range agg {
+			agg[j] += fv[j] * float64(w)
+		}
+		wsum += w
+	}
+	if wsum == 0 {
+		return Features{}, false
+	}
+	for j := range agg {
+		agg[j] /= float64(wsum)
+	}
+	return FromVector(agg), true
+}
+
 // Extract computes the feature vector for a file's added lines. `added` is the
 // raw text of the lines a commit introduced (without the leading '+').
 func Extract(path string, added []string) Features {
