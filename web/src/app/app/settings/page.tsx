@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TopBar, Card } from "@/components/dashboard/ui";
 import { getUserAndOrg, getIngestTokens, getOrgMembers, getInvites, getMyOrgs, getActiveOrgId } from "@/lib/data";
 import { IngestTokens } from "@/components/dashboard/IngestTokens";
@@ -15,8 +16,16 @@ const BILLING_MSG: Record<string, { ok: boolean; text: string }> = {
   unconfigured: { ok: false, text: "Billing isn't configured yet." },
 };
 
-export default async function Settings({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string; billing?: string }> }) {
-  const { saved, error, billing } = await searchParams;
+const TABS = [
+  { key: "general", label: "General" },
+  { key: "members", label: "Members" },
+  { key: "billing", label: "Billing" },
+  { key: "integrations", label: "Integrations" },
+];
+
+export default async function Settings({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string; billing?: string; tab?: string }> }) {
+  const { saved, error, billing, tab: tabParam } = await searchParams;
+  const tab = TABS.some((t) => t.key === tabParam) ? tabParam! : "general";
   const [{ org }, tokens, members, invites, myOrgs, activeId] = await Promise.all([
     getUserAndOrg(), getIngestTokens(), getOrgMembers(), getInvites(), getMyOrgs(), getActiveOrgId(),
   ]);
@@ -34,8 +43,14 @@ export default async function Settings({ searchParams }: { searchParams: Promise
     <>
       <TopBar title="Settings" />
       <div className="flex flex-none gap-6 border-b border-line bg-surface px-7">
-        {["General", "Members", "Billing", "Integrations"].map((t, i) => (
-          <span key={t} className={`border-b-2 py-3.5 text-sm ${i === 0 ? "border-brand font-medium text-ink" : "border-transparent text-muted"}`}>{t}</span>
+        {TABS.map((t) => (
+          <Link
+            key={t.key}
+            href={`/app/settings?tab=${t.key}`}
+            className={`border-b-2 py-3.5 text-sm ${tab === t.key ? "border-brand font-medium text-ink" : "border-transparent text-muted hover:text-ink"}`}
+          >
+            {t.label}
+          </Link>
         ))}
       </div>
 
@@ -51,33 +66,34 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               {billingMsg.text}
             </div>
           )}
-          <Card className="p-6">
-            <form action={renameWorkspace}>
-              <h3 className="font-display text-base font-bold">Workspace</h3>
-              <p className="mb-4 mt-1 text-[12.5px] text-muted">The name and URL your team sees.</p>
-              <div className="mb-3.5 flex items-center gap-4">
-                <label className="w-[150px] text-[13px] font-medium">Workspace name</label>
-                <input name="name" defaultValue={name} maxLength={60} className="h-[42px] flex-1 rounded-[9px] border border-line bg-surface px-3 text-sm outline-none focus:border-brand" />
-              </div>
-              <div className="flex items-center gap-4">
-                <label className="w-[150px] text-[13px] font-medium">URL</label>
-                <div className="flex h-[42px] flex-1 items-center rounded-[9px] border border-line bg-surface px-3 text-sm text-muted">
-                  <span className="text-faint">grain.dev/</span>{slug}
+
+          {tab === "general" && (
+            <Card className="p-6">
+              <form action={renameWorkspace}>
+                <h3 className="font-display text-base font-bold">Workspace</h3>
+                <p className="mb-4 mt-1 text-[12.5px] text-muted">The name and URL your team sees.</p>
+                <div className="mb-3.5 flex items-center gap-4">
+                  <label className="w-[150px] text-[13px] font-medium">Workspace name</label>
+                  <input name="name" defaultValue={name} maxLength={60} className="h-[42px] flex-1 rounded-[9px] border border-line bg-surface px-3 text-sm outline-none focus:border-brand" />
                 </div>
-              </div>
-              <div className="mt-4 flex justify-end"><button type="submit" className={`${btn} bg-brand text-surface`}>Save changes</button></div>
-            </form>
-          </Card>
+                <div className="flex items-center gap-4">
+                  <label className="w-[150px] text-[13px] font-medium">URL</label>
+                  <div className="flex h-[42px] flex-1 items-center rounded-[9px] border border-line bg-surface px-3 text-sm text-muted">
+                    <span className="text-faint">grain.dev/</span>{slug}
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-end"><button type="submit" className={`${btn} bg-brand text-surface`}>Save changes</button></div>
+              </form>
+            </Card>
+          )}
 
-          <Card className="p-6">
-            <MembersCard members={members} invites={invites} canInvite={canInvite} />
-          </Card>
+          {tab === "members" && (
+            <Card className="p-6">
+              <MembersCard members={members} invites={invites} canInvite={canInvite} />
+            </Card>
+          )}
 
-          <Card className="p-6">
-            <IngestTokens tokens={tokens} />
-          </Card>
-
-          <div className="grid grid-cols-1 gap-[18px] md:grid-cols-2">
+          {tab === "billing" && (
             <Card className="flex flex-col p-6">
               <div className="flex items-center justify-between">
                 <h3 className="font-display text-base font-bold">Plan</h3>
@@ -94,7 +110,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">Org dashboard &amp; policy</li>
                 <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">{members.length} {members.length === 1 ? "seat" : "seats"} used</li>
               </ul>
-              <div className="mt-auto flex justify-end pt-4">
+              <div className="mt-5 flex justify-end">
                 {!canInvite ? (
                   <span className="font-mono text-[11.5px] text-faint">Ask an admin to manage billing</span>
                 ) : subscribed ? (
@@ -104,11 +120,18 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 )}
               </div>
             </Card>
+          )}
 
-            <Card className="p-6">
-              <GithubPanel />
-            </Card>
-          </div>
+          {tab === "integrations" && (
+            <>
+              <Card className="p-6">
+                <GithubPanel />
+              </Card>
+              <Card className="p-6">
+                <IngestTokens tokens={tokens} />
+              </Card>
+            </>
+          )}
         </div>
       </div>
     </>
