@@ -146,6 +146,7 @@
         <li><b>Records instead of guessing.</b> A hook in the agent logs the lines it writes; the commit gets a signed git note with exactly those lines. "git blame for AI" is a concrete, checkable claim, not another classifier.</li>
         <li><b>Developer-native.</b> It's a stdlib-only Go CLI you run in your own repo in one command. No signup to try. HN rewards "I can run this in 10 seconds."</li>
         <li><b>Self-distributing.</b> The README badge is an ad on every repo that adopts it.</li>
+        <li><b>Answers the vibe-coding security question.</b> Grain says which dangerous-looking lines the agent wrote (a pasted token, TLS off, shell from strings) and which packages it invented (the slopsquatting check against the registry), tells the agent before the commit, and puts both in the PR. A second live debate, and grain has a concrete answer for it.</li>
         <li><b>Honest by construction.</b> "Signals, not verdicts" and openly-stated limits are catnip for a skeptical audience. The honesty <em>is</em> the pitch.</li>
       </ul>
       <div class="callout warn">
@@ -173,6 +174,7 @@
       <ul>
         <li class="mono" style="font-size:13.5px">Show HN: Grain – know which lines the AI wrote, where they landed, and whether anyone reviewed them</li>
         <li class="mono" style="font-size:13.5px">Show HN: I built "git blame for AI": signed, line-level provenance in your repo</li>
+        <li class="mono" style="font-size:13.5px">Show HN: Grain – which lines the agent wrote, which dangerous ones, and which packages it made up</li>
       </ul>
       <div class="callout warn"><div class="ct">Title rules</div>No "revolutionary", no "AI-powered", no emoji in the HN title. Say what it does, not how it feels. The URL should point straight at the GitHub repo (not the marketing site) — HN prefers the source.</div>
     </section>
@@ -187,7 +189,7 @@ A hook in the agent (Claude Code today) logs the lines it writes as content hash
     grain hook install
     grain scan
 
-On top of that it reports two things a "38% AI" number can't: where AI-written lines landed in critical paths (auth, billing, workflows…) with no review evidence, down to the commits, and how often AI lines get reworked later versus human lines from the same commits.
+On top of that it reports things a "38% AI" number can't: where AI-written lines landed in critical paths (auth, billing, workflows…) with no review evidence, down to the commits; how often AI lines get reworked later versus human lines from the same commits; which added lines match a small set of danger patterns (secrets, TLS verification off, shell or SQL from strings) and whether an AI wrote them; and which packages the change added, with the registry's answer on whether the name exists and how old it is. The last one is the slopsquatting check: agents invent package names, someone registers them. When Claude Code writes a dangerous line, the hook tells it before the commit. None of this is a vulnerability scanner and it says so next to every finding.
 
 The core principle is "signals, not verdicts," and it is NOT an AI-cheating detector:
 
@@ -197,7 +199,7 @@ The core principle is "signals, not verdicts," and it is NOT an AI-cheating dete
 
 Honest dogfood: Grain reports its own repo as 97% AI-assisted, and since the hook landed the exact lines are attested and signed. It also reports 449 AI-written lines in its own auth/billing/workflows paths with no review evidence, because I'm a solo dev and nobody reviewed them. It doesn't pretend otherwise.
 
-There's a hosted dashboard (getgrain.dev, free for 3 repos) that scans on push through a GitHub App, checks the PR API for review evidence, and emails you when unreviewed AI code lands in a critical path. The engine is the same.
+There's a hosted dashboard (getgrain.dev, free for 3 repos) that scans on push through a GitHub App, checks the PR API for review evidence, and emails you when unreviewed AI code lands in a critical path, or when a push lands an AI-written security finding or a package the registry doesn't know. The engine is the same. The PR check can gate on all of it, but every gate is opt-in and off by default.
 
 Two things I'd genuinely love feedback on: (1) which other agents should get a capture hook first (the ledger format is one JSON line per edit), and (2) as a maintainer, what would make the PR comment useful instead of noise?
 
@@ -227,8 +229,9 @@ Repo: github.com/FrontTribe/grain — happy to answer anything.</div></div>
       <p>Three visuals do 90% of the work. Prepare them before launch:</p>
       <ol>
         <li><b>A terminal recording</b> (20–30s). Use <code>asciinema</code> (crisp, copy-pasteable) or a GIF via <code>vhs</code>. Show: <code>grain scan</code> with the bars, the outcomes and risk lines, "wrote PROVENANCE.md"; then <code>grain blame cmd/grain/main.go</code> lighting up the AI lines; then <code>grain verify</code> passing. End on the honest 97% dogfood.</li>
-        <li><b>A screenshot of the PR comment</b> from the GitHub Action on a real PR (you already have one on PR #1). It shows the product in its natural habitat.</li>
-        <li><b>A screenshot of the risk alert email</b> ("24 unreviewed AI-written lines landed in auth") as it was delivered. It makes "where it landed, and whether anyone looked" concrete in one glance.</li>
+        <li><b>A screenshot of the PR comment</b> from the GitHub Action on a real PR. PR #3 (closed, kept for this) has the full shape: policy lines, a TLS-off finding attributed to the AI, and a package PyPI has never heard of. It shows the product in its natural habitat.</li>
+        <li><b>A screenshot of the risk alert email</b> ("24 unreviewed AI-written lines landed in auth") as it was delivered, and the security one next to it ("1 AI-written security finding, 1 package not on the registry"). They make "where it landed, and whether anyone looked" concrete in one glance.</li>
+        <li><b>A screenshot of the hook talking back to Claude Code</b>: the agent writes <code>verify=False</code>, grain answers in the same turn with the pattern, the line and "fix the trust store instead". Capture at the source, in one frame.</li>
       </ol>
       <div class="callout good"><div class="ct">Keep it real</div>Don't stage a fake "73% human" repo for the demo. The 97%-AI dogfood with 449 unreviewed critical-path lines is more memorable and more credible <em>because</em> it's honest — that's the whole brand.</div>
     </section>
@@ -246,6 +249,8 @@ Repo: github.com/FrontTribe/grain — happy to answer anything.</div></div>
       <div class="qa"><div class="q"><span class="mk">Q</span>"False positives will flame innocent developers."</div><div class="a"><span class="mk">A</span>That's the failure mode I designed hardest against. Inference confidence is capped at 0.70 and always labeled "inferred"; the output says "62% of lines carry AI signals," never "this person cheated"; and the default is comment-only, never a merge block. A human who writes clean code reads as human unless there's a declared signal.</div></div>
 
       <div class="qa"><div class="q"><span class="mk">Q</span>"This will be used by managers to surveil/punish devs."</div><div class="a"><span class="mk">A</span>A real risk, and an explicit non-goal. Grain is framed for maintainer transparency, not dev policing; there's no per-developer leaderboard, and the copy avoids blame language. I'd rather it be less "powerful" than become a weapon — that's a deliberate product choice, not an oversight.</div></div>
+
+      <div class="qa"><div class="q"><span class="mk">Q</span>"The security part is a worse Semgrep. Why not just run a real scanner?"</div><div class="a"><span class="mk">A</span>Run the real scanner; grain isn't one and says so next to every finding. What it adds is the join with provenance: which dangerous-looking lines the agent wrote, whether anyone reviewed them, and the answer delivered to the agent before the commit rather than to a dashboard after. The dependency check is the same idea: not "is this package safe" but "does this name the agent reached for even exist, and since when". A small pattern set, shared byte for byte between the CLI and Cloud, that tells you where to look first.</div></div>
 
       <div class="qa"><div class="q"><span class="mk">Q</span>"Why not just grep for Co-Authored-By?"</div><div class="a"><span class="mk">A</span>The grep gets you a commit-level count of declared trailers. Grain adds the line level (which lines, via the hook), the signature, where those lines landed (critical paths without review evidence, down to the commit), what happened to them later (rework vs human lines from the same commits), and the badge, PR comment and PROVENANCE.md around it. The grep is the seed; the product is everything around it.</div></div>
 

@@ -108,7 +108,7 @@ go build -o grain ./cmd/grain     # or: make build
 Other commands:
 
 ```bash
-grain check --range main..HEAD   # gate a change set; exit 1 on attention
+grain check --range main..HEAD   # gate a change set; exit 1 on attention or a blocking gate
 grain explain <sha>              # why a commit was classified as it was
 grain badge                      # shields.io endpoint JSON
 grain init                       # write an example .grain.toml
@@ -143,15 +143,29 @@ No service to run.
 
 ### 2. A PR check
 
-The GitHub Action posts a calm, itemized comment from `grain[bot]`:
+The GitHub Action posts one calm, itemized sticky comment: the AI share per
+path, one line per thing your policy noticed, then the security findings and
+the dependencies the change added. This is the comment it left on a test PR
+in this repository:
 
 ```
-grain report · #482
-› 62% of +214 lines carry AI-authorship signals  (1 Co-Authored-By: Claude)
-› 2 files touch src/auth/ — human-owned per CODEOWNERS
-› convention check: 3 deviations from repo style
-policy: AI share > 40% in a human-owned path → 1 human review requested
+Provenance report · PR #3
+100% AI-assisted · 1 commit, 11 lines changed
+sandbox/                     0% human · 100% AI
+
+policy  change set above the 40% AI threshold → review suggested
+policy  1 security finding in AI-written lines → a human should look
+policy  1 added dependency not on the registry → a human should look
+
+security      7b49393 sandbox/fetch.py   TLS verification disabled (high)   AI
+dependencies  leftpadd-utilz   pypi   AI   not found
+              requests         pypi   AI   5691 days old
 ```
+
+Every gate is opt-in: `fail_on: policy` in the workflow, and `security` /
+`dependencies = "block"` in `.grain.toml` (defaults `warn`). A blocking gate
+fails the `grain/provenance` status a branch rule can require; a maintainer
+can still merge.
 
 ### 3. `PROVENANCE.md`
 
@@ -267,9 +281,12 @@ repositories and keeps watching:
 - **Scans on every push** through the GitHub App; declared and attested
   provenance from git, inferred from the code, review evidence from the
   **pull request API** (was there a PR, who approved it).
-- **Risk and Outcomes** per repository, trends and policy across the workspace.
-- **Alerts** by email when a repo crosses your AI threshold or when unreviewed
-  AI-written lines land in a critical path, naming the commits.
+- **Risk, Outcomes, Security and Dependencies** per repository (registries
+  always consulted), trends and policy across the workspace.
+- **Alerts** by email when a repo crosses your AI threshold, when unreviewed
+  AI-written lines land in a critical path, or when a push lands AI-written
+  security findings or a package the registry does not know. Each names the
+  commits; one push, at most one email per kind.
 - A **signed Authorship Bill of Materials** (Ed25519, keys published at
   [`/.well-known/grain-keys.json`](https://getgrain.dev/.well-known/grain-keys.json))
   that anyone can check at [getgrain.dev/verify](https://getgrain.dev/verify) or
@@ -284,8 +301,8 @@ CLI-scanned repositories reach the same dashboard with `grain push`
 | Tier | Price | Includes |
 |------|-------|----------|
 | **grain CLI** | MIT · free forever | CLI, Action, badge, `PROVENANCE.md`, signed attestations, the full engine — runs locally. |
-| **Cloud Free** | $0 | 3 repositories, 3 seats: dashboard, scans on push, Risk, Outcomes, trends, policy. |
-| **Cloud Team** | $29 / workspace / month | Unlimited repositories, up to 20 seats, email alerts, signed authorship export. |
+| **Cloud Free** | $0 | 3 repositories, 3 seats: dashboard, scans on push, Risk, Outcomes, Security, Dependencies, trends, policy. |
+| **Cloud Team** | $29 / workspace / month | Unlimited repositories, up to 20 seats, email alerts (threshold, risk, security, dependencies), signed authorship export. |
 | **Cloud Audit** | from $199 / month | Unlimited seats, retention rules and audit exports, SSO on request, invoicing. |
 
 Everything that runs on a single repo, locally, is free and MIT. The open engine
@@ -300,7 +317,10 @@ Grain is built to be trustworthy, not omniscient. It says so plainly:
 - **Inference is a hint, not proof.** It's capped at 0.70 confidence and always
   labeled `inferred` — a clean human commit reads as human.
 - **It is not a dev-surveillance tool.** No per-developer leaderboard; defaults
-  are comment-only, never a merge block.
+  are comment-only, never a merge block. Every gate is something you turn on.
+- **It is not a vulnerability scanner.** The security patterns and the
+  registry check say where to look and who wrote it; they do not audit
+  package contents or prove a line is exploitable. Keep your SAST.
 - **Attestation only covers what a hook captured.** Lines written before the
   hook existed, in another editor, or by hand are shown as human, never
   claimed as AI. A valid signature proves who wrote the note and that it hasn't
