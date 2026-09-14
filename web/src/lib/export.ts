@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import { getUserAndOrg, getRepos, num } from "@/lib/data";
+import { canonical } from "@/lib/bom";
 
 // Engine identity mirrored from the CLI (internal/report). Bump with the engine.
 const ENGINE_VERSION = "0.1.0";
@@ -37,16 +38,6 @@ const METHODOLOGY =
   "attested (a git-note declaration), declared (a commit trailer or bot/agent identity), " +
   "and inferred (behavioral/content signals, confidence capped at 0.70 — never treated as certain). " +
   "Percentages are of classified lines. This report reflects the last scan of each repository.";
-
-// Stable, key-sorted stringify so the integrity digest is reproducible.
-function canonical(v: unknown): string {
-  if (Array.isArray(v)) return `[${v.map(canonical).join(",")}]`;
-  if (v && typeof v === "object") {
-    const keys = Object.keys(v as Record<string, unknown>).sort();
-    return `{${keys.map((k) => `${JSON.stringify(k)}:${canonical((v as Record<string, unknown>)[k])}`).join(",")}}`;
-  }
-  return JSON.stringify(v);
-}
 
 // Build the org's Authorship Bill of Materials, timestamped and integrity-hashed.
 export async function buildAuthorshipBOM(nowISO: string): Promise<AuthorshipBOM> {

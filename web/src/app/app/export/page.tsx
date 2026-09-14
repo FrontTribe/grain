@@ -81,7 +81,11 @@ export default async function ExportPage() {
             <div className="mt-1 text-[12.5px] text-muted">
               {bom.integrity.algorithm}: <code className="break-all font-mono text-[11.5px] text-ink">{bom.integrity.digest}</code>
             </div>
-            <div className="mt-1.5 text-[11.5px] text-faint">Hash of the canonical report — recompute it from the JSON to verify this document is unaltered.</div>
+            <div className="mt-1.5 text-[11.5px] text-faint">
+              Hash of the canonical report — recompute it from the JSON to verify this document is unaltered.
+              {" "}
+              <a href="/verify" target="_blank" rel="noreferrer" className="text-brand no-print hover:underline">Verify a report →</a>
+            </div>
           </div>
         </div>
       </div>
