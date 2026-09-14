@@ -18,11 +18,12 @@ type Set struct {
 	DeclaredHuman bool     // an explicit human attestation is present (git note)
 	AttestedClass string   // "" | "ai" | "human": authoritative provenance from a git note
 	HumanCoauth   bool     // a human (non-agent) co-author trailer is present
+	AILineFrac    float64  // attested share of added lines that were AI-written (AI-Lines: n/m); -1 = whole-commit/unknown
 }
 
 // Extract reads declared signals from a commit against the configured agents.
 func Extract(c gitlog.Commit, cfg config.Config) Set {
-	var s Set
+	s := Set{AILineFrac: -1}
 	lower := func(v string) string { return strings.ToLower(v) }
 
 	isAgent := func(v string) (string, bool) {
@@ -115,6 +116,17 @@ func Extract(c gitlog.Commit, cfg config.Config) Set {
 					s.attestAI("note: AI-Authored " + v)
 				} else {
 					s.attestHuman("note: AI-Authored " + v)
+				}
+			}
+		case "ai-lines":
+			// "n/m": exactly n of the m substantive added lines were AI-written
+			// (recorded by `grain attest`). Lets aggregation weight a partially
+			// AI-assisted commit by its true line share instead of all-or-nothing.
+			if n, m, ok := strings.Cut(v, "/"); ok {
+				num, e1 := strconv.ParseFloat(strings.TrimSpace(n), 64)
+				den, e2 := strconv.ParseFloat(strings.TrimSpace(m), 64)
+				if e1 == nil && e2 == nil && den > 0 && num >= 0 && num <= den {
+					s.AILineFrac = num / den
 				}
 			}
 		case "human-authored":

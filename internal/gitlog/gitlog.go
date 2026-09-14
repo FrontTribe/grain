@@ -143,6 +143,33 @@ func AddNote(dir, ref, sha, body string) error {
 	return err
 }
 
+// ReadNote returns the git note on `ref` for one commit ("" when absent).
+func ReadNote(dir, ref, sha string) string {
+	out, err := run(dir, "notes", "--ref="+ref, "show", sha)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(out)
+}
+
+// ShowBody returns a commit's full message (subject + body).
+func ShowBody(dir, sha string) string {
+	out, err := run(dir, "show", "-s", "--format=%B", sha)
+	if err != nil {
+		return ""
+	}
+	return out
+}
+
+// Head returns the SHA of HEAD.
+func Head(dir string) (string, error) {
+	out, err := run(dir, "rev-parse", "HEAD")
+	return strings.TrimSpace(out), err
+}
+
+// Run executes a git subcommand in dir and returns its stdout.
+func Run(dir string, args ...string) (string, error) { return run(dir, args...) }
+
 // ReadAddedLines returns, per commit SHA, the added ('+') lines grouped by file
 // path. It shells out once to `git log -p --unified=0` and parses the patch. Used
 // by content-based detection (which needs the actual added code, not just counts).

@@ -38,6 +38,7 @@ type Result struct {
 	Class        string
 	Signals      []string
 	Lines        int
+	AIFrac       float64 // attested AI share of this commit's lines (0-1); -1 = whole-commit
 }
 
 // IsAI reports whether the class counts as AI for aggregation.
@@ -68,7 +69,7 @@ var conventional = regexp.MustCompile(`^(feat|fix|chore|docs|refactor|test|build
 // Classify scores a single commit. `added` is the commit's added lines by file
 // path (nil unless the content classifier is enabled), used by the inferred path.
 func Classify(c gitlog.Commit, s signal.Set, cfg config.Config, added map[string][]string) Result {
-	r := Result{SHA: c.SHA, Lines: c.Lines(), Signals: s.Declared}
+	r := Result{SHA: c.SHA, Lines: c.Lines(), Signals: s.Declared, AIFrac: -1}
 
 	// Attested: an authoritative git-note declaration overrides everything else.
 	switch s.AttestedClass {
@@ -77,6 +78,7 @@ func Classify(c gitlog.Commit, s signal.Set, cfg config.Config, added map[string
 		r.Confidence = 0.95
 		r.Basis = "attested"
 		r.Class = bucket(r.AILikelihood, r.Confidence)
+		r.AIFrac = s.AILineFrac // line-level attestation, when grain attest recorded it
 		return r
 	case "human":
 		r.AILikelihood = 0.05

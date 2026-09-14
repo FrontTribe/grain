@@ -40,6 +40,12 @@ func main() {
 		err = cmdEval(os.Args[2:])
 	case "calibrate":
 		err = cmdCalibrate(os.Args[2:])
+	case "hook":
+		err = cmdHook(os.Args[2:])
+	case "attest":
+		err = cmdAttest(os.Args[2:])
+	case "blame":
+		err = cmdBlame(os.Args[2:])
 	case "push":
 		err = cmdPush(os.Args[2:])
 	case "init":
@@ -79,6 +85,9 @@ usage:
   grain annotate <sha> --ai|--human|--assisted   attest a commit's provenance in a git note
   grain eval [--fit] [-C dir]                     score the content classifier vs declared commits
   grain calibrate [-C dir] [--dry-run]            fit this repo's own classifier weights (.grain/model.json)
+  grain hook install                              capture AI edits at the source (git post-commit + Claude Code hook)
+  grain attest [-C dir]                           attest HEAD's AI-written lines from the edit ledger (post-commit)
+  grain blame <file>                              git blame for AI: which lines were AI-written
   grain push [--url U] [--token T] [--file f]     push grain.json to Grain Cloud
   grain init [-C dir]                            write an example .grain.toml
   grain version

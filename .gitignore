@@ -26,3 +26,6 @@ npm/vendor/
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# grain: transient AI-edit ledger (consumed by grain attest); model.json stays shared
+.grain/ai-edits.jsonl

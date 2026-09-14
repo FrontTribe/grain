@@ -176,6 +176,28 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (t: T) => Promise<R
 // --- attested tier: read grain's git notes (refs/notes/grain) ---
 
 type Attested = "ai" | "human";
+// A parsed grain note: the class plus, when `grain attest` recorded AI-Lines: n/m,
+// the exact share of added lines that were AI-written (-1 = whole-commit).
+type AttestedNote = { cls: Attested; frac: number };
+
+// Share of a commit that counts as AI: the attested line share when known,
+// else the whole commit.
+function attestedShare(n: AttestedNote | undefined): number {
+  return n && n.frac >= 0 && n.frac < 1 ? n.frac : 1;
+}
+
+// Parse "AI-Lines: n/m" from a grain note into a fraction, or -1 when absent.
+function parseAILineFrac(note: string): number {
+  for (const raw of note.split("\n")) {
+    const line = raw.trim();
+    const idx = line.indexOf(":");
+    if (idx < 0) continue;
+    if (line.slice(0, idx).trim().toLowerCase() !== "ai-lines") continue;
+    const [n, m] = line.slice(idx + 1).split("/").map((s) => Number(s.trim()));
+    if (Number.isFinite(n) && Number.isFinite(m) && m > 0 && n >= 0 && n <= m) return n / m;
+  }
+  return -1;
+}
 
 // Parse a git note body into an authoritative class. Faithful to
 // internal/signal's note handling; the last recognized line wins.
@@ -226,8 +248,8 @@ async function fetchAttestedNotes(
   repo: string,
   commitShas: string[],
   headers: Record<string, string>,
-): Promise<Map<string, Attested>> {
-  const result = new Map<string, Attested>();
+): Promise<Map<string, AttestedNote>> {
+  const result = new Map<string, AttestedNote>();
   const base = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
   const get = async (path: string) => {
     const res = await fetch(`${base}${path}`, { headers, cache: "no-store" });
@@ -253,7 +275,7 @@ async function fetchAttestedNotes(
       if (!blob) return null;
       const text = blob.encoding === "base64" ? Buffer.from(String(blob.content), "base64").toString("utf8") : String(blob.content ?? "");
       const cls = parseAttestedClass(text);
-      if (cls) result.set(commitSha, cls);
+      if (cls) result.set(commitSha, { cls, frac: parseAILineFrac(text) });
       return null;
     });
   } catch {
@@ -300,7 +322,7 @@ export async function scanGithubRepo(
   // Attested provenance from grain's git notes is authoritative when present.
   const attested = await fetchAttestedNotes(owner, repo, shas.filter(Boolean), headers);
   const basisOf = (i: number): "attested-ai" | "attested-human" | "declared" | "infer" => {
-    const cls = attested.get(shas[i]);
+    const cls = attested.get(shas[i])?.cls;
     if (cls === "ai") return "attested-ai";
     if (cls === "human") return "attested-human";
     if (declaredFlags[i]) return "declared";
@@ -313,7 +335,8 @@ export async function scanGithubRepo(
   let inferCandidates = 0;
   for (let i = 0; i < commits.length; i++) {
     const b = basisOf(i);
-    if (b === "attested-ai") attestedAI++;
+    // Line-level attestation (AI-Lines) weights a partially AI commit by its share.
+    if (b === "attested-ai") attestedAI += attestedShare(attested.get(shas[i]));
     else if (b === "declared") declaredCount++;
     else if (b === "infer") inferCandidates++;
     // attested-human counts as human (in the remainder)
@@ -328,10 +351,12 @@ export async function scanGithubRepo(
 
   // per top-level directory line tallies, human vs AI
   const dirs = new Map<string, { human: number; ai: number }>();
-  const bump = (dir: string, ai: boolean, n: number) => {
+  // `share` is the AI fraction of the commit's lines (0-1), so a partially
+  // AI-assisted commit splits its lines instead of counting all-or-nothing.
+  const bump = (dir: string, share: number, n: number) => {
     const cur = dirs.get(dir) ?? { human: 0, ai: 0 };
-    if (ai) cur.ai += n;
-    else cur.human += n;
+    cur.ai += n * share;
+    cur.human += n * (1 - share);
     dirs.set(dir, cur);
   };
 
@@ -343,22 +368,23 @@ export async function scanGithubRepo(
     const d = diffs[i];
     if (!d) continue; // fetch failed — skip
     const b = basisOf(i);
-    let commitAI: boolean;
-    if (b === "attested-ai" || b === "declared") commitAI = true;
-    else if (b === "attested-human") commitAI = false;
+    let aiShare: number;
+    if (b === "attested-ai") aiShare = attestedShare(attested.get(shas[i]));
+    else if (b === "declared") aiShare = 1;
+    else if (b === "attested-human") aiShare = 0;
     else {
       const { ai: isAI, ok } = classifyDiff(d);
-      commitAI = false;
+      aiShare = 0;
       if (ok) {
         sampled++;
         if (isAI) inferredInSample++;
-        commitAI = isAI;
+        aiShare = isAI ? 1 : 0;
       }
     }
     for (const [path, lns] of Object.entries(d)) {
       const n = lns.length;
       totalLines += n;
-      bump(topDir(path), commitAI, n);
+      bump(topDir(path), aiShare, n);
     }
   }
 

@@ -67,6 +67,19 @@ func (r Report) weightsID() string {
 	return WeightsID
 }
 
+// splitAI returns how many of a commit's w lines count as AI. With line-level
+// attestation (frac in [0,1)) that's the true share; otherwise the whole commit.
+func splitAI(w int, frac float64) int {
+	if frac < 0 || frac >= 1 {
+		return w
+	}
+	ai := int(math.Round(float64(w) * frac))
+	if ai > w {
+		ai = w
+	}
+	return ai
+}
+
 // Build aggregates results (line-weighted) into a report.
 func Build(repo, generatedAt string, commits []gitlog.Commit, results []score.Result, cfg config.Config) Report {
 	byClass := map[string]int{}
@@ -81,8 +94,12 @@ func Build(repo, generatedAt string, commits []gitlog.Commit, results []score.Re
 		case r.Class == score.Human:
 			byClass["human"] += w
 		case r.IsAI():
-			byClass["ai"] += w
-			basisAI[r.Basis] += w
+			// Line-level attestation splits a partially AI-assisted commit by its
+			// true share; without it the whole commit counts as AI.
+			aiW := splitAI(w, r.AIFrac)
+			byClass["ai"] += aiW
+			basisAI[r.Basis] += aiW
+			byClass["human"] += w - aiW
 		default:
 			byClass["uncl"] += w
 		}
@@ -95,7 +112,8 @@ func Build(repo, generatedAt string, commits []gitlog.Commit, results []score.Re
 
 	dirs := map[string]*PathStat{}
 	for _, c := range commits {
-		cls := resBySHA[c.SHA].Class
+		res := resBySHA[c.SHA]
+		cls := res.Class
 		for _, f := range c.Files {
 			d := topDir(f.Path)
 			ps := dirs[d]
@@ -112,7 +130,9 @@ func Build(repo, generatedAt string, commits []gitlog.Commit, results []score.Re
 			case cls == score.Human:
 				ps.Human += float64(w)
 			case cls == score.AIAssisted || cls == score.AIAuthored:
-				ps.AI += float64(w)
+				aiW := splitAI(w, res.AIFrac)
+				ps.AI += float64(aiW)
+				ps.Human += float64(w - aiW)
 			}
 		}
 	}
