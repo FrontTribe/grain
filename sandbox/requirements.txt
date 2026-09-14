@@ -1,0 +1,2 @@
+requests==2.32.3
+leftpadd-utilz==1.0.0
