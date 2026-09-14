@@ -29,14 +29,70 @@ export const SELF_SCAN = {
         "path": "billing",
         "lines": 58
       }
+    ],
+    "hotspots": [
+      {
+        "sha": "7463443",
+        "subject": "web: grain favicon + auth & onboarding flow",
+        "path": "login",
+        "lines": 53
+      },
+      {
+        "sha": "d472442",
+        "subject": "feat: Stripe billing integration",
+        "path": "billing",
+        "lines": 50
+      },
+      {
+        "sha": "33617b9",
+        "subject": "Add npm shim so `npx grain` works, plus a release workflow",
+        "path": "workflows",
+        "lines": 39
+      }
     ]
   },
   "outcomes": {
     "ai_lines": 2438,
     "ai_reworked": 21,
+    "ai_in_fix": 0,
+    "ai_median": 3,
     "human_lines": 168,
-    "human_reworked": 4
-  }
+    "human_reworked": 4,
+    "human_in_fix": 0,
+    "human_median": 8
+  },
+  "by_path": [
+    {
+      "path": "web/src/",
+      "ai": 100,
+      "lines": 8597
+    },
+    {
+      "path": "web/",
+      "ai": 100,
+      "lines": 7118
+    },
+    {
+      "path": "docs/",
+      "ai": 94,
+      "lines": 2589
+    },
+    {
+      "path": "cmd/grain/",
+      "ai": 92,
+      "lines": 1806
+    },
+    {
+      "path": "design/product/",
+      "ai": 100,
+      "lines": 1426
+    },
+    {
+      "path": "(root)",
+      "ai": 99,
+      "lines": 1063
+    }
+  ]
 } as const;
 
 // One entry per commit, oldest first: authorship class and lines changed.

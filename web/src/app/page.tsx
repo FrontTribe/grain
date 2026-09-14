@@ -93,6 +93,14 @@ const STEPS: StepData[] = [
   },
 ];
 
+const RISK_MAX = Math.max(...SELF_SCAN.risk.paths.map((p) => p.lines), 1);
+const pctOf = (n: number, d: number) => `${d > 0 ? Math.round((n / d) * 1000) / 10 : 0}%`;
+const ratio = (o: { ai_reworked: number; ai_lines: number; human_reworked: number; human_lines: number }) => {
+  const a = o.ai_lines > 0 ? o.ai_reworked / o.ai_lines : 0;
+  const h = o.human_lines > 0 ? o.human_reworked / o.human_lines : 0;
+  return h > 0 ? (a / h).toFixed(2) : "n/a";
+};
+
 const btn = "press inline-flex h-11 items-center justify-center whitespace-nowrap rounded-[10px] px-5 text-[14px] font-semibold";
 const btnPrimary = `${btn} bg-ink text-ground`;
 const btnSecondary = `${btn} border border-line-strong text-ink hover:border-ink`;
@@ -198,56 +206,114 @@ export default function Home() {
             <h2 id="tells-h" className="max-w-[24ch] text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
               Not a percentage. Where it landed, and whether anyone looked.
             </h2>
+            <p className="mt-4 max-w-[62ch] text-[16.5px] leading-relaxed text-muted">
+              Four views of the same repository, all from one scan. Every number below is grain reading its own history on {s.generated}.
+            </p>
+
             <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+              {/* Risk: the number a lead acts on, then where, then which commits. */}
               <article className="reveal rounded-[14px] bg-ai-soft p-6 sm:p-8">
                 <h3 className="font-display text-[20px] font-bold tracking-tight">Risk</h3>
-                <p className="mt-1.5 max-w-[48ch] text-[14.5px] text-muted">
-                  AI-written lines in security- and money-sensitive paths that carry no review evidence: no pull request, no reviewer trailer, applied by the author.
+                <p className="mt-1.5 max-w-[50ch] text-[14.5px] text-muted">
+                  AI-written lines in security- and money-sensitive paths with no review evidence: no approved pull request, no reviewer trailer, not merged, committed by the author.
                 </p>
                 <p className="mt-6 font-display text-[44px] font-extrabold leading-none tracking-tight text-ai sm:text-[56px]">
                   <CountUp value={s.risk.unreviewed} className="tabular-nums" />
                   <span className="ml-2 text-[16px] font-semibold text-muted">of {s.risk.lines} critical AI lines unreviewed</span>
                 </p>
-                <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 font-mono text-[13px] sm:grid-cols-4">
+
+                <ul className="mt-7 flex flex-col gap-2.5 font-mono text-[13px]">
                   {s.risk.paths.map((p) => (
-                    <li key={p.path}>
-                      <div className="text-muted">{p.path}/</div>
-                      <div className="text-[18px] font-semibold text-ink">{p.lines}</div>
+                    <li key={p.path} className="grid grid-cols-[7rem_minmax(0,1fr)_3rem] items-center gap-3">
+                      <span className="text-muted">{p.path}/</span>
+                      <span className="h-1.5 rounded-full bg-ai" style={{ width: `${Math.max(4, (p.lines / RISK_MAX) * 100)}%` }} aria-hidden />
+                      <span className="text-right font-semibold tabular-nums text-ink">{p.lines}</span>
                     </li>
                   ))}
                 </ul>
-                <p className="mt-6 text-[12.5px] text-muted">A place to look, not a verdict. Absence of evidence is not proof nobody reviewed.</p>
+
+                <h4 className="mt-8 text-[13px] font-semibold text-ink">Start here</h4>
+                <ol className="mt-2 divide-y divide-ai/15">
+                  {s.risk.hotspots.map((h) => (
+                    <li key={h.sha + h.path} className="grid gap-x-4 gap-y-0.5 py-2.5 text-[13px] sm:grid-cols-[5rem_minmax(0,1fr)_auto] sm:items-baseline">
+                      <code className="font-mono text-[12px] text-muted">{h.sha}</code>
+                      <span className="truncate text-ink">{h.subject}</span>
+                      <span className="font-mono text-[12px] text-muted">
+                        {h.path}/ <b className="font-semibold text-ai">{h.lines}</b>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="mt-5 text-[12.5px] text-muted">A place to look, not a verdict. Absence of evidence is not proof nobody reviewed.</p>
               </article>
 
               <div className="grid gap-4">
+                {/* Outcomes: the question every team is asking, answered on the same commits. */}
                 <article className="reveal rounded-[14px] bg-human-soft p-6 sm:p-7">
                   <h3 className="font-display text-[20px] font-bold tracking-tight">Outcomes</h3>
                   <p className="mt-1.5 text-[14.5px] text-muted">
-                    How often AI lines get reworked later versus human lines from the same commits.
+                    Does AI code get rewritten more? AI and human lines from the <em>same</em> line-attested commits, so author, style and era are held constant.
                   </p>
                   <div className="mt-5 grid grid-cols-2 gap-4 font-mono text-[13px]">
                     <div>
                       <div className="text-muted">AI lines</div>
-                      <div className="text-[18px] font-semibold text-ai">{s.outcomes.ai_lines.toLocaleString()}</div>
-                      <div className="text-muted">{s.outcomes.ai_reworked} reworked</div>
+                      <div className="text-[22px] font-semibold text-ai">{s.outcomes.ai_lines.toLocaleString()}</div>
+                      <div className="text-muted">{pctOf(s.outcomes.ai_reworked, s.outcomes.ai_lines)} later reworked</div>
+                      <div className="text-muted">{s.outcomes.ai_in_fix} in a fix or revert</div>
                     </div>
                     <div>
                       <div className="text-muted">human lines</div>
-                      <div className="text-[18px] font-semibold text-human">{s.outcomes.human_lines.toLocaleString()}</div>
-                      <div className="text-muted">{s.outcomes.human_reworked} reworked</div>
+                      <div className="text-[22px] font-semibold text-human">{s.outcomes.human_lines.toLocaleString()}</div>
+                      <div className="text-muted">{pctOf(s.outcomes.human_reworked, s.outcomes.human_lines)} later reworked</div>
+                      <div className="text-muted">{s.outcomes.human_in_fix} in a fix or revert</div>
                     </div>
                   </div>
+                  <p className="mt-4 text-[13px] text-ink">
+                    Here, AI lines are reworked <b className="font-semibold">{ratio(s.outcomes)}× as often</b> as human lines, after a median of {s.outcomes.ai_median} commits.
+                  </p>
+                  <p className="mt-2 text-[12.5px] text-muted">One repository, a few months of history. Measure your own before drawing conclusions.</p>
                 </article>
+
+                {/* Provenance: three tiers, in the order grain trusts them. */}
                 <article className="reveal rounded-[14px] border border-line bg-surface p-6 sm:p-7">
                   <h3 className="font-display text-[20px] font-bold tracking-tight">Provenance, by how it was known</h3>
-                  <div className="mt-5 grid grid-cols-3 gap-3 font-mono text-[13px]">
-                    <div><div className="text-muted">attested</div><div className="text-[18px] font-semibold text-ink">{s.attested}%</div></div>
-                    <div><div className="text-muted">declared</div><div className="text-[18px] font-semibold text-ink">{s.declared}%</div></div>
-                    <div><div className="text-muted">inferred</div><div className="text-[18px] font-semibold text-ink">{s.inferred}%</div></div>
+                  <div className="mt-5 flex h-2.5 gap-0.5 overflow-hidden rounded-md" aria-hidden>
+                    <span className="bg-human" style={{ width: `${s.attested}%` }} />
+                    <span className="bg-ai" style={{ width: `${s.declared}%` }} />
+                    <span className="bg-line-strong" style={{ width: `${Math.max(s.inferred, 1)}%` }} />
                   </div>
-                  <p className="mt-4 text-[12.5px] text-muted">Inference is capped at 0.70 confidence and always labelled. It never outranks a signature or a trailer.</p>
+                  <dl className="mt-4 grid gap-3 text-[13px]">
+                    <Tier swatch="bg-human" name="attested" value={`${s.attested}%`}>Signed git note, line by line. Ground truth.</Tier>
+                    <Tier swatch="bg-ai" name="declared" value={`${s.declared}%`}>A Co-Authored-By trailer, a bot account, an explicit tag.</Tier>
+                    <Tier swatch="bg-line-strong" name="inferred" value={`${s.inferred}%`}>Content and behaviour signals. Capped at 0.70, always labelled.</Tier>
+                  </dl>
                 </article>
               </div>
+
+              {/* By directory: where the AI code physically is. */}
+              <article className="reveal rounded-[14px] border border-line bg-surface p-6 sm:p-7 lg:col-span-2">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                  <h3 className="font-display text-[20px] font-bold tracking-tight">By directory</h3>
+                  <span className="text-[12.5px] text-muted">lines changed, and how many of them carry AI signals</span>
+                </div>
+                <ul className="mt-5 grid gap-x-10 gap-y-3 sm:grid-cols-2">
+                  {s.by_path.map((p) => (
+                    <li key={p.path} className="grid grid-cols-[minmax(0,9rem)_minmax(0,1fr)_4.5rem] items-center gap-3 font-mono text-[13px]">
+                      <span className="truncate text-ink">{p.path}</span>
+                      <span className="flex h-1.5 gap-0.5 overflow-hidden rounded-full" aria-hidden>
+                        <span className="bg-ai" style={{ width: `${p.ai}%` }} />
+                        <span className="bg-human" style={{ width: `${100 - p.ai}%` }} />
+                      </span>
+                      <span className="text-right text-muted">
+                        <b className="font-semibold text-ink">{p.ai}%</b> AI
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-4 text-[12.5px] text-muted">
+                  Mark a path <code className="font-mono">human_owned</code> in policy and grain flags AI lines landing there on every scan.
+                </p>
+              </article>
             </div>
           </div>
         </section>
@@ -409,6 +475,18 @@ function LinkRow({ href, title, children }: { href: string; title: string; child
     </>
   );
   return <li>{external ? <a href={href} className={cls}>{inner}</a> : <Link href={href} className={cls}>{inner}</Link>}</li>;
+}
+
+function Tier({ swatch, name, value, children }: { swatch: string; name: string; value: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[auto_7.5rem_minmax(0,1fr)] items-baseline gap-x-3">
+      <span className={`inline-block size-2 rounded-[2px] ${swatch}`} aria-hidden />
+      <dt className="font-mono text-muted">
+        {name} <b className="font-semibold text-ink">{value}</b>
+      </dt>
+      <dd className="text-muted">{children}</dd>
+    </div>
+  );
 }
 
 function Li({ children }: { children: React.ReactNode }) {

@@ -23,13 +23,19 @@ const summary = {
     lines: j.risk.critical_ai_lines,
     unreviewed: j.risk.critical_ai_unreviewed,
     paths: j.risk.critical.map((p) => ({ path: p.path, lines: p.ai_lines })),
+    hotspots: j.risk.top.slice(0, 3).map((h) => ({ sha: h.sha.slice(0, 7), subject: h.subject, path: h.path, lines: h.ai_lines })),
   },
   outcomes: {
     ai_lines: j.outcomes.strict.ai_lines,
     ai_reworked: j.outcomes.strict.ai_reworked,
+    ai_in_fix: j.outcomes.strict.ai_reworked_in_fix,
+    ai_median: j.outcomes.strict.ai_median_commits_to_rework,
     human_lines: j.outcomes.strict.human_lines,
     human_reworked: j.outcomes.strict.human_reworked,
+    human_in_fix: j.outcomes.strict.human_reworked_in_fix,
+    human_median: j.outcomes.strict.human_median_commits_to_rework,
   },
+  by_path: j.by_path.slice(0, 6).map((p) => ({ path: p.path, ai: pct(p.ai), lines: p.lines })),
 };
 
 const out = `// Real numbers from grain scanning its own repository (FrontTribe/grain),
