@@ -2,9 +2,13 @@
 
 import { useEffect, useRef } from "react";
 
+export type FingerprintBar = { c: "h" | "a" | "u"; w: number };
+
 // The signature graphic: a commit history drawn as a barcode of thin bars,
-// each colored by authorship. Deterministic (no Math.random), animates in once.
-export function Fingerprint({ height = 100, bars = 132 }: { height?: number; bars?: number }) {
+// each colored by authorship, height by lines changed. Pass `data` to draw
+// real commits (the landing page passes grain's own scan); without it the
+// pattern is deterministic (no Math.random). Animates in once.
+export function Fingerprint({ height = 100, bars = 132, data }: { height?: number; bars?: number; data?: FingerprintBar[] }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -21,14 +25,22 @@ export function Fingerprint({ height = 100, bars = 132 }: { height?: number; bar
       return x - Math.floor(x);
     };
 
-    const N = bars;
-    const data = Array.from({ length: N }, (_, i) => {
-      const r = rnd(i + 1);
-      const cluster = rnd(Math.floor(i / 6) + 100);
-      const p = r * 0.6 + cluster * 0.4;
-      const cls = p < 0.73 ? "h" : p < 0.95 ? "a" : "u";
-      return { cls, h: 0.42 + rnd(i + 50) * 0.58 };
-    });
+    let series: { cls: "h" | "a" | "u"; h: number }[];
+    if (data && data.length) {
+      // Real commits: bar height on a log scale of lines changed so one huge
+      // commit doesn't flatten the rest.
+      const max = Math.log1p(Math.max(...data.map((d) => d.w), 1));
+      series = data.map((d) => ({ cls: d.c, h: 0.25 + 0.75 * (Math.log1p(d.w) / max) }));
+    } else {
+      series = Array.from({ length: bars }, (_, i) => {
+        const r = rnd(i + 1);
+        const cluster = rnd(Math.floor(i / 6) + 100);
+        const p = r * 0.6 + cluster * 0.4;
+        const cls = p < 0.73 ? "h" : p < 0.95 ? "a" : "u";
+        return { cls, h: 0.42 + rnd(i + 50) * 0.58 };
+      });
+    }
+    const N = series.length;
 
     let raf = 0;
     const fit = () => {
@@ -49,7 +61,7 @@ export function Fingerprint({ height = 100, bars = 132 }: { height?: number; bar
       const bw = (W - gap * (N - 1)) / N;
       const shown = Math.floor(N * prog);
       for (let i = 0; i < N; i++) {
-        const b = data[i];
+        const b = series[i];
         ctx.globalAlpha = i < shown ? 1 : i === shown ? N * prog - shown : 0;
         ctx.fillStyle = b.cls === "h" ? human : b.cls === "a" ? ai : unc;
         const bh = H * b.h;
@@ -85,13 +97,17 @@ export function Fingerprint({ height = 100, bars = 132 }: { height?: number; bar
     window.addEventListener("resize", onResize);
     const obs = new MutationObserver(() => draw(1));
     obs.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const onScheme = () => draw(1);
+    mq.addEventListener("change", onScheme);
 
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
+      mq.removeEventListener("change", onScheme);
       obs.disconnect();
     };
-  }, [height, bars]);
+  }, [height, bars, data]);
 
-  return <canvas ref={ref} style={{ display: "block", width: "100%", height }} aria-label="Commit provenance fingerprint" />;
+  return <canvas ref={ref} style={{ display: "block", width: "100%", height }} aria-label="Commit history drawn as bars: green human-written, orange AI-written" />;
 }

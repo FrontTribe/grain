@@ -78,9 +78,40 @@ body {
   transform-origin: var(--popover-origin, top);
 }
 
+/* Landing-page motion: a staggered hero entrance (hierarchy: headline first,
+   then the proof) and scroll-driven reveals for sections (storytelling: each
+   step appears as you reach it). CSS only, no scroll listeners; everything
+   collapses to static under reduced motion or where view() is unsupported. */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.rise {
+  animation: rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 28%;
+  }
+}
+.press {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, color 0.2s, background-color 0.2s;
+}
+.press:hover { transform: translateY(-1px); }
+.press:active { transform: translateY(0) scale(0.98); }
+
+/* Real `grain blame` output: AI-written lines carry the AI colour. */
+.blame-ai { color: var(--ai); }
+.blame-ai::before { content: "AI "; font-weight: 600; }
+.blame-h::before { content: "   "; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .popover-in { animation: none; }
+  .popover-in, .rise, .reveal { animation: none; }
+  .press, .press:hover, .press:active { transform: none; }
 }
 
 /* Print: the authorship report should print as a clean document. */

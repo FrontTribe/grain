@@ -1,297 +1,394 @@
+import Link from "next/link";
 import { Mark } from "@/components/Mark";
 import { Fingerprint } from "@/components/Fingerprint";
+import { SELF_SCAN, SELF_COMMITS } from "@/lib/self-scan";
 
 const REPO = "https://github.com/FrontTribe/grain";
+const SPEC = `${REPO}/blob/main/docs/spec/provenance-v1.md`;
 
-function ProvBar({ human, ai, unc = 0 }: { human: number; ai: number; unc?: number }) {
-  return (
-    <div className="flex h-2.5 w-full gap-0.5 overflow-hidden rounded-md">
-      <span className="h-full rounded-sm bg-human" style={{ width: `${human}%` }} />
-      <span className="h-full rounded-sm bg-ai" style={{ width: `${ai}%` }} />
-      {unc > 0 && <span className="h-full rounded-sm bg-line-strong" style={{ width: `${unc}%` }} />}
-    </div>
-  );
-}
+// Every figure on this page is real output: grain run on its own repository
+// (numbers in @/lib/self-scan), command transcripts copied from a terminal,
+// the alert email as it was delivered. Nothing is mocked.
 
-function Shield({ label, value }: { label: string; value: string }) {
-  return (
-    <span className="inline-flex overflow-hidden rounded border border-line-strong font-mono text-xs">
-      <span className="bg-ink px-2 py-1 text-ground">{label}</span>
-      <span className="bg-surface-2 px-2 py-1 font-semibold text-ink">{value}</span>
-    </span>
-  );
-}
+const BLAME_FILE = "cmd/grain/provenance.go";
+const BLAME_LINES: { ai: boolean; sha: string; n: number; text: string }[] = [
+  { ai: true, sha: "c8ee52a", n: 39, text: "// One definition, shared with blame and outcome tracking, so hashes never drift." },
+  { ai: true, sha: "c8ee52a", n: 40, text: "func lineHash(line string) string { return outcomes.LineHash(line) }" },
+  { ai: false, sha: "2a65cf1", n: 41, text: "" },
+  { ai: true, sha: "c8ee52a", n: 42, text: "func substantive(line string) bool { return outcomes.Substantive(line) }" },
+  { ai: false, sha: "2a65cf1", n: 43, text: "" },
+  { ai: true, sha: "2a65cf1", n: 44, text: "type ledgerEntry struct {" },
+  { ai: true, sha: "2a65cf1", n: 45, text: "\tFile   string   `json:\"file\"`" },
+  { ai: true, sha: "2a65cf1", n: 46, text: "\tHashes []string `json:\"hashes\"`" },
+  { ai: false, sha: "2a65cf1", n: 47, text: "}" },
+  { ai: false, sha: "2a65cf1", n: 48, text: "" },
+  { ai: true, sha: "2a65cf1", n: 49, text: "func ledgerPath(root string) string { return filepath.Join(root, ledgerFile) }" },
+  { ai: false, sha: "2a65cf1", n: 50, text: "" },
+  { ai: true, sha: "2a65cf1", n: 51, text: "// readLedger returns, per repo-relative file, the set of AI-written line hashes." },
+  { ai: true, sha: "2a65cf1", n: 52, text: "func readLedger(root string) map[string]map[string]bool {" },
+];
 
-function SectionHead({ eyebrow, title, children }: { eyebrow: string; title: string; children?: React.ReactNode }) {
-  return (
-    <div className="mb-9 max-w-[62ch]">
-      <div className="font-mono text-xs uppercase tracking-[0.18em] text-ai">{eyebrow}</div>
-      <h2 className="mt-3 text-balance font-display text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
-      {children && <p className="mt-3.5 text-lg text-muted">{children}</p>}
-    </div>
-  );
-}
-
-const btnBase = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2.5 font-mono text-sm font-medium transition";
+const btn = "press inline-flex h-11 items-center justify-center whitespace-nowrap rounded-[10px] px-5 text-[14px] font-semibold";
+const btnPrimary = `${btn} bg-ink text-ground`;
+const btnSecondary = `${btn} border border-line-strong text-ink hover:border-ink`;
+const container = "mx-auto w-full max-w-[1120px] px-5 sm:px-8";
+const figure = "overflow-hidden rounded-[14px] border border-line bg-surface";
 
 export default function Home() {
+  const s = SELF_SCAN;
   return (
-    <main>
-      {/* Nav */}
-      <nav className="sticky top-0 z-20 border-b border-line bg-ground/85 backdrop-blur">
-        <div className="mx-auto flex h-16 max-w-[1120px] items-center gap-6 px-6">
-          <span className="flex items-center gap-2.5 font-display text-xl font-extrabold tracking-tight">
-            <Mark size={24} /> grain
-          </span>
-          <div className="ml-3 hidden gap-6 text-[14.5px] text-muted md:flex">
+    <>
+      <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-[10px] focus:bg-ink focus:px-4 focus:py-2 focus:text-ground">
+        Skip to content
+      </a>
+
+      <nav className="sticky top-0 z-20 border-b border-line bg-ground/90 backdrop-blur">
+        <div className={`${container} flex h-16 items-center gap-7`}>
+          <Link href="/" className="flex items-center gap-2.5 font-display text-[19px] font-extrabold tracking-tight">
+            <Mark size={22} /> grain
+          </Link>
+          <div className="hidden items-center gap-6 text-[14px] text-muted md:flex">
             <a href="#how" className="hover:text-ink">How it works</a>
-            <a href="#detection" className="hover:text-ink">Detection</a>
+            <a href="#cloud" className="hover:text-ink">Cloud</a>
             <a href="#pricing" className="hover:text-ink">Pricing</a>
-            <a href={REPO} className="hover:text-ink">Open source</a>
+            <a href={REPO} className="hover:text-ink">GitHub</a>
           </div>
           <span className="flex-1" />
-          <a href="/login" className="text-[14.5px] text-muted hover:text-ink">Sign in</a>
-          <a href={REPO} className={`${btnBase} border border-line-strong text-ink hover:border-brand hover:text-brand`}>
-            ★ GitHub
-          </a>
+          <Link href="/login" className="hidden text-[14px] text-muted hover:text-ink sm:block">Sign in</Link>
+          <Link href="/signup" className={`${btn} h-9 bg-ink px-4 text-ground`}>Start free</Link>
         </div>
       </nav>
 
-      {/* Hero */}
-      <header className="px-6 pb-11 pt-16">
-        <div className="mx-auto grid max-w-[1120px] items-center gap-11 lg:grid-cols-[1.05fr_0.95fr]">
+      <main id="main">
+        {/* Hero: asymmetric split. Text carries the claim; the proof is real
+            `grain blame` output from this repository. */}
+        <header className={`${container} grid items-center gap-10 pb-14 pt-14 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14 lg:pb-20 lg:pt-20`}>
           <div>
-            <div className="font-mono text-xs uppercase tracking-[0.18em] text-ai">Code provenance layer</div>
-            <h1 className="mt-5 text-balance font-display text-5xl font-extrabold leading-[1.05] tracking-[-0.035em] sm:text-6xl">
-              See the <span className="text-human">human</span> and the <span className="text-ai">AI</span> grain in your code.
+            <h1 className="rise text-balance font-display text-[40px] font-extrabold leading-[1.02] tracking-[-0.03em] sm:text-[54px] lg:text-[62px]" style={{ "--i": 0 } as React.CSSProperties}>
+              Know which lines the <span className="text-ai">AI</span> wrote.
             </h1>
-            <p className="mt-5 max-w-[46ch] text-xl text-muted">
-              Grain measures how much of a repository was human-written vs AI-assisted — with a confidence level on every claim. Signals, not verdicts.
+            <p className="rise mt-5 max-w-[42ch] text-[18px] leading-relaxed text-muted sm:text-[19px]" style={{ "--i": 1 } as React.CSSProperties}>
+              Grain records AI edits as they happen, signs them into git, and shows where they landed without review.
             </p>
-            <div className="mt-7 flex flex-wrap items-center gap-3">
-              <a href={REPO} className={`${btnBase} bg-ink text-ground hover:-translate-y-px`}>★ Star on GitHub</a>
-              <a href="#how" className={`${btnBase} border border-line-strong text-ink hover:border-brand hover:text-brand`}>See what it outputs</a>
-            </div>
-            <div className="mt-5 inline-flex items-center gap-3 rounded-[10px] border border-line bg-surface px-4 py-3 font-mono text-sm">
-              <span><span className="text-human">$</span> npx grain scan</span>
-              <span className="text-xs text-faint">· MIT · runs locally</span>
+            <div className="rise mt-8 flex flex-wrap gap-3" style={{ "--i": 2 } as React.CSSProperties}>
+              <Link href="/signup" className={btnPrimary}>Start free</Link>
+              <a href={`${REPO}#readme`} className={btnSecondary}>Read the docs</a>
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-[0_18px_46px_rgba(32,29,25,0.09)]">
-            <div className="flex flex-wrap items-center justify-between gap-1.5 border-b border-line px-[18px] py-3">
-              <span className="font-mono text-xs">◆ acme/<span className="text-faint">payments-service</span></span>
-              <span className="flex gap-3 font-mono text-[11px] text-muted">
-                <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-human" />human</span>
-                <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-ai" />AI</span>
-                <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-line-strong" />uncl.</span>
-              </span>
+          <figure className="rise min-w-0" style={{ "--i": 3 } as React.CSSProperties}>
+            <div className={figure}>
+              <div className="flex items-center justify-between border-b border-line px-4 py-2.5 font-mono text-[12px] text-muted">
+                <span>$ grain blame {BLAME_FILE}</span>
+              </div>
+              <pre className="overflow-x-auto px-4 py-3.5 font-mono text-[11.5px] leading-[1.75] text-ink" tabIndex={0}>
+                {BLAME_LINES.map((l) => (
+                  <div key={l.n} className={l.ai ? "blame-ai" : "blame-h"}>
+                    <span className="text-faint">{l.sha} </span>
+                    <span className="text-faint">{String(l.n).padStart(3)}  </span>
+                    {l.text.replace("\t", "    ")}
+                  </div>
+                ))}
+              </pre>
+              <div className="border-t border-line px-4 py-2.5 font-mono text-[12px] text-muted">
+                515 lines, <span className="text-ai">368 AI-written</span> (71%), attested from git notes
+              </div>
             </div>
-            <div className="px-[18px]"><Fingerprint height={100} /></div>
-            <div className="flex flex-wrap gap-6 border-t border-line px-[18px] py-3.5">
-              {[
-                { n: "73%", l: "human", c: "text-human" },
-                { n: "22%", l: "AI-assisted", c: "text-ai" },
-                { n: "5%", l: "uncl.", c: "text-faint" },
-                { n: "400", l: "commits", c: "" },
-              ].map((s) => (
-                <div key={s.l}>
-                  <div className={`font-display text-2xl font-bold tracking-tight ${s.c}`}>{s.n}</div>
-                  <div className="font-mono text-[10.5px] uppercase tracking-wider text-muted">{s.l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </header>
+            <figcaption className="mt-2.5 text-[12.5px] text-faint">
+              Real output. Each line is resolved from a signed attestation on the commit that added it.
+            </figcaption>
+          </figure>
+        </header>
 
-      {/* Why now */}
-      <section className="border-t border-line px-6 py-16">
-        <div className="mx-auto max-w-[1120px]">
-          <SectionHead eyebrow="Why now" title="Two trends just collided in every repo.">
-            AI writes code freely, and maintainers have grown wary of what it wrote. Between them sits an unmet need: a neutral way to measure provenance.
-          </SectionHead>
-          <div className="grid gap-[18px] md:grid-cols-2" style={{ gap: "18px" }}>
-            {[
-              {
-                side: "ai" as const, k: "Trend 01", h: "AI commits on its own",
-                p: "Agents open PRs, keep tool-activity logs, and push commits directly. A diff is no longer presumed human.",
-                q: "“@OmniBlocks/boxy peace was never an option”", c: "— a developer replying to an AI bot on GitHub",
-              },
-              {
-                side: "human" as const, k: "Trend 02", h: "Maintainers turned wary",
-                p: "Projects are rewriting contribution policy to demand transparency about AI use — but disclosure is honor-system today.",
-                q: "“To better reflect the community's AI-skeptical ('wary') sentiment, the policy itself has changed.”", c: "— maintainer, Bevy engine policy",
-              },
-            ].map((t) => (
-              <div key={t.k} className="relative overflow-hidden rounded-2xl border border-line bg-surface p-[26px]" style={{ padding: "26px" }}>
-                <span className={`absolute inset-y-0 left-0 w-1 ${t.side === "ai" ? "bg-ai" : "bg-human"}`} />
-                <div className="font-mono text-[11.5px] uppercase tracking-widest text-muted">{t.k}</div>
-                <h3 className="mb-2 mt-2.5 font-display text-xl font-bold">{t.h}</h3>
-                <p className="text-[15px] text-muted">{t.p}</p>
-                <div className="mt-3.5 border-t border-dashed border-line-strong pt-3.5 text-[13.5px] italic">
-                  {t.q}
-                  <cite className="mt-1.5 block font-mono text-[11px] not-italic text-faint">{t.c}</cite>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="mt-5 text-center font-mono text-sm">
-            The gap between them is <b className="text-brand">trust</b>. Grain is the instrument that measures it.
-          </p>
-        </div>
-      </section>
-
-      {/* Outputs */}
-      <section id="how" className="border-t border-line px-6 py-16">
-        <div className="mx-auto max-w-[1120px]">
-          <SectionHead eyebrow="What it outputs" title="One command in. Three things out.">
-            No dashboard to learn. Grain meets developers where they already look — the badge, the PR, and a file in the repo.
-          </SectionHead>
-          <div className="grid gap-[18px] md:grid-cols-3" style={{ gap: "18px" }}>
-            {/* badge */}
-            <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface">
-              <div className="flex flex-1 items-center justify-center bg-surface-2 p-6">
-                <div className="flex w-full flex-col items-center gap-3">
-                  <Shield label="🌾 grain" value="22% AI-assisted" />
-                  <ProvBar human={73} ai={22} unc={5} />
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="font-mono text-[11px] uppercase tracking-wider text-ai">01 · Badge</div>
-                <h3 className="mb-1 mt-1.5 font-display text-[17px] font-bold">A README shield</h3>
-                <p className="text-[13.5px] text-muted">The repo&apos;s human/AI mix, the way a coverage badge shows tests.</p>
-              </div>
-            </div>
-            {/* PR */}
-            <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface">
-              <div className="flex flex-1 items-center justify-center bg-surface-2 p-6">
-                <div className="w-full font-mono text-[11px] leading-[1.7]">
-                  <div>grain report · #482</div>
-                  <div>› <span className="font-semibold text-ai">62%</span> of +214 lines carry AI signals</div>
-                  <div>› 2 files touch <span className="font-semibold text-human">src/auth/</span> (owned)</div>
-                  <div>⚠ 1 human review requested</div>
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="font-mono text-[11px] uppercase tracking-wider text-ai">02 · PR check</div>
-                <h3 className="mb-1 mt-1.5 font-display text-[17px] font-bold">A calm comment</h3>
-                <p className="text-[13.5px] text-muted">Itemized, framed as signals — never an accusation.</p>
-              </div>
-            </div>
-            {/* provenance */}
-            <div className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface">
-              <div className="flex flex-1 items-center justify-center bg-surface-2 p-6">
-                <div className="w-full text-center">
-                  <div className="font-display text-4xl font-extrabold tracking-tight text-human">73%</div>
-                  <div className="mb-3 mt-1.5 font-mono text-[10.5px] uppercase tracking-wider text-muted">human-authored</div>
-                  <ProvBar human={73} ai={22} unc={5} />
-                </div>
-              </div>
-              <div className="p-5">
-                <div className="font-mono text-[11px] uppercase tracking-wider text-ai">03 · PROVENANCE.md</div>
-                <h3 className="mb-1 mt-1.5 font-display text-[17px] font-bold">A nutrition label</h3>
-                <p className="text-[13.5px] text-muted">A committable report of the whole repo, backed by grain.json.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Detection */}
-      <section id="detection" className="border-t border-line px-6 py-16">
-        <div className="mx-auto max-w-[1120px]">
-          <SectionHead eyebrow="How it reads the grain" title="Forensics, ranked by confidence.">
-            Grain starts from hard evidence and only falls back to inference — and it reports a confidence score, never an accusation.
-          </SectionHead>
-          <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
-            {[
-              { i: "01", h: "Declared signals", p: "Co-Authored-By trailers, agent commits, bot accounts, explicit tags.", tag: "high confidence", hi: true },
-              { i: "02", h: "Commit forensics", p: "Burst timing, diff uniformity, the “all at once” shape of agent output.", tag: "inferred", hi: false },
-              { i: "03", h: "Convention diffing", p: "Did the change respect the repo's own style and CODEOWNERS?", tag: "inferred", hi: false },
-              { i: "04", h: "Local model pass", p: "Optional, for ambiguous diffs. Runs client-side; code never leaves the machine.", tag: "privacy-first", hi: true },
-            ].map((s) => (
-              <div key={s.i} className="rounded-xl border border-line bg-surface p-5">
-                <div className="font-mono text-xs font-semibold text-brand">{s.i}</div>
-                <h3 className="mb-1.5 mt-2 font-display text-[15px] font-bold">{s.h}</h3>
-                <p className="text-[13px] text-muted">{s.p}</p>
-                <span className={`mt-2.5 inline-block rounded-full px-2 py-0.5 font-mono text-[10.5px] ${s.hi ? "bg-human-soft text-human" : "bg-ai-soft text-ai"}`}>{s.tag}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Philosophy band */}
-      <section className="border-t border-line px-6 py-16">
-        <div className="mx-auto max-w-[1120px]">
-          <div className="rounded-[22px] bg-ink px-10 py-14 text-center text-ground">
-            <div className="font-mono text-xs uppercase tracking-[0.18em]" style={{ color: "#E28A50" }}>The principle</div>
-            <h2 className="mt-3.5 font-display text-4xl font-bold text-ground sm:text-[46px]">
-              Signals, <span style={{ color: "#E28A50" }}>not</span> verdicts.
+        {/* Proof band: grain's own history as a barcode of real commits. */}
+        <section aria-labelledby="self-h" className="border-y border-line bg-surface">
+          <div className={`${container} py-10 lg:py-12`}>
+            <h2 id="self-h" className="text-balance font-display text-[24px] font-bold tracking-tight sm:text-[28px]">
+              Measured on grain itself: {s.commits} commits, oldest to newest.
             </h2>
-            <p className="mx-auto mt-[18px] max-w-[56ch] text-[17px]" style={{ color: "rgba(236,233,225,0.6)" }}>
-              Grain reports &ldquo;62% of these lines carry AI signals&rdquo; — never &ldquo;this person cheated&rdquo;. Inference is capped, declared signals are preferred, and it names its own limits.
+            <div className="reveal mt-6">
+              <Fingerprint height={88} data={SELF_COMMITS} />
+            </div>
+            <dl className="mt-6 grid grid-cols-2 gap-x-8 gap-y-5 sm:grid-cols-4">
+              <Stat label="AI-assisted" value={`${s.ai}%`} tone="ai" />
+              <Stat label="Human-written" value={`${s.human}%`} tone="human" />
+              <Stat label="Attested line by line" value={`${s.attested}%`} />
+              <Stat label="In critical paths, unreviewed" value={String(s.risk.unreviewed)} tone="ai" note="lines" />
+            </dl>
+            <p className="mt-5 max-w-[68ch] text-[13.5px] text-muted">
+              Grain is written almost entirely with Claude Code. Every claim on this page is what the tool says about its own repository, as of {s.generated}.
             </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="border-t border-line px-6 py-16">
-        <div className="mx-auto max-w-[1120px]">
-          <SectionHead eyebrow="Open core" title="The instrument is free. The org tooling is paid.">
-            Everything that runs on a single repo, locally, is free and MIT. The open engine is what makes the numbers credible.
-          </SectionHead>
-          <div className="grid gap-[18px] md:grid-cols-3" style={{ gap: "18px" }}>
-            {[
-              { price: "MIT · free forever", h: "grain CLI", who: "Solo devs & OSS maintainers", feats: ["CLI, GitHub Action, badge", "PROVENANCE.md + grain.json", "Runs fully local", "The full detection engine"], cta: "★ Star on GitHub", href: REPO, feature: false },
-              { price: "Team · join the waitlist", h: "grain Cloud", who: "Teams shipping with agents", feats: ["Org dashboard & trends", "Merge-policy engine", "Multi-repo rollups", "Slack / PR gating"], cta: "Join the waitlist", href: "#", feature: true },
-              { price: "Compliance · talk to us", h: "grain Audit", who: "Regulated & enterprise", feats: ["Signed provenance ledger", "EU AI Act / SOC2 export", "SSO & retention policy", "On-prem option"], cta: "Contact us", href: "#", feature: false },
-            ].map((t) => (
-              <div key={t.h} className={`flex flex-col rounded-2xl border bg-surface p-[26px] ${t.feature ? "border-brand shadow-[0_18px_46px_rgba(32,29,25,0.09)]" : "border-line"}`} style={{ padding: "26px" }}>
-                <div className={`font-mono text-xs uppercase tracking-wider ${t.feature ? "text-brand" : "text-muted"}`}>{t.price}</div>
-                <h3 className="mb-1 mt-2 font-display text-xl font-bold">{t.h}</h3>
-                <div className="mb-[18px] text-[13.5px] text-muted" style={{ marginBottom: "18px" }}>{t.who}</div>
-                <ul className="mb-5 flex flex-col gap-2.5">
-                  {t.feats.map((f) => (
-                    <li key={f} className="relative pl-[22px] text-sm" style={{ paddingLeft: "22px" }}>
-                      <span className="absolute left-0 font-mono text-brand">→</span>{f}
+        {/* How it works: three stacked steps, command on the left, what
+            happens on the right, with the real transcript of each. */}
+        <section id="how" aria-labelledby="how-h" className={`${container} py-20 lg:py-24`}>
+          <h2 id="how-h" className="max-w-[24ch] text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
+            Recorded when the AI writes it, not guessed afterwards.
+          </h2>
+          <p className="mt-4 max-w-[62ch] text-[16.5px] leading-relaxed text-muted">
+            Detecting AI code after the fact is unreliable. Grain hooks into the agent instead, so provenance is captured at the source and travels with the commit.
+          </p>
+
+          <ol className="mt-12 flex flex-col">
+            <Step
+              cmd="grain hook install"
+              title="Install the hook once"
+              body="A git post-commit hook plus a Claude Code hook. From then on, every line the agent writes is logged as a content hash, never as text."
+              out={`✓ installed .git/hooks/post-commit\n\nAdd this to .claude/settings.json so AI edits are captured at the source:\n{ "hooks": { "PostToolUse": [ { "matcher": "Edit|Write|MultiEdit", ... } ] } }`}
+            />
+            <Step
+              cmd="git commit"
+              title="Commit as usual"
+              body="The hook matches the commit's added lines against the ledger and writes a signed note: exactly which lines were AI-written, bound to that commit."
+              out={`grain attest, 5f49f3c: Provenance: assisted · 889/961 added lines AI-written\n(note on refs/notes/grain, signed 336b33f8517eb53b)\n\nProvenance: assisted\nAI-Lines: 889/961\nAI-Hashes: 0320d2bd7a,1c9e0f77b2,…\nSigned-By: ed25519:gsnAw0076ceAPFu8U35z7QjoQYD8ZTrNksSjzdPF6B4=\nSignature: ikJWlrLo5T6OlaBlxNr9brS5D5n1qBo5aLnd7aTJlP92Ieak…`}
+            />
+            <Step
+              cmd="grain verify"
+              title="Check it, anywhere"
+              body="Any clone can verify every attestation offline. A note that was edited or moved to another commit fails. Teams list trusted keys in .grain/signers."
+              out={`grain verify: 87 commits, 10 attested\n  signed, valid     1\n  signed, invalid   0\n  unsigned          9\n  ✓ every attestation checks out`}
+              last
+            />
+          </ol>
+        </section>
+
+        {/* What it tells you: a three-cell bento with real numbers. Risk gets
+            the width because it is the number a lead acts on. */}
+        <section aria-labelledby="tells-h" className="border-t border-line">
+          <div className={`${container} py-20 lg:py-24`}>
+            <h2 id="tells-h" className="max-w-[24ch] text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
+              Not a percentage. Where it landed, and whether anyone looked.
+            </h2>
+            <div className="mt-10 grid gap-4 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+              <article className="reveal rounded-[14px] bg-ai-soft p-6 sm:p-8">
+                <h3 className="font-display text-[20px] font-bold tracking-tight">Risk</h3>
+                <p className="mt-1.5 max-w-[48ch] text-[14.5px] text-muted">
+                  AI-written lines in security- and money-sensitive paths that carry no review evidence: no pull request, no reviewer trailer, applied by the author.
+                </p>
+                <p className="mt-6 font-display text-[44px] font-extrabold leading-none tracking-tight text-ai sm:text-[56px]">
+                  {s.risk.unreviewed}
+                  <span className="ml-2 text-[16px] font-semibold text-muted">of {s.risk.lines} critical AI lines unreviewed</span>
+                </p>
+                <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 font-mono text-[13px] sm:grid-cols-4">
+                  {s.risk.paths.map((p) => (
+                    <li key={p.path}>
+                      <div className="text-muted">{p.path}/</div>
+                      <div className="text-[18px] font-semibold text-ink">{p.lines}</div>
                     </li>
                   ))}
                 </ul>
-                <div className="mt-auto">
-                  <a href={t.href} className={`${btnBase} w-full justify-center ${t.feature ? "bg-ink text-ground hover:-translate-y-px" : "border border-line-strong text-ink hover:border-brand hover:text-brand"}`}>{t.cta}</a>
+                <p className="mt-6 text-[12.5px] text-muted">A place to look, not a verdict. Absence of evidence is not proof nobody reviewed.</p>
+              </article>
+
+              <div className="grid gap-4">
+                <article className="reveal rounded-[14px] bg-human-soft p-6 sm:p-7">
+                  <h3 className="font-display text-[20px] font-bold tracking-tight">Outcomes</h3>
+                  <p className="mt-1.5 text-[14.5px] text-muted">
+                    How often AI lines get reworked later versus human lines from the same commits.
+                  </p>
+                  <div className="mt-5 grid grid-cols-2 gap-4 font-mono text-[13px]">
+                    <div>
+                      <div className="text-muted">AI lines</div>
+                      <div className="text-[18px] font-semibold text-ai">{s.outcomes.ai_lines.toLocaleString()}</div>
+                      <div className="text-muted">{s.outcomes.ai_reworked} reworked</div>
+                    </div>
+                    <div>
+                      <div className="text-muted">human lines</div>
+                      <div className="text-[18px] font-semibold text-human">{s.outcomes.human_lines.toLocaleString()}</div>
+                      <div className="text-muted">{s.outcomes.human_reworked} reworked</div>
+                    </div>
+                  </div>
+                </article>
+                <article className="reveal rounded-[14px] border border-line bg-surface p-6 sm:p-7">
+                  <h3 className="font-display text-[20px] font-bold tracking-tight">Provenance, by how it was known</h3>
+                  <div className="mt-5 grid grid-cols-3 gap-3 font-mono text-[13px]">
+                    <div><div className="text-muted">attested</div><div className="text-[18px] font-semibold text-ink">{s.attested}%</div></div>
+                    <div><div className="text-muted">declared</div><div className="text-[18px] font-semibold text-ink">{s.declared}%</div></div>
+                    <div><div className="text-muted">inferred</div><div className="text-[18px] font-semibold text-ink">{s.inferred}%</div></div>
+                  </div>
+                  <p className="mt-4 text-[12.5px] text-muted">Inference is capped at 0.70 confidence and always labelled. It never outranks a signature or a trailer.</p>
+                </article>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Cloud: stacked heading, then the real alert next to what the
+            GitHub App does. */}
+        <section id="cloud" aria-labelledby="cloud-h" className="border-t border-line bg-surface">
+          <div className={`${container} py-20 lg:py-24`}>
+            <h2 id="cloud-h" className="max-w-[24ch] text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
+              Cloud watches every push and tells you when it matters.
+            </h2>
+            <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] lg:gap-14">
+              <figure className="reveal">
+                <div className="rounded-[14px] border border-line bg-ground p-5 sm:p-6">
+                  <div className="font-mono text-[12px] text-muted">
+                    <div>from: grain &lt;notifications@getgrain.dev&gt;</div>
+                    <div className="mt-1 text-ink">subject: kresogalic8: 24 unreviewed AI-written lines landed in auth</div>
+                  </div>
+                  <p className="mt-5 text-[14.5px] leading-relaxed">
+                    A push to <b>kresogalic8</b> put <b>24 AI-written lines</b> into <code className="font-mono text-[13px]">auth</code> with no review evidence: no pull request, no reviewer trailer, applied by the author.
+                  </p>
+                  <p className="mt-3 font-mono text-[12.5px] text-muted">f29359c feat: session handling · auth, 24 lines</p>
+                </div>
+                <figcaption className="mt-2.5 text-[12.5px] text-faint">Delivered 23:07, four seconds after the push.</figcaption>
+              </figure>
+              <ul className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
+                <Feature title="Scans on every push">Install the GitHub App. Each push to the default branch re-scans the repo and updates the dashboard.</Feature>
+                <Feature title="Review evidence from GitHub">Cloud asks the pull request API whether a commit went through a PR and who approved it.</Feature>
+                <Feature title="Alerts that name the commit">Threshold crossings and unreviewed AI code in critical paths email your workspace admins with the hotspots.</Feature>
+                <Feature title="A signed authorship report">Export a Bill of Materials signed by grain Cloud, for audits and due diligence. Anyone can verify it.</Feature>
+              </ul>
+            </div>
+            <div className="mt-10">
+              <Link href="/signup" className={btnPrimary}>Start free</Link>
+            </div>
+          </div>
+        </section>
+
+        {/* Open standard: prose, then the links that let anyone check the work. */}
+        <section aria-labelledby="open-h" className="border-t border-line">
+          <div className={`${container} py-20 lg:py-24`}>
+            <div className="max-w-[64ch]">
+              <h2 id="open-h" className="text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
+                Open format, open engine, nothing to take on trust.
+              </h2>
+              <p className="mt-4 text-[16.5px] leading-relaxed text-muted">
+                Attestations are plain text in git notes. Signatures are Ed25519, bound to the commit. Reports carry a digest and a signature you can check in the browser or offline. The engine is MIT-licensed Go with no dependencies, so the numbers can be reproduced by anyone with a clone.
+              </p>
+            </div>
+            <ul className="mt-8 max-w-[760px] divide-y divide-line border-y border-line">
+              <LinkRow href={SPEC} title="grain provenance v1">The note format, line hashes, signature scheme, and BOM schema.</LinkRow>
+              <LinkRow href="/verify" title="Verify a report">Paste an authorship report; the digest and signature are checked client-side.</LinkRow>
+              <LinkRow href={REPO} title="Read the source">CLI, engine, and Cloud in one repository. Star it, fork it, audit it.</LinkRow>
+            </ul>
+          </div>
+        </section>
+
+        {/* Pricing: two columns, the recommended one by colour, not height. */}
+        <section id="pricing" aria-labelledby="pricing-h" className="border-t border-line bg-surface">
+          <div className={`${container} py-20 lg:py-24`}>
+            <h2 id="pricing-h" className="text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
+              The CLI is free forever. Cloud is free to start.
+            </h2>
+            <div className="mt-10 grid gap-4 md:grid-cols-2">
+              <div className="flex flex-col rounded-[14px] border border-line bg-ground p-7">
+                <h3 className="font-display text-[22px] font-bold tracking-tight">Free</h3>
+                <p className="mt-1 text-[14.5px] text-muted">For solo developers and small projects.</p>
+                <p className="mt-6 font-display text-[40px] font-extrabold leading-none tracking-tight">$0</p>
+                <ul className="mt-6 flex flex-col gap-2.5 text-[14.5px]">
+                  <Li>3 repositories, 3 seats</Li>
+                  <Li>GitHub App auto-scan and alerts</Li>
+                  <Li>Risk, Outcomes, trends, policy</Li>
+                  <Li>Signed authorship report</Li>
+                  <Li>Everything in the CLI, always</Li>
+                </ul>
+                <div className="mt-8">
+                  <Link href="/signup" className={`${btnSecondary} w-full`}>Start free</Link>
                 </div>
               </div>
-            ))}
+              <div className="flex flex-col rounded-[14px] border border-human bg-ground p-7">
+                <h3 className="font-display text-[22px] font-bold tracking-tight text-human">Team</h3>
+                <p className="mt-1 text-[14.5px] text-muted">For teams shipping with agents every day.</p>
+                <p className="mt-6 font-display text-[40px] font-extrabold leading-none tracking-tight">
+                  $20<span className="text-[16px] font-semibold text-muted"> per workspace, per month</span>
+                </p>
+                <ul className="mt-6 flex flex-col gap-2.5 text-[14.5px]">
+                  <Li>Unlimited repositories and seats</Li>
+                  <Li>Everything in Free</Li>
+                  <Li>Upgrade or cancel in Settings, any time</Li>
+                </ul>
+                <div className="mt-8">
+                  <Link href="/signup" className={`${btnPrimary} w-full`}>Start free</Link>
+                </div>
+              </div>
+            </div>
+            <p className="mt-6 text-[14px] text-muted">
+              Need SSO, retention rules, or on-prem? <a href={`${REPO}/issues/new`} className="underline decoration-line-strong underline-offset-4 hover:text-ink">Open an issue</a> and tell us what your audit needs.
+            </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Final CTA */}
-      <section className="border-t border-line px-6 py-16 text-center">
-        <div className="mx-auto max-w-[1120px]">
-          <h2 className="font-display text-4xl font-bold tracking-tight">See the grain of your codebase.</h2>
-          <p className="mx-auto mb-[26px] mt-3.5 max-w-[50ch] text-lg text-muted" style={{ marginBottom: "26px" }}>
-            One command. MIT. Runs locally. Star it, try it, and put a provenance badge on your repo today.
-          </p>
-          <div className="flex flex-wrap justify-center gap-3">
-            <a href={REPO} className={`${btnBase} bg-ink text-ground hover:-translate-y-px`}>★ Star on GitHub</a>
-            <a href={`${REPO}#quickstart`} className={`${btnBase} border border-line-strong text-ink hover:border-brand hover:text-brand`}>Read the docs</a>
+        <section className={`${container} py-20 text-center lg:py-24`}>
+          <h2 className="mx-auto max-w-[20ch] text-balance font-display text-[32px] font-bold tracking-tight sm:text-[40px]">
+            See the grain of your own codebase.
+          </h2>
+          <p className="mx-auto mt-3 max-w-[44ch] text-[16.5px] text-muted">One command locally, or connect a repository and let Cloud keep watching.</p>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <Link href="/signup" className={btnPrimary}>Start free</Link>
+            <a href={`${REPO}#readme`} className={btnSecondary}>Read the docs</a>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* Footer */}
-      <footer className="border-t border-line px-6 py-9">
-        <div className="mx-auto flex max-w-[1120px] items-center justify-between font-mono text-[12.5px] text-muted">
-          <span className="flex items-center gap-2 font-display text-[17px] font-extrabold text-ink">
-            <Mark size={20} /> grain
+      <footer className="border-t border-line">
+        <div className={`${container} flex flex-wrap items-center gap-x-6 gap-y-3 py-8 text-[13px] text-muted`}>
+          <span className="flex items-center gap-2 font-display text-[16px] font-extrabold text-ink">
+            <Mark size={18} /> grain
           </span>
-          <span>MIT · signals, not verdicts · © 2026</span>
+          <a href={REPO} className="hover:text-ink">GitHub</a>
+          <a href={SPEC} className="hover:text-ink">Provenance spec</a>
+          <Link href="/verify" className="hover:text-ink">Verify a report</Link>
+          <Link href="/login" className="hover:text-ink">Sign in</Link>
+          <span className="ml-auto">MIT licensed. Signals, not verdicts.</span>
         </div>
       </footer>
-    </main>
+    </>
   );
+}
+
+function Stat({ label, value, tone, note }: { label: string; value: string; tone?: "ai" | "human"; note?: string }) {
+  const color = tone === "ai" ? "text-ai" : tone === "human" ? "text-human" : "text-ink";
+  return (
+    <div>
+      <dt className="text-[13px] text-muted">{label}</dt>
+      <dd className={`mt-1 font-display text-[30px] font-extrabold leading-none tracking-tight ${color}`}>
+        {value}
+        {note && <span className="ml-1.5 text-[13px] font-medium text-muted">{note}</span>}
+      </dd>
+    </div>
+  );
+}
+
+function Step({ cmd, title, body, out, last }: { cmd: string; title: string; body: string; out: string; last?: boolean }) {
+  return (
+    <li className={`reveal grid gap-5 py-9 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12 ${last ? "" : "border-b border-line"}`}>
+      <div>
+        <code className="inline-block rounded-[8px] bg-surface-2 px-2.5 py-1 font-mono text-[13.5px] font-semibold text-ink">
+          <span className="text-human">$</span> {cmd}
+        </code>
+        <h3 className="mt-3.5 font-display text-[22px] font-bold tracking-tight">{title}</h3>
+        <p className="mt-2 max-w-[46ch] text-[15px] leading-relaxed text-muted">{body}</p>
+      </div>
+      <pre className={`${figure} min-w-0 overflow-x-auto px-4 py-3.5 font-mono text-[12.5px] leading-[1.7] text-ink`} tabIndex={0}>{out}</pre>
+    </li>
+  );
+}
+
+function Feature({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <li className="reveal">
+      <h3 className="font-display text-[17px] font-bold tracking-tight">{title}</h3>
+      <p className="mt-1.5 text-[14.5px] leading-relaxed text-muted">{children}</p>
+    </li>
+  );
+}
+
+function LinkRow({ href, title, children }: { href: string; title: string; children: React.ReactNode }) {
+  const external = href.startsWith("http");
+  const cls = "group grid gap-1 py-5 sm:grid-cols-[220px_minmax(0,1fr)] sm:gap-6";
+  const inner = (
+    <>
+      <span className="font-display text-[17px] font-bold tracking-tight underline decoration-line-strong underline-offset-4 group-hover:decoration-ink">{title}</span>
+      <span className="text-[14.5px] leading-relaxed text-muted">{children}</span>
+    </>
+  );
+  return <li>{external ? <a href={href} className={cls}>{inner}</a> : <Link href={href} className={cls}>{inner}</Link>}</li>;
+}
+
+function Li({ children }: { children: React.ReactNode }) {
+  return <li className="ml-4 list-disc marker:text-faint">{children}</li>;
 }

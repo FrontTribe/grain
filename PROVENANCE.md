@@ -1,6 +1,6 @@
 # Provenance
 
-Authorship mix for **FrontTribe/grain**, measured from 83 commits. Signals, not verdicts.
+Authorship mix for **FrontTribe/grain**, measured from 87 commits. Signals, not verdicts.
 
 | | Share |
 |---|---|
@@ -12,12 +12,12 @@ Authorship mix for **FrontTribe/grain**, measured from 83 commits. Signals, not 
 
 | Path | Human | AI | Lines | |
 |---|---|---|---|---|
-| `web/src/` | 0% | 100% | 7898 |  |
+| `web/src/` | 0% | 100% | 8597 |  |
 | `web/` | 0% | 100% | 7118 |  |
-| `docs/` | 6% | 94% | 2510 |  |
-| `cmd/grain/` | 8% | 92% | 1531 |  |
+| `docs/` | 6% | 94% | 2589 |  |
+| `cmd/grain/` | 8% | 92% | 1806 |  |
 | `design/product/` | 0% | 100% | 1426 |  |
-| `(root)` | 1% | 99% | 1015 |  |
+| `(root)` | 1% | 99% | 1063 |  |
 | `design/cloud/` | 0% | 100% | 664 |  |
 | `design/brand/` | 0% | 100% | 647 |  |
 
@@ -27,8 +27,10 @@ What happened to the code after it landed — AI-written and human-written lines
 
 | | Lines | Later reworked | In a fix/revert | Median commits until rework |
 |---|---|---|---|---|
-| AI-written | 877 | 2 (0%) | 0 | 3 |
-| Human-written | 99 | 0 (0%) | 0 | 0 |
+| AI-written | 2438 | 21 (1%) | 0 | 3 |
+| Human-written | 168 | 4 (2%) | 0 | 8 |
+
+**AI-written lines were reworked 0.4× as often as human-written ones.**
 
 ## Risk
 
