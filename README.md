@@ -294,7 +294,7 @@ repositories and keeps watching:
 
 CLI-scanned repositories reach the same dashboard with `grain push`
 (Settings → Ingest tokens). Setup notes: [GitHub App](docs/github-app-setup.md),
-[email](docs/email-setup.md), [Stripe](docs/go-live-stripe.md).
+[email](docs/email-setup.md).
 
 ## Open core
 
