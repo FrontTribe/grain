@@ -65,18 +65,24 @@ internal/classify/   the content classifier (logistic; per-repo calibration)
 internal/score/      per-commit scoring (attested > declared > inferred, capped)
 internal/outcomes/   rework tracking by line hash (Outcomes)
 internal/risk/       AI lines in critical paths without review evidence (Risk)
+internal/security/   danger patterns over added lines, joined with provenance (Security)
+internal/deps/       dependencies added per manifest, registry existence and age (Dependencies)
 internal/sign/       Ed25519 signatures for notes and BOMs (provenance v1)
-internal/report/     grain.json, PROVENANCE.md, badge, terminal, PR markdown
+internal/report/     grain.json, PROVENANCE.md, badge, terminal, PR markdown, check gates
 internal/config/     .grain.toml loader
-web/src/lib/         Cloud engine mirrors: classify.ts, risk.ts, signing.ts, bom.ts
+web/src/lib/         Cloud engine mirrors: classify.ts, risk.ts, security.ts, deps.ts, signing.ts, bom.ts
 docs/                specs, method notes, setup guides
 ```
 
-Two things are implemented twice, in Go and TypeScript, and must stay
-byte-identical: the line hash (`outcomes.LineHash` / `risk.ts lineHash`) and
-canonical JSON for BOM digests (`sign.Canonical` / `bom.ts canonical`).
-`internal/sign/sign_test.go` verifies a Cloud-signed BOM for exactly this
-reason; if you touch either side, keep that test green.
+Three things are implemented twice, in Go and TypeScript, and must stay
+byte-identical: the line hash (`outcomes.LineHash` / `risk.ts lineHash`),
+canonical JSON for BOM digests (`sign.Canonical` / `bom.ts canonical`), and
+the security pattern file (`internal/security/patterns.json`, copied verbatim
+to `web/src/lib/security-patterns.json`). `internal/sign/sign_test.go`
+verifies a Cloud-signed BOM and `internal/security/security_test.go` compares
+the two pattern files for exactly this reason; if you touch either side, keep
+those tests green. The dependency manifest parser (`deps.Parse` /
+`deps.ts parseDep`) is mirrored by hand; change both.
 
 ## Pull requests
 
@@ -84,7 +90,8 @@ reason; if you touch either side, keep that test green.
   or signing.
 - `go vet ./...` and `go test ./...` must pass; for `web/`, `tsc`, `eslint`
   and `next build` must pass. CI enforces the Go side and grain runs on its
-  own PRs, so expect a provenance comment.
+  own PRs, so expect a provenance comment with the Security and Dependencies
+  sections; both gates are at `warn` here, so they never fail the check.
 - Copy in the product (landing page, app, emails) uses plain punctuation:
   no em dashes, sentence case, specific words. Match the surrounding voice.
 - Don't commit `.grain/ai-edits.jsonl`, `.grain/model.json` or any signing key.
@@ -94,6 +101,27 @@ reason; if you touch either side, keep that test green.
 New agents are recognized by name in `internal/config` (`Agents`) and matched in
 `internal/signal`. If you use an assistant that leaves a `Co-Authored-By` or
 `Generated-by` trailer, add its identifier there.
+
+## Adding a security pattern
+
+Patterns live in `internal/security/patterns.json`, one object per rule:
+`id`, `title`, `severity` (`high` | `medium`), `re`, and a one-line `note`
+that tells the agent what to do instead. The regex must be valid in both Go
+RE2 and JavaScript (no lookbehind, no backreferences), because the same file
+runs in Cloud and in the Claude Code hook. Keep the set small and the
+matches narrow: every rule fires on real code an agent might write, and a
+false positive costs more trust than a miss. After editing, copy the file to
+`web/src/lib/security-patterns.json` and add a case to `security_test.go`
+that shows one line it should match and one it should not.
+
+## Adding a dependency ecosystem
+
+`internal/deps/deps.go` has three pieces per ecosystem: `IsManifest` (which
+file names count), `Parse` (a manifest's added line → package name), and
+`Lookup` (registry endpoint → exists, created-at). Add the ecosystem to all
+three, `RegistryURL` for the link, a parse case in `deps_test.go`, and the
+same three in `web/src/lib/deps.ts`. Only the package name may leave the
+machine; never send file contents or repository names to a registry.
 
 ## Adding a capture hook for another agent
 

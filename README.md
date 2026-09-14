@@ -339,8 +339,10 @@ internal/classify/   the content classifier (logistic; per-repo calibration)
 internal/score/      per-commit scoring (attested > declared > inferred, capped)
 internal/outcomes/   rework tracking by line hash (Outcomes)
 internal/risk/       AI lines in critical paths without review evidence (Risk)
+internal/security/   danger patterns over added lines, joined with provenance (Security)
+internal/deps/       dependencies added per manifest, registry existence and age (Dependencies)
 internal/sign/       Ed25519 signatures for notes and BOMs (provenance v1)
-internal/report/     grain.json, PROVENANCE.md, badge, terminal, PR markdown
+internal/report/     grain.json, PROVENANCE.md, badge, terminal, PR markdown, check gates
 internal/config/     .grain.toml loader
 web/                 grain Cloud (Next.js, Supabase, Stripe, GitHub App)
 ```

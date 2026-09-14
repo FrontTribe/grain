@@ -433,6 +433,7 @@
       <div class="step"><span class="idx"></span><div><h3>Explicit signals</h3><p>Co-Authored-By trailers, agent commit signatures, <span class="mono">*[bot]</span> accounts, explicit tags.</p><span class="tag strong">high confidence</span></div></div>
       <div class="step"><span class="idx"></span><div><h3>Content and forensics</h3><p>A lexical classifier calibrated per repository, plus burst timing and diff shape. Capped at 0.70, always labelled.</p><span class="tag soft">inferred</span></div></div>
       <div class="step"><span class="idx"></span><div><h3>Where it landed, and who looked</h3><p>AI lines in auth, billing, workflows without review evidence, down to the commit; and how often AI lines get reworked vs human ones.</p><span class="tag strong">risk · outcomes</span></div></div>
+      <div class="step" style="grid-column:1/-1"><span class="idx"></span><div><h3>What it wrote that looks dangerous, and what it pulled in</h3><p>A small set of danger patterns (secrets, TLS off, shell or SQL from strings) over the added lines, with who wrote them; and every package the change added, with the registry's answer on whether the name exists and how old it is. Told to the agent before the commit, listed in the PR, gated only if you say so.</p><span class="tag strong">security · dependencies</span></div></div>
     </div>
     <div class="principle"><b>Design principle:</b> Grain reports <b>signals, not verdicts</b>. "62% of these lines carry AI signals" — never "this person cheated." That single choice is the difference between adoption and backlash.</div>
   </div>
@@ -456,7 +457,8 @@
           <li>Single-binary CLI, GitHub Action, badge</li>
           <li>Signed line-level attestations</li>
           <li>blame, verify, calibrate</li>
-          <li>PROVENANCE.md with Outcomes and Risk</li>
+          <li>PROVENANCE.md with Outcomes, Risk, Security, Dependencies</li>
+          <li>PR check with opt-in security and dependency gates</li>
         </ul>
         <div class="oss-badge">// the whole engine, in the open</div>
       </div>
@@ -467,7 +469,7 @@
         <ul>
           <li>Scans on every push (GitHub App)</li>
           <li>Review evidence from the PR API</li>
-          <li>Email alerts: threshold, risk hotspots</li>
+          <li>Email alerts: threshold, risk hotspots, security findings, unknown packages</li>
           <li>Signed authorship report (Team)</li>
         </ul>
         <div class="oss-badge">// where the workflow lives</div>
