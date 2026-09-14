@@ -57,20 +57,20 @@ export function Onboarding({ workspace, connect }: { workspace: string; connect:
   return (
     <div className="flex flex-1 items-start justify-center overflow-y-auto p-7">
       <div className="w-full max-w-[720px]">
-        <div className="mb-6 overflow-hidden rounded-2xl border border-line bg-[#1A1712] p-7 text-[#C9C2B3]">
+        <div className="mb-6 overflow-hidden rounded-2xl border border-line bg-surface p-7 text-ink">
           <div className="mb-4 max-w-[46ch]">
-            <div className="font-mono text-[11px] uppercase tracking-[0.14em] text-[#8F8778]">
+            <div className="font-mono text-[11px] text-faint">
               {workspace} · empty workspace
             </div>
-            <h2 className="mt-2 font-display text-[26px] font-extrabold leading-tight tracking-tight text-[#F1ECE0]">
-              Let&apos;s read the grain of your first repo.
+            <h2 className="mt-2 font-display text-[26px] font-extrabold leading-tight tracking-tight text-ink">
+              Read the grain of your first repository.
             </h2>
-            <p className="mt-2 text-[14px] text-[#8F8778]">
+            <p className="mt-2 text-[14px] text-muted">
               Grain never uploads your code: the CLI scans locally and pushes only the
               provenance report. Three steps and this dashboard fills in.
             </p>
           </div>
-          <div className="overflow-hidden rounded-xl border border-[#2c2820]">
+          <div className="overflow-hidden rounded-xl border border-line bg-ground px-3 py-2">
             <Fingerprint height={54} bars={72} />
           </div>
         </div>

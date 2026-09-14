@@ -19,7 +19,7 @@ export function OnboardRepoPicker({ repos, login }: { repos: GhRepo[]; login: st
         <div className="mb-3.5 flex items-center gap-3">
           <span className="w-[120px] text-[13px] font-medium">Account</span>
           <div className="flex h-11 flex-1 items-center rounded-[10px] border border-line bg-surface px-3.5 text-sm">
-            <span className="mr-2.5 size-[22px] rounded-md bg-gradient-to-br from-[#57C6A8] to-[#E28A50]" />
+            <span className="mr-2.5 size-[22px] rounded-md bg-gradient-to-br from-human to-ai" />
             {login ?? "GitHub"} <span className="ml-auto font-mono text-[11.5px] text-human">connected</span>
           </div>
         </div>

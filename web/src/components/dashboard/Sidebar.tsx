@@ -35,7 +35,7 @@ function link(item: NavItem, active: boolean) {
       key={item.href}
       href={item.href}
       className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13.5px] transition ${
-        active ? "bg-[#242c26] text-[#7FD8BE] [&_svg]:text-[#57C6A8]" : "text-[#A69E8D] hover:text-[#ECE6D8]"
+        active ? "bg-human-soft text-human [&_svg]:text-human" : "text-muted hover:bg-surface-2 hover:text-ink"
       }`}
     >
       {item.icon} {item.label}
@@ -49,54 +49,54 @@ export function Sidebar({ orgName, plan, userName, userEmail, orgs = [], activeO
   const initials = userName.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase() || "U";
 
   return (
-    <aside className="flex w-[244px] flex-none flex-col bg-[#1A1712] p-4 text-[#C9C2B3]">
+    <aside className="flex w-[244px] flex-none flex-col border-r border-line bg-surface p-4 text-ink">
       <div className="flex items-center gap-2.5 px-2 pb-1">
         <Mark size={26} />
-        <span className="font-display text-xl font-extrabold tracking-tight text-[#F1ECE0]">grain</span>
-        <span className="rounded border border-[#35301f] px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.16em] text-[#8A8272]">cloud</span>
+        <span className="font-display text-xl font-extrabold tracking-tight text-ink">grain</span>
+        <span className="rounded border border-line px-1.5 py-0.5 font-mono text-[9.5px] uppercase tracking-[0.16em] text-faint">cloud</span>
       </div>
 
       {orgs.length > 1 ? (
         <details className="relative my-5">
-          <summary className="flex cursor-pointer list-none items-center gap-2.5 rounded-[10px] border border-[#322c1f] bg-[#241F17] px-3 py-2.5 text-[13px] marker:hidden [&::-webkit-details-marker]:hidden">
-            <span className="size-[22px] flex-none rounded-md bg-gradient-to-br from-[#57C6A8] to-[#E28A50]" />
-            <span className="truncate font-semibold text-[#ECE6D8]">{orgName}</span>
-            <span className="ml-auto text-[#6E6656]">▾</span>
+          <summary className="flex cursor-pointer list-none items-center gap-2.5 rounded-[10px] border border-line bg-ground px-3 py-2.5 text-[13px] marker:hidden [&::-webkit-details-marker]:hidden">
+            <span className="size-[22px] flex-none rounded-md bg-gradient-to-br from-human to-ai" />
+            <span className="truncate font-semibold text-ink">{orgName}</span>
+            <span className="ml-auto text-faint">▾</span>
           </summary>
-          <div className="absolute left-0 right-0 z-20 mt-1 max-h-[300px] overflow-y-auto rounded-[10px] border border-[#322c1f] bg-[#241F17] p-1 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+          <div className="absolute left-0 right-0 z-20 mt-1 max-h-[300px] overflow-y-auto rounded-[10px] border border-line bg-ground p-1 shadow-[var(--shadow)]">
             {orgs.map((o) => (
               <form key={o.org_id} action={switchOrg}>
                 <input type="hidden" name="org" value={o.org_id} />
-                <button type="submit" className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[12.5px] ${o.org_id === activeOrgId ? "text-[#7FD8BE]" : "text-[#C9C2B3] hover:bg-[#2c2519]"}`}>
-                  <span className="size-4 flex-none rounded bg-gradient-to-br from-[#57C6A8] to-[#E28A50]" />
+                <button type="submit" className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-[12.5px] ${o.org_id === activeOrgId ? "text-human" : "text-ink hover:bg-surface-2"}`}>
+                  <span className="size-4 flex-none rounded bg-gradient-to-br from-human to-ai" />
                   <span className="truncate">{o.name}</span>
-                  {o.org_id === activeOrgId && <span className="ml-auto text-[#57C6A8]">✓</span>}
+                  {o.org_id === activeOrgId && <span className="ml-auto text-human">✓</span>}
                 </button>
               </form>
             ))}
           </div>
         </details>
       ) : (
-        <div className="my-5 flex items-center gap-2.5 rounded-[10px] border border-[#322c1f] bg-[#241F17] px-3 py-2.5 text-[13px]">
-          <span className="size-[22px] flex-none rounded-md bg-gradient-to-br from-[#57C6A8] to-[#E28A50]" />
-          <span className="truncate font-semibold text-[#ECE6D8]">{orgName}</span>
+        <div className="my-5 flex items-center gap-2.5 rounded-[10px] border border-line bg-ground px-3 py-2.5 text-[13px]">
+          <span className="size-[22px] flex-none rounded-md bg-gradient-to-br from-human to-ai" />
+          <span className="truncate font-semibold text-ink">{orgName}</span>
         </div>
       )}
 
       <nav className="flex flex-col gap-0.5">
         {NAV.map((n) => link(n, isActive(n.href)))}
-        <div className="px-3 pb-1.5 pt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-[#6A6252]">Workspace</div>
+        <div className="px-3 pb-1.5 pt-4 font-mono text-[10px] uppercase tracking-[0.14em] text-faint">Workspace</div>
         {link(SETTINGS, isActive(SETTINGS.href))}
       </nav>
 
-      <div className="mt-auto flex items-center gap-2.5 border-t border-[#2a2519] px-2 pt-2.5">
-        <span title={userEmail} className="flex size-[30px] flex-none items-center justify-center rounded-lg bg-[#3a3323] text-xs font-semibold">{initials}</span>
+      <div className="mt-auto flex items-center gap-2.5 border-t border-line px-2 pt-2.5">
+        <span title={userEmail} className="flex size-[30px] flex-none items-center justify-center rounded-lg bg-surface-2 text-xs font-semibold text-ink">{initials}</span>
         <div className="min-w-0">
-          <div className="truncate text-[13px] font-medium text-[#E4DDCD]">{userName}</div>
-          <div className="truncate text-[11px] text-[#7C7462] capitalize">{plan} plan</div>
+          <div className="truncate text-[13px] font-medium text-ink">{userName}</div>
+          <div className="truncate text-[11px] capitalize text-muted">{plan} plan</div>
         </div>
         <form action={signout} className="ml-auto">
-          <button type="submit" title="Sign out" className="flex size-7 items-center justify-center rounded-md text-[#7C7462] hover:bg-[#242c26] hover:text-[#7FD8BE]">
+          <button type="submit" title="Sign out" className="flex size-7 items-center justify-center rounded-md text-muted hover:bg-human-soft hover:text-human">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="size-[16px]">
               <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11" />
             </svg>

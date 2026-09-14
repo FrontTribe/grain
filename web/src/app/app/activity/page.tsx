@@ -21,7 +21,7 @@ const icons: Record<string, React.ReactNode> = {
   repo: <><circle cx="6" cy="6" r="2.4" /><circle cx="6" cy="18" r="2.4" /><circle cx="18" cy="9" r="2.4" /><path d="M6 8.4v7.2M8.2 6h5.6a2 2 0 0 1 2 2v.6" /></>,
 };
 const tone: Record<string, string> = {
-  attention: "bg-ai-soft text-ai", scan: "bg-human-soft text-human", policy: "bg-surface-2 text-muted", repo: "bg-[#E7EEF4] text-[#3B6EA5]",
+  attention: "bg-ai-soft text-ai", scan: "bg-human-soft text-human", policy: "bg-surface-2 text-muted", repo: "bg-surface-2 text-ink",
 };
 
 function dayLabel(iso: string): string {
