@@ -1,0 +1,94 @@
+{
+  "schema": "grain/authorship-bom/v1",
+  "generated_at": "2026-09-14T21:19:12.792Z",
+  "engine": {
+    "version": "0.1.0"
+  },
+  "workspace": {
+    "name": "Krešimir Galić's workspace",
+    "slug": "kresogalic8-fdab68"
+  },
+  "scope": {
+    "repositories": 4
+  },
+  "summary": {
+    "human": 37,
+    "ai_assisted": 63,
+    "unclassified": 0,
+    "ai_by_basis": {
+      "attested": 1,
+      "declared": 60,
+      "inferred": 3
+    }
+  },
+  "repositories": [
+    {
+      "name": "kresogalic8",
+      "full_name": "kresogalic8/kresogalic8",
+      "human": 83,
+      "ai_assisted": 17,
+      "unclassified": 0,
+      "ai_by_basis": {
+        "attested": 0,
+        "declared": 7,
+        "inferred": 10
+      },
+      "human_owned_paths": [],
+      "last_scan_at": "2026-09-14T21:10:01.849772+00:00"
+    },
+    {
+      "name": "grain",
+      "full_name": "FrontTribe/grain",
+      "human": 2,
+      "ai_assisted": 98,
+      "unclassified": 0,
+      "ai_by_basis": {
+        "attested": 4,
+        "declared": 94,
+        "inferred": 0
+      },
+      "human_owned_paths": [],
+      "last_scan_at": "2026-09-14T20:47:05.259849+00:00"
+    },
+    {
+      "name": "klik",
+      "full_name": "FrontTribe/klik",
+      "human": 9,
+      "ai_assisted": 91,
+      "unclassified": 0,
+      "ai_by_basis": {
+        "attested": 0,
+        "declared": 91,
+        "inferred": 0
+      },
+      "human_owned_paths": [],
+      "last_scan_at": "2026-09-14T16:53:32.083759+00:00"
+    },
+    {
+      "name": "aureo",
+      "full_name": "FrontTribe/aureo",
+      "human": 54,
+      "ai_assisted": 46,
+      "unclassified": 0,
+      "ai_by_basis": {
+        "attested": 0,
+        "declared": 46,
+        "inferred": 0
+      },
+      "human_owned_paths": [],
+      "last_scan_at": "2026-09-14T16:53:27.176228+00:00"
+    }
+  ],
+  "methodology": "Signals, not verdicts. Provenance is separated by how it was determined: attested (a git-note declaration), declared (a commit trailer or bot/agent identity), and inferred (behavioral/content signals, confidence capped at 0.70 — never treated as certain). Percentages are of classified lines. This report reflects the last scan of each repository.",
+  "integrity": {
+    "algorithm": "sha256",
+    "digest": "2f56188f828824c7b6249abb8f5bbced9db6393b6528a58078e8637187e319d1"
+  },
+  "signature": {
+    "algorithm": "ed25519",
+    "key_id": "33907b75a6a4824c",
+    "public_key": "ed25519:2Ln2Btj2+fSXZESf1GulsqJIZmOlaOK5n2xzxcPb2TU=",
+    "signed_at": "2026-09-14T21:19:12.792Z",
+    "value": "UA9fn7q0wZOTiO9xp5u5M1TlsWyQE9DBENGEDxkJSD6WWvewfYlycTt02pX76v0IZqgS1v+7B4vCvy1DLBcLAQ=="
+  }
+}

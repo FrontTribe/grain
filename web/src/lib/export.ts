@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { getUserAndOrg, getRepos, num } from "@/lib/data";
 import { canonical } from "@/lib/bom";
+import { loadSigningKey, signBomDigest, type BomSignature } from "@/lib/signing";
 
 // Engine identity mirrored from the CLI (internal/report). Bump with the engine.
 const ENGINE_VERSION = "0.1.0";
@@ -31,6 +32,9 @@ export type AuthorshipBOM = {
   repositories: BomRepo[];
   methodology: string;
   integrity: { algorithm: "sha256"; digest: string };
+  // Present when the server has a signing key: an Ed25519 signature over the
+  // digest, verifiable against /.well-known/grain-keys.json.
+  signature?: BomSignature;
 };
 
 const METHODOLOGY =
@@ -82,5 +86,10 @@ export async function buildAuthorshipBOM(nowISO: string): Promise<AuthorshipBOM>
   };
 
   const digest = createHash("sha256").update(canonical(doc)).digest("hex");
-  return { ...doc, integrity: { algorithm: "sha256", digest } };
+  const key = loadSigningKey();
+  return {
+    ...doc,
+    integrity: { algorithm: "sha256", digest },
+    ...(key ? { signature: signBomDigest(key, digest, nowISO) } : {}),
+  };
 }

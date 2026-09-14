@@ -38,8 +38,14 @@ added config takes effect in the next session.
    AI-Hashes: 0320d2bd7a,…     # the AI lines, by content hash
    ```
    Matched lines are consumed from the ledger so nothing is attested twice.
+   The note is **signed** with your Ed25519 key (`grain key`; created on first
+   use) and bound to the commit, so it can't be edited or moved to another
+   commit without the signature failing — see the
+   [provenance v1 spec](spec/provenance-v1.md). `grain verify` checks every
+   note in a repo; `.grain/signers` lists the keys a repo trusts.
 3. **Push the notes** with `git push origin refs/notes/grain` so Grain Cloud and
-   teammates see them.
+   teammates see them. Cloud verifies the signatures too and ignores any note
+   that fails.
 
 Hashes are content-based, so an attestation is **shift-proof**: later edits
 elsewhere in the file don't break it. A line the human rewrites afterwards gets

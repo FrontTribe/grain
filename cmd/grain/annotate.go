@@ -53,6 +53,11 @@ func cmdAnnotate(args []string) error {
 	if *extra != "" {
 		body += "\n" + *extra
 	}
+	// Notes are bound to a full SHA; resolve abbreviations before signing.
+	if full, err := gitlog.Run(root, "rev-parse", "--verify", sha+"^{commit}"); err == nil {
+		sha = strings.TrimSpace(full)
+	}
+	body, signedBy := signNote(sha, body)
 	if err := gitlog.AddNote(root, gitlog.NotesRef, sha, body); err != nil {
 		return err
 	}
@@ -61,7 +66,7 @@ func cmdAnnotate(args []string) error {
 	if len(short) > 7 {
 		short = short[:7]
 	}
-	fmt.Printf("annotated %s → Provenance: %s  (note on %s)\n", short, prov, gitlog.NotesRef)
+	fmt.Printf("annotated %s → Provenance: %s  (note on %s%s)\n", short, prov, gitlog.NotesRef, signedBy)
 	fmt.Println("  push it with: git push origin " + gitlog.NotesRef)
 	return nil
 }

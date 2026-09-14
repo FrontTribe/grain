@@ -46,6 +46,10 @@ func main() {
 		err = cmdAttest(os.Args[2:])
 	case "blame":
 		err = cmdBlame(os.Args[2:])
+	case "key":
+		err = cmdKey(os.Args[2:])
+	case "verify":
+		err = cmdVerify(os.Args[2:])
 	case "push":
 		err = cmdPush(os.Args[2:])
 	case "init":
@@ -88,6 +92,8 @@ usage:
   grain hook install                              capture AI edits at the source (git post-commit + Claude Code hook)
   grain attest [-C dir]                           attest HEAD's AI-written lines from the edit ledger (post-commit)
   grain blame <file>                              git blame for AI: which lines were AI-written
+  grain key                                       show (or create) the key your attestations are signed with
+  grain verify [--strict] | --bom report.json     check attestation signatures, or a signed authorship report
   grain push [--url U] [--token T] [--file f]     push grain.json to Grain Cloud
   grain init [-C dir]                            write an example .grain.toml
   grain version

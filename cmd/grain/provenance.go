@@ -13,6 +13,7 @@ import (
 
 	"github.com/FrontTribe/grain/internal/gitlog"
 	"github.com/FrontTribe/grain/internal/outcomes"
+	"github.com/FrontTribe/grain/internal/sign"
 	"github.com/FrontTribe/grain/internal/signal"
 )
 
@@ -324,6 +325,7 @@ func cmdAttest(args []string) error {
 	}
 	sort.Strings(aiHashes)
 	note := fmt.Sprintf("Provenance: %s\nAI-Lines: %d/%d\nAI-Hashes: %s", prov, aiN, totalN, strings.Join(aiHashes, ","))
+	note, signedBy := signNote(head, note)
 	if err := gitlog.AddNote(root, gitlog.NotesRef, head, note); err != nil {
 		return err
 	}
@@ -338,11 +340,22 @@ func cmdAttest(args []string) error {
 		return err
 	}
 	if !*quiet {
-		fmt.Printf("grain attest — %s: Provenance: %s · %d/%d added lines AI-written (note on %s)\n",
-			head[:7], prov, aiN, totalN, gitlog.NotesRef)
+		fmt.Printf("grain attest — %s: Provenance: %s · %d/%d added lines AI-written (note on %s%s)\n",
+			head[:7], prov, aiN, totalN, gitlog.NotesRef, signedBy)
 		fmt.Println("  push it with: git push origin " + gitlog.NotesRef)
 	}
 	return nil
+}
+
+// signNote signs an attestation with the local key (created on first use).
+// Signing is best-effort: an attestation is still worth writing unsigned.
+// Returns the note and a suffix for messages (", signed <fingerprint>").
+func signNote(sha, note string) (string, string) {
+	k, _, err := sign.LoadOrCreate()
+	if err != nil {
+		return note, ""
+	}
+	return sign.SignNote(k, sha, note), ", signed " + k.Fingerprint()
 }
 
 // parseAIHashes reads the AI-Hashes line of a grain note into a set.

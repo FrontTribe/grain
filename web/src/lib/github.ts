@@ -7,6 +7,7 @@
 
 import { classifyDiff } from "@/lib/classify";
 import { computeCloudRisk, parseAIHashes, type CloudRisk, type CloudRiskCommit } from "@/lib/risk";
+import { verifyNoteSignature, type NoteSignature } from "@/lib/signing";
 
 const AGENTS = ["claude", "copilot", "cursor", "codex", "devin", "chatgpt", "gemini", "anthropic"];
 
@@ -24,6 +25,8 @@ export type GhReport = {
   };
   by_path: { path: string; human: number; ai: number; lines: number; human_owned: boolean }[];
   risk?: CloudRisk;
+  // attestation notes found, by signature status (docs/spec/provenance-v1.md)
+  attestations?: { signed: number; unsigned: number; invalid: number };
 };
 
 // Top-level directory of a path; root-level files group under "(root)".
@@ -185,7 +188,7 @@ type Attested = "ai" | "human";
 // A parsed grain note: the class plus, when `grain attest` recorded AI-Lines: n/m,
 // the exact share of added lines that were AI-written (-1 = whole-commit) and
 // the hashes of those lines (for per-file attribution).
-type AttestedNote = { cls: Attested; frac: number; hashes: Set<string> | null };
+type AttestedNote = { cls: Attested; frac: number; hashes: Set<string> | null; sig: NoteSignature };
 
 // Share of a commit that counts as AI: the attested line share when known,
 // else the whole commit.
@@ -282,7 +285,9 @@ async function fetchAttestedNotes(
       if (!blob) return null;
       const text = blob.encoding === "base64" ? Buffer.from(String(blob.content), "base64").toString("utf8") : String(blob.content ?? "");
       const cls = parseAttestedClass(text);
-      if (cls) result.set(commitSha, { cls, frac: parseAILineFrac(text), hashes: parseAIHashes(text) });
+      // A note whose signature fails is kept only to be counted: it claims a
+      // key and doesn't verify, so it was altered or moved — never trusted.
+      if (cls) result.set(commitSha, { cls, frac: parseAILineFrac(text), hashes: parseAIHashes(text), sig: verifyNoteSignature(commitSha, text).status });
       return null;
     });
   } catch {
@@ -328,8 +333,15 @@ export async function scanGithubRepo(
 
   // Attested provenance from grain's git notes is authoritative when present.
   const attested = await fetchAttestedNotes(owner, repo, shas.filter(Boolean), headers);
+  const attestations = { signed: 0, unsigned: 0, invalid: 0 };
+  for (const n of attested.values()) {
+    if (n.sig === "valid") attestations.signed++;
+    else if (n.sig === "invalid") attestations.invalid++;
+    else attestations.unsigned++;
+  }
   const basisOf = (i: number): "attested-ai" | "attested-human" | "declared" | "infer" => {
-    const cls = attested.get(shas[i])?.cls;
+    const n = attested.get(shas[i]);
+    const cls = n && n.sig !== "invalid" ? n.cls : undefined;
     if (cls === "ai") return "attested-ai";
     if (cls === "human") return "attested-human";
     if (declaredFlags[i]) return "declared";
@@ -449,6 +461,7 @@ export async function scanGithubRepo(
     },
     by_path: byPath,
     risk,
+    attestations,
   };
   return {
     report,

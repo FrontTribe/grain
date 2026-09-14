@@ -135,6 +135,16 @@ A committable, diff-friendly "nutrition label" for the whole repo — repo-level
 mix, a per-directory breakdown, and the engine version — backed by a
 machine-readable `grain.json`.
 
+### 4. Signed attestations
+
+When an AI agent writes code, `grain hook` records it and `grain attest` writes
+a **signed** note on the commit: exactly which lines, by content hash, signed
+with your Ed25519 key and bound to that commit. `grain verify` checks every
+note in a repo; anyone can — the format is open
+([provenance v1](docs/spec/provenance-v1.md)), stdlib-only, and needs no
+service. Cloud authorship reports are signed the same way and checked at
+[getgrain.dev/verify](https://getgrain.dev/verify).
+
 ## How it works
 
 Grain extracts **signals** from each commit, ranked by confidence:
