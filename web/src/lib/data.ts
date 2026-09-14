@@ -59,12 +59,16 @@ export type Outcomes = { strict: OutcomesCohort; broad: OutcomesCohort; commits:
 // Risk analysis pushed by the CLI (grain.json → risk): AI lines in critical
 // paths without review evidence. Field names match internal/risk.
 export type RiskPath = { path: string; ai_lines: number; ai_unreviewed: number; commits: number };
-export type RiskHotspot = { sha: string; subject: string; path: string; ai_lines: number };
+export type RiskHotspot = { sha: string; subject: string; path: string; ai_lines: number; evidence?: string };
 export type Risk = {
   ai_lines: number; ai_unreviewed: number;
   critical_ai_lines: number; critical_ai_unreviewed: number;
   critical: RiskPath[]; top: RiskHotspot[]; patterns: string[];
   reviewed_commits: number; unreviewed_commits: number;
+  // scope — "cli" = full history from grain push, "cloud" = the scan's window
+  source?: "cli" | "cloud"; commits?: number;
+  // Cloud only: critical AI lines whose PR was approved by someone else
+  approved_ai_lines?: number;
 };
 
 export type Repo = {

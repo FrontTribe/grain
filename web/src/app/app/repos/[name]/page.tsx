@@ -182,7 +182,9 @@ export default async function RepoDetail({
             <Card className="p-5">
               <div className="mb-1 flex items-center justify-between">
                 <h3 className="font-display text-[15px] font-bold">Risk</h3>
-                <span className="font-mono text-[11px] text-faint">AI-written code in critical paths</span>
+                <span className="font-mono text-[11px] text-faint">
+                  {rk.source === "cloud" ? `last ${rk.commits ?? "?"} commits · GitHub scan` : rk.source === "cli" ? "full history · CLI scan" : "AI-written code in critical paths"}
+                </span>
               </div>
               {rk.critical_ai_lines === 0 ? (
                 <p className="text-[12.5px] text-muted">No AI-written lines landed in critical paths ({rk.patterns.slice(0, 6).join(", ")}…).</p>
@@ -190,7 +192,10 @@ export default async function RepoDetail({
                 <>
                   <p className="mb-3.5 text-[12.5px] text-muted">
                     <b className={share > 0.5 ? "text-ai" : "text-ink"}>{rk.critical_ai_unreviewed}</b> of {rk.critical_ai_lines} AI-written lines in critical paths
-                    (<b className="text-ink">{Math.round(share * 100)}%</b>) landed with no review evidence — no reviewer trailer, no PR merge, applied by the author.
+                    (<b className="text-ink">{Math.round(share * 100)}%</b>) landed with no review evidence — no pull request, no reviewer trailer, applied by the author.
+                    {typeof rk.approved_ai_lines === "number" && rk.approved_ai_lines > 0 && (
+                      <> Of the reviewed ones, <b className="text-human">{rk.approved_ai_lines}</b> went through a PR someone else approved.</>
+                    )}
                   </p>
                   <div className="flex flex-col gap-2">
                     {rk.critical.slice(0, 6).map((p) => (

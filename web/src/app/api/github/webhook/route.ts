@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { installationToken } from "@/lib/githubApp";
 import { scanGithubRepo, parseRepoInput } from "@/lib/github";
-import { notifyAttentionForOrg } from "@/lib/notify";
+import { notifyAttentionForOrg, notifyRiskForOrg } from "@/lib/notify";
 
 export const runtime = "nodejs";
 
@@ -60,15 +60,16 @@ export async function POST(req: Request) {
 
   // Do the work, but never fail the webhook — GitHub retries non-2xx and we
   // don't want a scan hiccup to cause redelivery storms.
+  const pushed = (payload.commits ?? []).map((c) => c.id ?? "").filter(Boolean);
   try {
-    await rescanFromWebhook(fullName, installationId);
+    await rescanFromWebhook(fullName, installationId, pushed);
   } catch (err) {
     console.error("[gh-webhook] rescan failed:", (err as Error).message);
   }
   return NextResponse.json({ ok: true });
 }
 
-async function rescanFromWebhook(fullName: string, installationId: number): Promise<void> {
+async function rescanFromWebhook(fullName: string, installationId: number, pushedShas: string[]): Promise<void> {
   const parsed = parseRepoInput(fullName);
   if (!parsed) return;
 
@@ -90,11 +91,19 @@ async function rescanFromWebhook(fullName: string, installationId: number): Prom
     // Service-role ingest: a thin, session-less wrapper around the member ingest
     // that takes an explicit org (see docs/github-app-setup.md).
     await db.rpc("ingest_grain_service", { p_org: orgId, p_payload: scan.report });
-    // Alert the workspace's admins if this push pushed the repo over threshold.
+    // Alert the workspace's admins if this push pushed the repo over threshold…
     try {
       await notifyAttentionForOrg(db, orgId, parsed.repo, scan.ai);
     } catch (err) {
       console.error("[gh-webhook] notify failed:", (err as Error).message);
+    }
+    // …or put unreviewed AI-written lines into a critical path.
+    if (scan.report.risk) {
+      try {
+        await notifyRiskForOrg(db, orgId, parsed.repo, scan.report.risk, pushedShas);
+      } catch (err) {
+        console.error("[gh-webhook] risk notify failed:", (err as Error).message);
+      }
     }
   }
 }
@@ -103,4 +112,5 @@ type PushPayload = {
   ref?: string;
   repository?: { full_name?: string; default_branch?: string };
   installation?: { id?: number };
+  commits?: { id?: string }[];
 };

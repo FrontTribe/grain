@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { sendEmail, attentionEmail } from "@/lib/email";
+import { sendEmail, attentionEmail, riskEmail } from "@/lib/email";
 import { getOrgMembers, getOrgPolicy, getUserAndOrg } from "@/lib/data";
 
 type EmailRow = { email: string };
@@ -29,6 +29,35 @@ export async function notifyAttentionForOrg(
 
   const href = `https://getgrain.dev/app/repos/${encodeURIComponent(repoName)}`;
   const { subject, html } = attentionEmail((org?.name as string | undefined) ?? "your workspace", repoName, aiPercent, threshold, href);
+  await sendEmail({ to: admins, subject, html });
+}
+
+// Session-less risk alert for the webhook path: when the commits that were just
+// pushed put AI-written lines into a critical path with no review evidence,
+// email the workspace's admins with the hotspots. Only the pushed commits
+// count, so one push produces at most one alert.
+export async function notifyRiskForOrg(
+  db: SupabaseClient,
+  orgId: string,
+  repoName: string,
+  risk: { top: { sha: string; subject: string; path: string; ai_lines: number }[] },
+  pushedShas: string[],
+): Promise<void> {
+  if (pushedShas.length === 0) return;
+  const pushed = new Set(pushedShas);
+  const hot = risk.top.filter((h) => pushed.has(h.sha));
+  if (hot.length === 0) return;
+  const lines = hot.reduce((t, h) => t + h.ai_lines, 0);
+
+  const [{ data: org }, { data: rows }] = await Promise.all([
+    db.from("orgs").select("name").eq("id", orgId).maybeSingle(),
+    db.rpc("org_admin_emails", { p_org: orgId }),
+  ]);
+  const admins = ((rows ?? []) as EmailRow[]).map((r) => r.email).filter(Boolean);
+  if (admins.length === 0) return;
+
+  const href = `https://getgrain.dev/app/repos/${encodeURIComponent(repoName)}`;
+  const { subject, html } = riskEmail((org?.name as string | undefined) ?? "your workspace", repoName, lines, hot, href);
   await sendEmail({ to: admins, subject, html });
 }
 

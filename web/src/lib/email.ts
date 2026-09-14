@@ -77,3 +77,27 @@ export function attentionEmail(
     ),
   };
 }
+
+export function riskEmail(
+  workspace: string,
+  repo: string,
+  lines: number,
+  hotspots: { sha: string; subject: string; path: string; ai_lines: number }[],
+  href: string,
+): { subject: string; html: string } {
+  const paths = [...new Set(hotspots.map((h) => h.path))];
+  const items = hotspots
+    .slice(0, 5)
+    .map((h) => `<li><code>${esc(h.sha.slice(0, 7))}</code> ${esc(h.subject)} — <code>${esc(h.path)}</code>, ${h.ai_lines} lines</li>`)
+    .join("");
+  return {
+    subject: `${repo}: ${lines} unreviewed AI-written lines landed in ${paths.join(", ")}`,
+    html: emailShell(
+      `Unreviewed AI code in a critical path`,
+      `<p style="margin:0 0 12px">A push to <b>${esc(repo)}</b> in <b>${esc(workspace)}</b> put <b>${lines} AI-written lines</b> into ${paths.map((p) => `<code>${esc(p)}</code>`).join(", ")} with no review evidence — no pull request, no reviewer trailer, applied by the author.</p>
+       <ul style="margin:0 0 14px;padding-left:18px;font-size:13px">${items}</ul>
+       <p style="margin:0 0 16px;color:#948D80;font-size:12.5px">A place to look, not a verdict. Open the repo to see every critical path and the full hotspot list.</p>`,
+      { label: "Review the hotspots", href },
+    ),
+  };
+}

@@ -46,8 +46,17 @@ risk: 312 AI lines in critical paths, 312 (100%) without review evidence · auth
 
 `grain scan` prints the line; `PROVENANCE.md` gets a **Risk** section with the
 table and hotspots; `grain.json` carries the `risk` block; `grain push` sends
-it to Grain Cloud, where the repo page shows a **Risk** card. Cloud GitHub
-scans don't compute it and never overwrite a pushed block.
+it to Grain Cloud, where the repo page shows a **Risk** card.
+
+Cloud GitHub scans compute their own block over the commits they deep-scan
+(the card says "last N commits"), with one upgrade the CLI can't make: review
+evidence comes from the **GitHub PR API** — whether a commit belongs to a pull
+request, and whether someone other than the author approved it
+(`approved_ai_lines`). GitHub is asked only about commits that put AI lines
+into a critical path and carry no git-side evidence, so rate limits stay
+comfortable. A push through the GitHub App that lands unreviewed AI lines in a
+critical path **emails the workspace admins** with the hotspots; only the
+pushed commits count, so one push means at most one alert.
 
 ## What it does not claim
 

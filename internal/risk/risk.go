@@ -52,6 +52,8 @@ type Summary struct {
 	Patterns           []string  `json:"patterns"`               // what counted as critical
 	ReviewedCommits    int       `json:"reviewed_commits"`
 	UnreviewedCommits  int       `json:"unreviewed_commits"`
+	Commits            int       `json:"commits"` // commits examined
+	Source             string    `json:"source"`  // "cli": full history (the Cloud scan writes "cloud")
 }
 
 // UnreviewedShare is the share of AI lines in critical paths that had no
@@ -132,7 +134,7 @@ func Compute(commits []gitlog.Commit, added map[string]map[string][]string, firs
 	if len(patterns) == 0 {
 		patterns = DefaultCritical
 	}
-	sum := Summary{Patterns: patterns}
+	sum := Summary{Patterns: patterns, Commits: len(commits), Source: "cli"}
 	byPath := map[string]*Path{}
 	seenPathCommit := map[string]bool{}
 	var hot []Hotspot

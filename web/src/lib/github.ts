@@ -6,6 +6,7 @@
 // per-directory path; this is commit-weighted.
 
 import { classifyDiff } from "@/lib/classify";
+import { computeCloudRisk, parseAIHashes, type CloudRisk, type CloudRiskCommit } from "@/lib/risk";
 
 const AGENTS = ["claude", "copilot", "cursor", "codex", "devin", "chatgpt", "gemini", "anthropic"];
 
@@ -22,6 +23,7 @@ export type GhReport = {
     ai_by_basis: { attested: number; declared: number; inferred: number };
   };
   by_path: { path: string; human: number; ai: number; lines: number; human_owned: boolean }[];
+  risk?: CloudRisk;
 };
 
 // Top-level directory of a path; root-level files group under "(root)".
@@ -52,7 +54,11 @@ function isAgent(s: string): boolean {
 
 type Commit = {
   sha?: string;
-  commit?: { message?: string; author?: { name?: string; email?: string } };
+  commit?: {
+    message?: string;
+    author?: { name?: string; email?: string };
+    committer?: { name?: string; email?: string };
+  };
   author?: { login?: string; type?: string } | null;
   committer?: { login?: string; type?: string } | null;
 };
@@ -177,8 +183,9 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (t: T) => Promise<R
 
 type Attested = "ai" | "human";
 // A parsed grain note: the class plus, when `grain attest` recorded AI-Lines: n/m,
-// the exact share of added lines that were AI-written (-1 = whole-commit).
-type AttestedNote = { cls: Attested; frac: number };
+// the exact share of added lines that were AI-written (-1 = whole-commit) and
+// the hashes of those lines (for per-file attribution).
+type AttestedNote = { cls: Attested; frac: number; hashes: Set<string> | null };
 
 // Share of a commit that counts as AI: the attested line share when known,
 // else the whole commit.
@@ -275,7 +282,7 @@ async function fetchAttestedNotes(
       if (!blob) return null;
       const text = blob.encoding === "base64" ? Buffer.from(String(blob.content), "base64").toString("utf8") : String(blob.content ?? "");
       const cls = parseAttestedClass(text);
-      if (cls) result.set(commitSha, { cls, frac: parseAILineFrac(text) });
+      if (cls) result.set(commitSha, { cls, frac: parseAILineFrac(text), hashes: parseAIHashes(text) });
       return null;
     });
   } catch {
@@ -410,6 +417,24 @@ export async function scanGithubRepo(
       human_owned: false,
     }));
 
+  // Risk over the deep-scan window: AI lines in critical paths without review
+  // evidence, with the GitHub PR API consulted where it changes the answer.
+  // Inference never labels a line here — only attested/declared commits count.
+  const riskCommits: CloudRiskCommit[] = window.map((c, i) => {
+    const b = basisOf(i);
+    const note = attested.get(shas[i]);
+    return {
+      sha: c.sha ?? "",
+      message: c.commit?.message ?? "",
+      authorEmail: c.commit?.author?.email,
+      committerEmail: c.commit?.committer?.email,
+      added: diffs[i],
+      aiHashes: b === "attested-ai" ? (note?.hashes ?? null) : null,
+      wholeAI: b === "declared" || (b === "attested-ai" && !note?.hashes),
+    };
+  });
+  const risk = await computeCloudRisk({ owner, repo, headers, commits: riskCommits });
+
   const report: GhReport = {
     schema: "grain/v0.1",
     repo: `${owner}/${repo}`,
@@ -423,6 +448,7 @@ export async function scanGithubRepo(
       ai_by_basis: { attested: attestedFrac, declared: declaredFrac, inferred: inferredFrac },
     },
     by_path: byPath,
+    risk,
   };
   return {
     report,
