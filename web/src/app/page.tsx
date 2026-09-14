@@ -349,7 +349,7 @@ export default function Home() {
             A calm comment on every pull request.
           </h2>
           <p className="mt-4 max-w-[62ch] text-[16.5px] leading-relaxed text-muted">
-            Add the GitHub Action and each PR gets an itemised note from grain: how much of the change carries AI signals, whether it touches paths you marked human-owned, and what your policy asks for. Framed as signals, never as an accusation.
+            Add the GitHub Action and each PR gets an itemised note from grain: how much of the change carries AI signals, whether it touches paths you marked human-owned, which dangerous-looking lines an AI wrote, which packages it added and whether the registry knows them, and what your policy asks for. Framed as signals, never as an accusation.
           </p>
           <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start">
             <figure>
@@ -361,14 +361,21 @@ export default function Home() {
                   <span className="text-muted">commented</span>
                 </div>
                 <pre className="mt-4 overflow-x-auto font-mono text-[12.5px] leading-[1.8] text-ink">
-{`grain report · #482
-› 62% of +214 lines carry AI-authorship signals  (1 Co-Authored-By: Claude)
-› 2 files touch src/auth/, human-owned per CODEOWNERS
-› convention check: 3 deviations from repo style
-policy: AI share > 40% in a human-owned path, 1 human review requested`}
+{`Provenance report · PR #3
+100% AI-assisted · 1 commit, 11 lines changed
+sandbox/                     0% human · 100% AI
+
+policy  change set above the 40% AI threshold → review suggested
+policy  1 security finding in AI-written lines → a human should look
+policy  1 added dependency not on the registry → a human should look
+
+security      7b49393 sandbox/fetch.py
+              TLS verification disabled (high)          AI
+dependencies  leftpadd-utilz   pypi   AI   not found
+              requests         pypi   AI   5691 days old`}
                 </pre>
               </div>
-              <figcaption className="mt-2.5 text-[12.5px] text-faint">Example comment. The Action also sets a check, so a policy can block the merge until a human has reviewed.</figcaption>
+              <figcaption className="mt-2.5 text-[12.5px] text-faint">The comment grain left on a test pull request in its own repository, every gate at its default of warn. Set <code className="font-mono">security = &quot;block&quot;</code> or <code className="font-mono">dependencies = &quot;block&quot;</code> in .grain.toml and the check fails until a human looks.</figcaption>
             </figure>
             <div>
               <div className="text-[13px] font-semibold text-ink">.github/workflows/grain.yml</div>
@@ -416,8 +423,8 @@ jobs:
               <ul className="grid gap-x-8 gap-y-7 sm:grid-cols-2">
                 <Feature title="Scans on every push">Install the GitHub App. Each push to the default branch re-scans the repo and updates the dashboard.</Feature>
                 <Feature title="Review evidence from GitHub">Cloud asks the pull request API whether a commit went through a PR and who approved it.</Feature>
-                <Feature title="Alerts that name the commit">Threshold crossings and unreviewed AI code in critical paths email your workspace admins with the hotspots.</Feature>
-                <Feature title="Security signals with provenance">Dangerous-looking lines (secrets, TLS off, shell and SQL from strings) shown with who wrote them and whether anyone reviewed them. The same check runs inside the agent loop, before the commit.</Feature>
+                <Feature title="Alerts that name the commit">Threshold crossings, unreviewed AI code in critical paths, AI-written security findings and packages the registry does not know: one email per push to your workspace admins, naming the commits.</Feature>
+                <Feature title="Security signals with provenance">Dangerous-looking lines (secrets, TLS off, shell and SQL from strings) shown with who wrote them and whether anyone reviewed them. The same check runs inside the agent loop, before the commit. Dependencies get the same treatment, with the registry&apos;s answer next to each one.</Feature>
                 <Feature title="A signed authorship report">Export a Bill of Materials signed by grain Cloud, for audits and due diligence. Anyone can verify it.</Feature>
               </ul>
             </div>
@@ -483,7 +490,7 @@ jobs:
               The post-commit hook hashes the lines the commit added and writes one note. On this repository that is a few milliseconds. Nothing runs in the editor loop.
             </QA>
             <QA q="Does it catch security problems?">
-              It catches the lines that make vibe coding dangerous: a pasted token, TLS verification turned off, a shell or SQL command built from input, unsafe deserialization, wildcard IAM. When Claude Code writes one, grain tells the agent before the commit; every report says which of these lines an AI wrote and whether anyone reviewed them. It also lists the dependencies AI-written lines added and asks the registry whether each package exists and how old it is, the slopsquatting check. It is not a vulnerability scanner, and it says so next to every finding.
+              It catches the lines that make vibe coding dangerous: a pasted token, TLS verification turned off, a shell or SQL command built from input, unsafe deserialization, wildcard IAM. When Claude Code writes one, grain tells the agent before the commit; every report says which of these lines an AI wrote and whether anyone reviewed them. It also lists the dependencies AI-written lines added and asks the registry whether each package exists and how old it is, the slopsquatting check. It is not a vulnerability scanner, and it says so next to every finding. In a pull request, two lines in .grain.toml decide whether these findings warn or block the check.
             </QA>
             <QA q="Which agents does it capture?">
               Claude Code today, through its PostToolUse hook. The ledger format is a JSON line per edit, so any tool that can run a command after writing a file can attest.
