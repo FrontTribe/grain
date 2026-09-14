@@ -197,7 +197,8 @@
     <!-- 00 -->
     <section id="overview">
       <h2><span class="sn">00</span> Overview</h2>
-      <p class="lede-p">Grain reads a git history and produces a provenance report: the share of code that is human-authored vs AI-assisted, broken down by directory and change, with a confidence level on every claim. It ships as a single-binary CLI plus a GitHub Action, and surfaces its findings where developers already look — a README badge, a PR check, and a <code>PROVENANCE.md</code> file committed to the repo.</p>
+      <p class="lede-p">Grain records which lines an AI agent writes as it writes them, signs that into git as a note bound to the commit, and produces a provenance report: the share of code that is human-authored vs AI-assisted, where the AI-written code landed (critical paths, review evidence), what happened to it later (rework), with a confidence level on every claim. It ships as a single-binary CLI plus a GitHub Action, surfaces its findings where developers already look — a README badge, a PR check, a <code>PROVENANCE.md</code> file committed to the repo — and, as grain Cloud, watches a workspace of repositories on every push.</p>
+      <div class="callout decision"><div class="ct">Status — 2026-09-15</div>Everything in this spec marked <span class="conf hi">shipped</span> exists and runs on grain's own repository; §15 lists what is next. The illustrative figures of the v0.1 draft are replaced by real ones where they matter.</div>
       <h4>Positioning in one line</h4>
       <p><em>"See the grain of your codebase — how it was made, not just what it is."</em> Grain is to authorship what a coverage badge is to tests: a lightweight, in-repo signal that becomes a norm because it is free, fast, and visible.</p>
       <h4>Elevator context</h4>
@@ -245,7 +246,7 @@
           <tr><td><b>Compliance / security</b><br><span class="mono" style="color:var(--faint)">"Reg"</span></td><td>Needs auditable records of AI involvement for EU AI Act / SOC2.</td><td>Signed provenance ledger + export. <b>(Audit)</b></td><td>Export / API</td></tr>
         </tbody>
       </table></div>
-      <p><strong>MVP serves Maya and you.</strong> Dan and Reg are the monetization path, deliberately deferred to v0.3+.</p>
+      <p><strong>All four are served today.</strong> Maya and you by the CLI and Action; Dan by grain Cloud (dashboard, alerts, Risk, Outcomes; Team plan); Reg by the signed Authorship Bill of Materials and the public verification page (Team and Audit plans).</p>
     </section>
 
     <!-- 03 -->
@@ -288,8 +289,13 @@
           <tr><td><b>Provenance</b></td><td>The origin story of a change: who/what authored it and under what process.</td></tr>
           <tr><td><b>Unit of analysis</b></td><td>The <b>commit</b>. Scores aggregate up to file → directory → PR → repo, weighted by lines changed.</td></tr>
           <tr><td><b>ai_likelihood</b></td><td>A 0–1 estimate that a unit was AI-generated/assisted.</td></tr>
-          <tr><td><b>basis</b></td><td>How the estimate was reached: <code>declared</code> (explicit signal) or <code>inferred</code> (behavioral).</td></tr>
-          <tr><td><b>confidence</b></td><td>0–1 trust in the estimate. Declared → up to 1.0. Inferred → <b>capped</b> (default 0.7). A hard product rule.</td></tr>
+          <tr><td><b>basis</b></td><td>How the estimate was reached: <code>attested</code> (a signed git note, line-level), <code>declared</code> (explicit signal) or <code>inferred</code> (content and behaviour).</td></tr>
+          <tr><td><b>attestation</b></td><td>A note on <code>refs/notes/grain</code> carrying <code>Provenance</code>, <code>AI-Lines: n/m</code>, <code>AI-Hashes</code> and an Ed25519 signature bound to the commit SHA. Format: <a href="spec/provenance-v1.md">provenance v1</a>.</td></tr>
+          <tr><td><b>line hash</b></td><td><code>sha256(trim(line))[0:10]</code>. Shift-proof identity of a substantive line (&gt; 3 chars); how attestations, blame and rework tracking refer to lines without storing text.</td></tr>
+          <tr><td><b>confidence</b></td><td>0–1 trust in the estimate. Attested and declared → up to 0.95. Inferred → <b>capped</b> (default 0.7). A hard product rule.</td></tr>
+          <tr><td><b>review evidence</b></td><td>Anything that shows a second person looked: an approved pull request (Cloud, via the PR API), a <code>Reviewed-by</code> trailer, a merge, a committer other than the author. Absence is "no evidence", not "no review".</td></tr>
+          <tr><td><b>critical path</b></td><td>A directory or file stem in the built-in list (auth, billing, workflows, migrations, …) or a policy <code>human_owned</code> path. Where an unreviewed AI line matters most.</td></tr>
+          <tr><td><b>outcomes</b></td><td>How often lines get reworked later, AI-written vs human-written from the <em>same</em> line-attested commits (author, style and era held constant).</td></tr>
           <tr><td><b>class</b></td><td>Bucketed label for display: <code>human</code>, <code>ai_assisted</code>, <code>ai_authored</code>, <code>unclassified</code>.</td></tr>
           <tr><td><b>grain mix</b></td><td>Repo-level summary percentages (e.g. 71% human / 24% AI / 5% unclassified).</td></tr>
           <tr><td><b>attention flag</b></td><td>A contextual concern (e.g. AI touched a human-owned path) — separate from ai_likelihood.</td></tr>
@@ -300,9 +306,19 @@
     <!-- 05 -->
     <section id="engine">
       <h2><span class="sn">05</span> Detection engine</h2>
-      <p>The engine extracts <b>signals</b> from each commit, scores an <code>ai_likelihood</code> and <code>confidence</code>, then aggregates. Signals are grouped in three tiers by trustworthiness.</p>
+      <p>The engine extracts <b>signals</b> from each commit, scores an <code>ai_likelihood</code> and <code>confidence</code>, then aggregates. Signals are grouped in four tiers by trustworthiness; the top tier is recorded, not detected.</p>
 
-      <h3>5.1 — Tier A: declared signals <span class="conf hi">high confidence</span></h3>
+      <h3>5.0 — Tier 0: attested, captured at the source <span class="conf hi">ground truth · shipped</span></h3>
+      <p>Detecting AI code after the fact is unreliable (see the <a href="detection/calibration-study.md">calibration study</a>). So grain records it when it happens:</p>
+      <ul>
+        <li><code>grain hook claude</code> runs from Claude Code's <code>PostToolUse</code> hook and appends the lines the agent just wrote, as content hashes, to <code>.grain/ai-edits.jsonl</code> (gitignored, transient, never text).</li>
+        <li>On commit, <code>grain attest</code> (post-commit hook) matches the commit's added lines against the ledger and writes the note: <code>Provenance</code>, <code>AI-Lines: n/m</code>, <code>AI-Hashes</code>, signed with the developer's Ed25519 key and bound to the SHA. Matched lines are consumed so nothing is attested twice.</li>
+        <li><code>grain blame &lt;file&gt;</code> resolves provenance per line; <code>grain verify</code> checks every note (valid / invalid / unsigned; trust via <code>.grain/signers</code>). A note that is edited or moved to another commit fails.</li>
+        <li><code>grain annotate &lt;sha&gt; --ai|--human|--assisted</code> writes a signed note by hand.</li>
+      </ul>
+      <div class="callout decision"><div class="ct">Decision — attested beats everything</div>A line-attested commit counts by its true AI share (<code>AI-Lines</code>), not all-or-nothing. Lines nobody attested are shown as human, never claimed as AI. A valid signature proves who wrote the note and that it hasn't changed, not that the claim is true; that is stated everywhere the number appears.</div>
+
+      <h3>5.1 — Tier A: declared signals <span class="conf hi">high confidence · shipped</span></h3>
       <p>Deterministic, machine-declared evidence. When present, they dominate the score.</p>
       <ul>
         <li><code>Co-Authored-By:</code> trailer matching a known agent (Claude, Copilot, Cursor, Codex, Devin, …).</li>
@@ -311,11 +327,12 @@
         <li>Self-declaration labels on a PR/commit (<code>grain:ai</code>, <code>grain:human</code>) — manual override.</li>
       </ul>
 
-      <h3>5.2 — Tier B: inferred behavioral signals <span class="conf lo">inferred · capped</span></h3>
-      <p>Probabilistic tells from the shape of the change. They <em>never</em> push confidence past the cap.</p>
+      <h3>5.2 — Tier B: inferred signals <span class="conf lo">inferred · capped · shipped</span></h3>
+      <p>Probabilistic tells from the content and shape of the change. They <em>never</em> push confidence past the cap.</p>
       <div class="twrap"><table>
         <thead><tr><th>Signal</th><th>What it looks at</th><th>Direction</th></tr></thead>
         <tbody>
+          <tr><td>Content classifier</td><td>Ten lexical features of the added code (comment density, identifier length, error-handling idioms, …) through a logistic model. The global fit did not generalize across repositories; <code>grain calibrate</code> fits per-repo weights from that repo's declared commits (<code>.grain/model.json</code>).</td><td>↑ / ↓ AI</td></tr>
           <tr><td>Diff uniformity</td><td>Entropy of the diff; AI edits tend to be uniform, complete, comment-dense.</td><td>↑ AI</td></tr>
           <tr><td>Burst timing</td><td>Large diff after a short session; many commits in a tight window.</td><td>↑ AI</td></tr>
           <tr><td>Message style</td><td>Perfectly-formed conventional commits, generic bodies, telltale phrasing.</td><td>↑ AI (weak)</td></tr>
@@ -328,10 +345,12 @@
         Tier B is intentionally weak and clearly labeled. If Tier A is absent, Grain says "inferred, low confidence" rather than pretending to know. This protects real humans who happen to write clean code.
       </div>
 
-      <h3>5.3 — Tier C: contextual modifiers (attention, not classification)</h3>
+      <h3>5.3 — Tier C: contextual modifiers (attention, not classification) <span class="conf hi">shipped</span></h3>
       <ul>
-        <li><b>CODEOWNERS check</b> — an <code>ai_assisted</code> change touching a human-owned path raises an <em>attention flag</em>, not the AI score.</li>
-        <li><b>Convention deviation</b> — the change departs from the repo's own learned style baseline.</li>
+        <li><b>Human-owned paths</b> — an <code>ai_assisted</code> change touching a policy <code>human_owned</code> path raises an <em>attention flag</em>, not the AI score.</li>
+        <li><b>Risk</b> — AI-written lines (attested or declared; never inferred) in critical paths without review evidence, per path and per commit (hotspots). The CLI reads evidence from git; Cloud also asks the GitHub PR API whether the commit belongs to a pull request and who approved it.</li>
+        <li><b>Outcomes</b> — rework rate of AI vs human lines from the same line-attested commits, with fix/revert tagging and median commits-to-rework.</li>
+        <li><b>Convention deviation</b> — the change departs from the repo's own learned style baseline. <span class="conf lo">not shipped</span></li>
       </ul>
 
       <h3>5.4 — Scoring model</h3>
@@ -343,7 +362,12 @@
         <span class="s">aggregate by lines</span>
       </div>
       <pre><span class="c"># per-commit, pseudocode</span>
-<span class="k">if</span> declared_signals:
+<span class="k">if</span> attested_note <span class="k">and</span> signature_ok:
+    ai_likelihood = <span class="s">0.98</span> <span class="k">if</span> note.provenance <span class="k">in</span> (ai, assisted) <span class="k">else</span> <span class="s">0.02</span>
+    confidence    = <span class="s">0.95</span>
+    basis         = <span class="s">"attested"</span>
+    ai_frac       = note.ai_lines / note.total_lines             <span class="c"># line-level share, when recorded</span>
+<span class="k">elif</span> declared_signals:
     ai_likelihood = max(weight(s) <span class="k">for</span> s <span class="k">in</span> declared_signals)  <span class="c"># e.g. 0.98</span>
     confidence    = <span class="s">0.95</span>
     basis         = <span class="s">"declared"</span>
@@ -354,16 +378,16 @@
 
 class = bucket(ai_likelihood, confidence)                     <span class="c"># human / ai_assisted / ai_authored / unclassified</span>
 <span class="c"># unclassified when confidence is too low to bucket</span></pre>
-      <p>Repo/dir/PR aggregates are line-weighted means of member commits, carrying a blended confidence. MVP uses hand-tuned weights; weights are versioned in the schema so scores are reproducible and explainable.</p>
+      <p>Repo/dir/PR aggregates are line-weighted means of member commits (an attested commit contributes <code>ai_frac</code> of its lines), carrying a blended confidence. Weights are versioned in the schema (<code>w1</code> behavioural baseline, <code>w2-content</code>, <code>w2-content-fit</code> per repo) so scores are reproducible and explainable.</p>
 
-      <h3>5.5 — Optional local model pass</h3>
-      <p>For ambiguous diffs only, an optional small classifier (local GGUF via an embedded runtime, or a heuristic-only fallback) can refine Tier B. <b>It runs client-side; code never leaves the machine.</b> Off by default in MVP; the heuristic engine stands alone.</p>
+      <h3>5.5 — Calibration <span class="conf hi">shipped</span></h3>
+      <p><code>grain eval</code> scores the content classifier against a repo's declared commits (the labels git already has); <code>grain calibrate</code> fits per-repo weights and writes <code>.grain/model.json</code>, which the scorer picks up automatically. The <a href="detection/calibration-study.md">study</a> that motivated this is published, including the negative result (leave-repos-out AUC below chance for a single global model). The optional local GGUF model pass from the v0.1 draft is <span class="conf lo">deferred</span>; the lexical classifier stands alone and runs client-side.</p>
     </section>
 
     <!-- 06 -->
     <section id="outputs">
       <h2><span class="sn">06</span> Outputs</h2>
-      <p>One input (a repo or a diff), three outputs. No dashboard required for the free tool.</p>
+      <p>One input (a repo or a diff), four outputs from the CLI; a fifth, the Cloud workspace, on top. No dashboard required for the free tool.</p>
 
       <h3>6.1 — The badge</h3>
       <p>A shields.io-compatible endpoint (JSON) or static SVG. Modes: <code>mix</code> (e.g. "24% AI-assisted"), <code>owned</code> ("human-owned"), <code>policy</code> ("review needed"). Every badge in a README is a distribution surface.</p>
@@ -379,8 +403,24 @@ class = bucket(ai_likelihood, confidence)                     <span class="c"># 
 policy: AI share &gt; 40% in a human-owned path → 1 human review requested</pre>
 
       <h3>6.3 — PROVENANCE.md (the nutrition label)</h3>
-      <p>A generated, committable file: repo-level mix, per-directory breakdown, generation timestamp + engine version. Human-readable and diff-friendly so provenance itself is versioned.</p>
+      <p>A generated, committable file: repo-level mix, per-directory breakdown, an <b>Outcomes</b> table (AI vs human rework from the same attested commits), a <b>Risk</b> section (critical-path AI lines without review evidence, per path, with hotspot commits), generation timestamp + engine version. Human-readable and diff-friendly so provenance itself is versioned.</p>
       <div class="callout decision"><div class="ct">Decision — machine format alongside</div> Each run also emits <code>grain.json</code> (see §09) as the machine source of truth; <code>PROVENANCE.md</code> is the human render of it.</div>
+
+      <h3>6.4 — Signed attestations <span class="conf hi">shipped</span></h3>
+      <p>Git notes on <code>refs/notes/grain</code>, one per commit, signed with the author's Ed25519 key (<code>grain key</code>) and bound to the SHA. Plain text, public format, verifiable offline by anyone with a clone. They travel with the repository (<code>git push origin refs/notes/grain</code>) and Cloud reads them straight from GitHub.</p>
+      <pre>Provenance: assisted
+AI-Lines: 889/961
+AI-Hashes: 0320d2bd7a,1c9e0f77b2,…
+Signed-By: ed25519:gsnAw0076ceAPFu8U35z7QjoQYD8ZTrNksSjzdPF6B4=
+Signature: ikJWlrLo5T6OlaBlxNr9brS5D5n1qBo5aLnd7aTJlP92Ieak…</pre>
+
+      <h3>6.5 — grain Cloud <span class="conf hi">shipped</span></h3>
+      <ul>
+        <li><b>Scans on every push</b> through the GitHub App (webhook → installation token → scan → ingest); CLI-scanned repos arrive via <code>grain push</code> with an ingest token.</li>
+        <li><b>Dashboard:</b> workspace overview, repositories, per-repo page with provenance basis, Outcomes and Risk cards, trends, policy (threshold, human-owned paths, merge behaviour), activity.</li>
+        <li><b>Alerts by email</b> (Team): threshold crossings, and unreviewed AI-written lines landing in a critical path, naming the commits. One push, at most one alert.</li>
+        <li><b>Signed Authorship Bill of Materials</b> (Team): a JSON export with a SHA-256 digest and an Ed25519 signature; keys published at <code>/.well-known/grain-keys.json</code>; verifiable at <code>getgrain.dev/verify</code> in the browser or with <code>grain verify --bom</code> offline.</li>
+      </ul>
     </section>
 
     <!-- 07 -->
@@ -394,36 +434,45 @@ policy: AI share &gt; 40% in a human-owned path → 1 human review requested</pr
           <tr><td><code>grain check</code></td><td>CI/PR mode: analyze the diff, print PR markdown, exit non-zero on policy breach.</td><td>0 / 1</td></tr>
           <tr><td><code>grain badge</code></td><td>Emit shields endpoint JSON or SVG.</td><td>0</td></tr>
           <tr><td><code>grain explain &lt;sha&gt;</code></td><td>Show which signals classified a commit and why.</td><td>0</td></tr>
+          <tr><td><code>grain hook install</code> · <code>grain hook claude</code></td><td>Install the post-commit hook and print the Claude Code hook config; the agent-side receiver.</td><td>0</td></tr>
+          <tr><td><code>grain attest</code></td><td>Write the signed line-level note for HEAD from the edit ledger (runs from the hook).</td><td>0</td></tr>
+          <tr><td><code>grain annotate &lt;sha&gt; --ai|--human|--assisted</code></td><td>Write a signed note by hand.</td><td>0</td></tr>
+          <tr><td><code>grain blame &lt;file&gt;</code></td><td>Per-line provenance from attestations.</td><td>0</td></tr>
+          <tr><td><code>grain key</code></td><td>Show (or create) the Ed25519 signing key.</td><td>0</td></tr>
+          <tr><td><code>grain verify [--strict]</code> · <code>--bom &lt;file&gt;</code></td><td>Check every attestation signature in a repo, or a signed authorship report (digest, signature, publisher).</td><td>0 / 1</td></tr>
+          <tr><td><code>grain calibrate</code> · <code>grain eval</code></td><td>Fit / score the content classifier against the repo's declared commits.</td><td>0</td></tr>
+          <tr><td><code>grain push</code></td><td>Send <code>grain.json</code> to a Cloud workspace with an ingest token.</td><td>0</td></tr>
           <tr><td><code>grain init</code></td><td>Scaffold <code>.grain.toml</code>.</td><td>0</td></tr>
         </tbody>
       </table></div>
       <h4>Key flags</h4>
-      <p><code>--since &lt;date&gt;</code> · <code>--range &lt;a..b&gt;</code> · <code>--format json|md|text</code> · <code>--config &lt;path&gt;</code> · <code>--model off|local|&lt;path&gt;</code> · <code>--fail-on &lt;rule&gt;</code> · <code>--no-inference</code></p>
+      <p><code>--max &lt;n&gt;</code> · <code>--range &lt;a..b&gt;</code> · <code>--format json|md|text</code> · <code>-C &lt;dir&gt;</code> · <code>--no-inference</code> · <code>--strict</code> · <code>--offline</code></p>
       <h4>Config — <code>.grain.toml</code></h4>
       <pre><span class="k">[policy]</span>
-ai_threshold        = <span class="s">0.40</span>            <span class="c"># PR attention threshold</span>
-require_review_over = <span class="s">0.40</span>
-human_owned         = [<span class="s">"src/auth/**"</span>, <span class="s">"src/payments/**"</span>]
+ai_threshold = <span class="s">0.40</span>                       <span class="c"># attention threshold</span>
+human_owned  = [<span class="s">"src/auth/**"</span>, <span class="s">"src/payments/**"</span>]
+<span class="c"># critical   = ["auth", "billing", "workflows"]   # override the built-in critical-path list</span>
 
 <span class="k">[detection]</span>
-inference   = <span class="s">true</span>
-local_model = <span class="s">"off"</span>                   <span class="c"># off | local | &lt;gguf path&gt;</span>
+inference          = <span class="s">true</span>
+content_classifier = <span class="s">true</span>                <span class="c"># false = declared-only</span>
+local_model = <span class="s">"off"</span>                        <span class="c"># reserved; not shipped</span>
 agents      = [<span class="s">"claude"</span>, <span class="s">"copilot"</span>, <span class="s">"cursor"</span>, <span class="s">"codex"</span>, <span class="s">"devin"</span>]
 bot_authors = [<span class="s">"*[bot]"</span>]
 
 <span class="k">[report]</span>
 badge  = <span class="s">"mix"</span>                       <span class="c"># mix | owned | policy</span>
 output = <span class="s">"PROVENANCE.md"</span></pre>
-      <p>Exit codes: <code>0</code> ok · <code>1</code> policy violation (for CI gating) · <code>2</code> error.</p>
+      <p>Exit codes: <code>0</code> ok · <code>1</code> policy violation or failed verification (for CI gating) · <code>2</code> error. Trusted signers live in <code>.grain/signers</code> (<code>name ed25519:&lt;key&gt;</code> per line); the per-repo model in <code>.grain/model.json</code>; the edit ledger in <code>.grain/ai-edits.jsonl</code> (gitignored).</p>
     </section>
 
     <!-- 08 -->
     <section id="action">
       <h2><span class="sn">08</span> GitHub Action</h2>
       <p>A thin wrapper around <code>grain check</code>. Runs on <code>pull_request</code>, posts/updates one sticky comment, sets a status check, and can refresh the badge endpoint on <code>main</code>.</p>
-      <pre><span class="k">- uses:</span> grain-dev/grain-action@v1
+      <pre><span class="k">- uses:</span> FrontTribe/grain@v1
   <span class="k">with:</span>
-    fail_on: <span class="s">policy</span>        <span class="c"># comment-only by default; opt-in to gating</span>
+    fail_on: <span class="s">never</span>         <span class="c"># default; "policy" fails the check on attention</span>
     config:  <span class="s">.grain.toml</span></pre>
       <div class="callout warn"><div class="ct">Default posture</div> The Action <b>comments, does not block</b>, out of the box. Gating is a deliberate opt-in (<code>fail_on</code>). This keeps first contact non-hostile.</div>
     </section>
@@ -443,31 +492,35 @@ output = <span class="s">"PROVENANCE.md"</span></pre>
     { <span class="k">"path"</span>: <span class="s">"src/auth/"</span>, <span class="k">"human"</span>: 0.94, <span class="k">"ai"</span>: 0.06, <span class="k">"lines"</span>: 3120 }
   ],
   <span class="k">"commits"</span>: [
-    { <span class="k">"sha"</span>: <span class="s">"9f3a…"</span>, <span class="k">"ai_likelihood"</span>: 0.98, <span class="k">"basis"</span>: <span class="s">"declared"</span>,
-      <span class="k">"confidence"</span>: 0.97, <span class="k">"class"</span>: <span class="s">"ai_authored"</span>,
-      <span class="k">"signals"</span>: [<span class="s">"co-authored-by:claude"</span>], <span class="k">"lines"</span>: 214,
-      <span class="k">"flags"</span>: [<span class="s">"human_owned_path"</span>] }
-  ]
+    { <span class="k">"sha"</span>: <span class="s">"9f3a…"</span>, <span class="k">"ai_likelihood"</span>: 0.98, <span class="k">"basis"</span>: <span class="s">"attested"</span>,
+      <span class="k">"confidence"</span>: 0.95, <span class="k">"class"</span>: <span class="s">"ai_authored"</span>, <span class="k">"ai_frac"</span>: 0.92,
+      <span class="k">"signals"</span>: [<span class="s">"Co-Authored-By: claude"</span>, <span class="s">"note: Provenance assisted"</span>], <span class="k">"lines"</span>: 214 }
+  ],
+  <span class="k">"outcomes"</span>: { <span class="k">"strict"</span>: { <span class="k">"ai_lines"</span>: 4259, <span class="k">"ai_reworked"</span>: 341, <span class="k">"human_lines"</span>: 370, <span class="k">"human_reworked"</span>: 67, <span class="s">…</span> }, <span class="k">"broad"</span>: { <span class="s">…</span> }, <span class="k">"commits"</span>: 99 },
+  <span class="k">"risk"</span>: { <span class="k">"critical_ai_lines"</span>: 449, <span class="k">"critical_ai_unreviewed"</span>: 449,
+            <span class="k">"critical"</span>: [ { <span class="k">"path"</span>: <span class="s">"workflows"</span>, <span class="k">"ai_lines"</span>: 155, <span class="k">"ai_unreviewed"</span>: 155, <span class="k">"commits"</span>: 7 } ],
+            <span class="k">"top"</span>: [ { <span class="k">"sha"</span>: <span class="s">"7463443…"</span>, <span class="k">"subject"</span>: <span class="s">"…"</span>, <span class="k">"path"</span>: <span class="s">"login"</span>, <span class="k">"ai_lines"</span>: 53 } ],
+            <span class="k">"source"</span>: <span class="s">"cli"</span>, <span class="k">"commits"</span>: 99 }
 }</pre>
+      <p>Cloud scans emit the same shape with <code>risk.source = "cloud"</code>, <code>risk.approved_ai_lines</code> (PR approvals) and an <code>attestations</code> count by signature status. The Authorship BOM (<code>grain/authorship-bom/v1</code>) is a separate, signed document; see the <a href="spec/provenance-v1.md">spec</a>.</p>
     </section>
 
     <!-- 10 -->
     <section id="arch">
-      <h2><span class="sn">10</span> Architecture (MVP)</h2>
+      <h2><span class="sn">10</span> Architecture</h2>
       <div class="steps-flow">
-        <span class="s">git (go-git)</span><span class="ar">→</span>
-        <span class="s">commit iterator</span><span class="ar">→</span>
-        <span class="s">signal extractors</span><span class="ar">→</span>
-        <span class="s">scorer</span><span class="ar">→</span>
-        <span class="s">aggregator</span><span class="ar">→</span>
-        <span class="s">renderers (md · json · badge · pr)</span>
+        <span class="s">agent hook → ledger</span><span class="ar">→</span>
+        <span class="s">post-commit attest (signed note)</span><span class="ar">→</span>
+        <span class="s">git binary: commits · diffs · notes</span><span class="ar">→</span>
+        <span class="s">signals · classify · score</span><span class="ar">→</span>
+        <span class="s">outcomes · risk</span><span class="ar">→</span>
+        <span class="s">renderers (md · json · badge · pr) · push</span>
       </div>
       <ul>
-        <li><b>Language:</b> Go — static binary, fast, trivial to ship as CLI + Action. <span class="conf lo">decision · Rust is the alternative</span></li>
-        <li><b>Git access:</b> <code>go-git</code> (pure Go, no libgit2 dependency).</li>
-        <li><b>No server in MVP.</b> Everything runs in the repo/CI. The badge is a static JSON committed or served from Pages.</li>
-        <li><b>Extensible signals:</b> each extractor is an interface, so new agents/tells are additive.</li>
-        <li><b>Optional model:</b> pluggable local inference behind a flag; heuristics work standalone.</li>
+        <li><b>Language:</b> Go, standard library only; shells out to the <code>git</code> binary (decided against <code>go-git</code>: notes, blame and diff plumbing come for free).</li>
+        <li><b>Packages:</b> <code>gitlog</code>, <code>signal</code>, <code>features</code>, <code>classify</code>, <code>score</code>, <code>outcomes</code>, <code>risk</code>, <code>sign</code>, <code>report</code>, <code>config</code>. Each signal extractor is additive.</li>
+        <li><b>No server for the CLI.</b> Everything runs in the repo/CI. The badge is a static JSON committed or served by Cloud.</li>
+        <li><b>Cloud:</b> Next.js on Vercel, Supabase (Postgres, RLS, one ingest function <code>_grain_apply</code> behind member and service-role wrappers), Stripe, a GitHub App (webhook, installation tokens, PR API), Resend for email. The engine pieces Cloud needs are mirrored in TypeScript (<code>classify.ts</code>, <code>risk.ts</code>, <code>signing.ts</code>, <code>bom.ts</code>); line hashes and canonical JSON are byte-identical across Go and TypeScript, guarded by a test that verifies a Cloud-signed BOM in Go.</li>
       </ul>
     </section>
 
@@ -480,7 +533,8 @@ output = <span class="s">"PROVENANCE.md"</span></pre>
         <li><b>Confidence caps on inference.</b> Grain refuses to sound certain when it is guessing.</li>
         <li><b>Explainability.</b> <code>grain explain</code> shows the exact signals behind any classification.</li>
         <li><b>Reproducibility.</b> Scores are pinned to an engine + weights version in <code>grain.json</code>.</li>
-        <li><b>Human override.</b> A <code>grain:human</code> / <code>grain:ai</code> declaration always wins over inference.</li>
+        <li><b>Tamper evidence, not surveillance.</b> Attestations are signed and bound to their commit; anyone can verify them offline. The ledger stores hashes, never text. Nothing watches the developer; the record is written by the tooling at the moment of the edit.</li>
+        <li><b>Human override.</b> <code>grain annotate</code> always wins over inference, and is signed like any other note.</li>
       </ul>
     </section>
 
@@ -494,6 +548,9 @@ output = <span class="s">"PROVENANCE.md"</span></pre>
           <tr><td>False positives on clean human code</td><td>Real risk with inference alone.</td><td>Confidence cap + "signals" framing + never block by default. Declared signals preferred.</td></tr>
           <tr><td>"Surveillance tool" perception</td><td>Reputational, could kill adoption.</td><td>Non-goals are explicit; defaults are comment-only; positioning is maintainer-transparency, not dev-policing.</td></tr>
           <tr><td>Adversarial rewriting to defeat heuristics</td><td>Possible with effort.</td><td>Out of scope by design; Grain measures the honest signal that exists, not a guarantee.</td></tr>
+          <tr><td>Not installing the hook</td><td>Lines written without it are never attested.</td><td>Shown as human, never claimed as AI. Coverage is visible: <code>ai_by_basis.attested</code> vs declared vs inferred is reported everywhere.</td></tr>
+          <tr><td>Forging or editing an attestation</td><td>A note is plain text anyone can write.</td><td>Signatures are bound to the commit SHA; an edited or moved note fails <code>grain verify</code> and Cloud ignores it. Identity is opt-in via <code>.grain/signers</code>; a valid signature proves the signer and integrity, not the truth of the claim.</td></tr>
+          <tr><td>"Unreviewed" read as "reckless"</td><td>Review evidence is whatever git and GitHub can see.</td><td>Copy says "no review evidence", never "unreviewed by anyone"; chat and pairing reviews leave no trace and this is stated next to the number.</td></tr>
         </tbody>
       </table></div>
       <div class="callout principle"><div class="ct">Honesty as a feature</div> Naming these limits openly is part of the product. Overclaiming (an "AI detector that catches cheaters") is exactly what would trigger backlash and false-positive drama. Grain wins by being trustworthy, not omniscient.</div>
@@ -506,12 +563,13 @@ output = <span class="s">"PROVENANCE.md"</span></pre>
       <div class="twrap"><table>
         <thead><tr><th>Tier</th><th>Price</th><th>Includes</th><th>For</th></tr></thead>
         <tbody>
-          <tr><td><b>grain CLI</b></td><td><span class="conf hi">MIT · free</span></td><td>CLI, Action, badge, PROVENANCE.md, local scan/check/explain, full engine.</td><td>Solo devs, OSS maintainers</td></tr>
-          <tr><td><b>grain Cloud</b></td><td>$ / seat</td><td>Org dashboard, trend history, merge-policy engine, multi-repo rollups, Slack/PR gating.</td><td>Teams shipping with agents</td></tr>
-          <tr><td><b>grain Audit</b></td><td>$$</td><td>Signed provenance ledger, EU AI Act / SOC2 export, SSO, retention, on-prem.</td><td>Regulated / enterprise</td></tr>
+          <tr><td><b>grain CLI</b></td><td><span class="conf hi">MIT · free forever</span></td><td>CLI, Action, badge, PROVENANCE.md, signed attestations, blame, verify, calibration, the full engine.</td><td>Solo devs, OSS maintainers</td></tr>
+          <tr><td><b>Cloud Free</b></td><td>$0, no card</td><td>3 repositories, 3 seats: dashboard, scans on push, Risk, Outcomes, trends, policy.</td><td>Trying it on a real team</td></tr>
+          <tr><td><b>Cloud Team</b></td><td>$29 / workspace / month</td><td>Unlimited repositories, up to 20 seats, email alerts (threshold, risk hotspots), signed authorship export.</td><td>Teams shipping with agents</td></tr>
+          <tr><td><b>Cloud Audit</b></td><td>from $199 / month</td><td>Unlimited seats, retention rules and audit exports, SSO on request, invoicing, priority support.</td><td>Regulated / enterprise, due diligence</td></tr>
         </tbody>
       </table></div>
-      <p><b>Licensing:</b> core MIT (maximizes adoption + trust). Cloud/Audit are proprietary hosted services. The engine staying fully open is a feature, not a giveaway — it is what makes the numbers credible.</p>
+      <p><b>Licensing:</b> core MIT (maximizes adoption + trust). Cloud is a hosted service on the same engine; its source lives in the same repository. The engine and the provenance format staying fully open is a feature, not a giveaway — it is what makes the numbers credible. <b>Why Free gives up alerts and the signed export:</b> Free shows you everything; Team is for being told, and for handing the numbers to someone else.</p>
     </section>
 
     <!-- 14 -->
@@ -521,27 +579,30 @@ output = <span class="s">"PROVENANCE.md"</span></pre>
         <thead><tr><th>Horizon</th><th>Signal</th><th>Rough target</th></tr></thead>
         <tbody>
           <tr><td>Launch week</td><td>Show HN front page + GitHub stars</td><td>Front page; 1k+ stars</td></tr>
-          <tr><td>Month 1</td><td>Badges in the wild (repos rendering a grain badge)</td><td>100+ repos</td></tr>
-          <tr><td>Month 1</td><td>Action installs</td><td>250+ repos</td></tr>
-          <tr><td>Month 3</td><td>Cloud waitlist signups</td><td>500+</td></tr>
+          <tr><td>Month 1</td><td>Attested notes in the wild (<code>refs/notes/grain</code> on repos that aren't ours)</td><td>50+ repos</td></tr>
+          <tr><td>Month 1</td><td>Badges + Action installs</td><td>100+ badges, 250+ repos</td></tr>
+          <tr><td>Month 3</td><td>Cloud workspaces · Team conversions</td><td>500+ · 20+</td></tr>
+          <tr><td>Month 3</td><td>Capture hooks for other agents</td><td>The #1 requested one shipped</td></tr>
           <tr><td>Ongoing</td><td>False-positive complaints per 1k scans</td><td>Trending to zero</td></tr>
         </tbody>
       </table></div>
-      <p>The leading indicator that matters most is <b>badges in the wild</b> — it proves the norm is forming and is the compounding distribution loop.</p>
+      <p>The leading indicator that matters most is <b>attested notes in the wild</b> — a signed note on someone else's repository proves the norm is forming; a badge means they're proud of it.</p>
     </section>
 
     <!-- 15 -->
     <section id="roadmap">
       <h2><span class="sn">15</span> Roadmap</h2>
       <div class="mile">
-        <div class="v">v0.1</div>
-        <div class="d"><h4>MVP · ~2 weeks · launch</h4><p>CLI (scan/check/badge), declared + basic inferred signals, PROVENANCE.md, grain.json, GitHub Action, README badge. → Show HN.</p></div>
-        <div class="v">v0.2</div>
-        <div class="d"><h4>Depth</h4><p><code>grain explain</code>, convention diffing + CODEOWNERS attention flags, policy config, optional local model.</p></div>
-        <div class="v">v0.3</div>
-        <div class="d"><h4>Cloud alpha</h4><p>Hosted dashboard, multi-repo rollups, trend history, waitlist → paid.</p></div>
-        <div class="v">v1.0</div>
-        <div class="d"><h4>Policy &amp; compliance</h4><p>Merge-policy engine, signed provenance ledger, EU AI Act / SOC2 export, SSO.</p></div>
+        <div class="v">shipped</div>
+        <div class="d"><h4>Engine and CLI</h4><p>scan / check / badge / explain, declared signals, content classifier with per-repo calibration (and the published study), PROVENANCE.md, grain.json, GitHub Action, README badge, Outcomes, Risk.</p></div>
+        <div class="v">shipped</div>
+        <div class="d"><h4>Capture at source, signed</h4><p><code>grain hook</code> (Claude Code), <code>attest</code>, <code>blame</code>, <code>key</code>, <code>verify</code>; provenance v1 spec; Ed25519 notes bound to the commit; <code>.grain/signers</code>.</p></div>
+        <div class="v">shipped</div>
+        <div class="d"><h4>Cloud</h4><p>getgrain.dev: GitHub App scans on push, PR-API review evidence, dashboard, trends, policy, email alerts, signed Authorship BOM + public verify page, Free / Team / Audit plans on Stripe.</p></div>
+        <div class="v">next</div>
+        <div class="d"><h4>More agents, more forges</h4><p>Capture hooks for Cursor, Copilot, Codex (ledger format is one JSON line per edit); GitLab / Bitbucket scanning; a hosted badge endpoint per repo.</p></div>
+        <div class="v">next</div>
+        <div class="d"><h4>Audit depth</h4><p>Retention rules, audit exports, SSO/SAML, convention-deviation signal, Stripe live billing.</p></div>
       </div>
     </section>
 
@@ -562,14 +623,15 @@ output = <span class="s">"PROVENANCE.md"</span></pre>
 
     <!-- 17 -->
     <section id="questions">
-      <h2><span class="sn">17</span> Open questions (need your call)</h2>
+      <h2><span class="sn">17</span> Decisions taken (the v0.1 open questions)</h2>
       <ol>
-        <li><b>Language:</b> Go (default) vs Rust. Go = faster to ship + easy Action; Rust = perf + a local model story. <span class="conf hi">recommend Go</span></li>
-        <li><b>Forge scope for MVP:</b> GitHub-only (default) vs also GitLab/Gitea day one. <span class="conf hi">recommend GitHub-first, git-native core</span></li>
-        <li><b>Local model in MVP:</b> ship heuristics-only v0.1 (default) and add model in v0.2, or include from day one? <span class="conf hi">recommend defer</span></li>
-        <li><b>Name &amp; domain:</b> confirm <code>grain</code>; check npm/crates/GitHub org + <code>grain.dev</code> / <code>getgrain.dev</code> availability. Fallbacks: <code>attest</code>, <code>vellum</code>, <code>papertrace</code>.</li>
-        <li><b>Badge hosting:</b> shields.io endpoint pointing at a committed <code>grain.json</code> (default) vs a tiny hosted endpoint from day one.</li>
-        <li><b>Monetization timing:</b> waitlist at launch (default) vs stay pure-OSS until traction is proven.</li>
+        <li><b>Language:</b> Go, standard library only, shelling out to <code>git</code>. <span class="conf hi">decided</span></li>
+        <li><b>Forge scope:</b> GitHub first (App, PR API); the core is git-native so GitLab / Bitbucket are a scanner away. <span class="conf hi">decided</span></li>
+        <li><b>Local model:</b> deferred; the lexical classifier plus per-repo calibration is the inference layer, and the study says a global model wouldn't have generalized anyway. <span class="conf hi">decided</span></li>
+        <li><b>Name &amp; domain:</b> <code>grain</code>, <code>getgrain.dev</code>, GitHub org FrontTribe, npm shim <code>npx grain</code>, Homebrew tap, Scoop bucket. <span class="conf hi">decided</span></li>
+        <li><b>Badge hosting:</b> shields endpoint over a committed <code>grain.json</code>, plus a per-repo public badge from Cloud. <span class="conf hi">decided</span></li>
+        <li><b>Monetization:</b> no waitlist; a free tier on day one, Team at $29 per workspace, Audit from $199. Alerts and the signed export are the upgrade reasons. <span class="conf hi">decided</span></li>
+        <li><b>Still open:</b> which agent gets the second capture hook; per-seat vs per-workspace pricing once teams exceed 20 seats; whether convention deviation earns its place as a signal.</li>
       </ol>
     </section>
 
@@ -577,8 +639,8 @@ output = <span class="s">"PROVENANCE.md"</span></pre>
 </div>
 
 <footer>
-  🌾 grain · product spec v0.1 draft · illustrative figures
-  <div class="disc">A working specification for discussion, not a finished commitment. Percentages, repo names, and quotes shown are illustrative; maintainer sentiment referenced in §01 is drawn from public GitHub discussions surfaced during research.</div>
+  🌾 grain · product spec v0.2 · updated 2026-09-15
+  <div class="disc">A living specification. Items marked shipped exist and run on grain's own repository; figures in §09 and §15 are real (grain on itself) except the sample repository names; the PR comment in §06 is an example. Maintainer sentiment referenced in §01 is drawn from public GitHub discussions surfaced during research.</div>
 </footer>
 
 <script>

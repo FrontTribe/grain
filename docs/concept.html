@@ -288,17 +288,17 @@
 <header class="hero">
   <div class="wrap">
     <div class="hero-tag eyebrow"><span class="dot-h"></span><span class="dot-a"></span> code provenance layer</div>
-    <h1>See the <span class="em-h">human</span> and the <span class="em-a">AI</span> grain in your code.</h1>
-    <p class="lede">An open-source layer that labels how much of a repository was human-written, how much was AI-assisted, and whether it followed the project's own rules. Signals, not verdicts.</p>
+    <h1>Know which lines the <span class="em-a">AI</span> wrote.</h1>
+    <p class="lede">An open-source layer that records AI edits as they happen, signs them into git, and shows where they landed without review. Human vs AI, per line, with a confidence level on every claim. Signals, not verdicts.</p>
     <div class="hero-cta">
       <a class="btn btn-primary" href="#launch">▶ Read the pitch</a>
       <a class="btn btn-ghost" href="#artifacts">See what it outputs</a>
     </div>
-    <p class="install" style="margin-top:18px">$ <b>npx grain scan</b> &nbsp;·&nbsp; adds a badge + PR check in one command</p>
+    <p class="install" style="margin-top:18px">$ <b>grain hook install</b> &nbsp;·&nbsp; $ <b>grain scan</b> &nbsp;·&nbsp; signed, line-level provenance in two commands</p>
 
     <div class="fingerprint">
       <div class="fp-head">
-        <div class="repo">◆ acme/<span class="path">payments-service</span> · last 400 commits</div>
+        <div class="repo">◆ FrontTribe/<span class="path">grain</span> · 99 commits, grain on itself</div>
         <div class="legend">
           <span><i style="background:var(--human)"></i> human</span>
           <span><i style="background:var(--ai)"></i> AI-assisted</span>
@@ -307,10 +307,10 @@
       </div>
       <canvas id="grainCanvas" width="1040" height="92" aria-label="Commit provenance fingerprint: a barcode of commits colored by authorship"></canvas>
       <div class="fp-foot">
-        <div class="stat"><div class="n h">71%</div><div class="l">human-authored</div></div>
-        <div class="stat"><div class="n a">24%</div><div class="l">AI-assisted</div></div>
-        <div class="stat"><div class="n" style="color:var(--faint)">5%</div><div class="l">unclassified</div></div>
-        <div class="stat"><div class="n">400</div><div class="l">commits read</div></div>
+        <div class="stat"><div class="n h">3%</div><div class="l">human-authored</div></div>
+        <div class="stat"><div class="n a">97%</div><div class="l">AI-assisted</div></div>
+        <div class="stat"><div class="n">21</div><div class="l">commits line-attested</div></div>
+        <div class="stat"><div class="n a">449</div><div class="l">critical lines, unreviewed</div></div>
       </div>
     </div>
   </div>
@@ -347,8 +347,8 @@
   <div class="wrap">
     <div class="section-head">
       <div class="eyebrow">what it outputs</div>
-      <h2>One command in. Three things out.</h2>
-      <p>No dashboard to learn. Grain meets developers where they already look — the badge, the PR, and a file in the repo.</p>
+      <h2>One command in. Four things out.</h2>
+      <p>No dashboard to learn. Grain meets developers where they already look — the badge, the PR, a file in the repo, and a signed note on the commit itself.</p>
     </div>
     <div class="artifacts">
 
@@ -379,6 +379,21 @@
             <div class="row"><span class="mk">›</span><span>provenance: 4 commits · 1 <span class="mono">Co-Authored-By: Claude</span> tag</span></div>
           </div>
           <div class="pr-verdict"><span>⚠</span><span>policy: AI-assisted share above 40% in a human-owned path — 1 human review requested.</span></div>
+        </div>
+      </div>
+
+      <div class="card span-2">
+        <div class="card-label"><span class="num">04 /</span> the signed attestation — git blame for AI</div>
+        <div class="card-body">
+          <div class="pr-body" style="font-family:var(--mono);font-size:12.5px;line-height:1.7">
+            <div class="row"><span class="mk">$</span><span>grain blame cmd/grain/main.go</span></div>
+            <div class="row"><span class="mk hl-a">AI</span><span>04ef67e &nbsp;37 &nbsp;case "annotate":</span></div>
+            <div class="row"><span class="mk hl-a">AI</span><span>04ef67e &nbsp;38 &nbsp;&nbsp;&nbsp;err = cmdAnnotate(os.Args[2:])</span></div>
+            <div class="row"><span class="mk">&nbsp;&nbsp;</span><span>2a65cf1 &nbsp;43 &nbsp;case "hook":</span></div>
+            <div class="row"><span class="mk">&nbsp;&nbsp;</span><span>2a65cf1 &nbsp;44 &nbsp;&nbsp;&nbsp;err = cmdHook(os.Args[2:])</span></div>
+            <div class="row"><span class="mk">›</span><span>362 lines · <span class="hl-a">260 AI-written</span> (71%) · attested from signed git notes</span></div>
+          </div>
+          <p class="badge-note">A hook in the agent records the lines it writes; the commit gets a note with exactly those lines, signed with your Ed25519 key and bound to the SHA. <span class="mono">grain verify</span> checks every note in a clone, offline. The format is a public spec.</p>
         </div>
       </div>
 
@@ -414,10 +429,10 @@
       <p>Grain starts from hard evidence and only falls back to inference — and it reports a confidence score, never an accusation.</p>
     </div>
     <div class="steps">
-      <div class="step"><span class="idx"></span><div><h3>Explicit signals</h3><p>Co-Authored-By trailers, agent commit signatures, <span class="mono">*[bot]</span> accounts, PR labels. Ground truth.</p><span class="tag strong">high confidence</span></div></div>
-      <div class="step"><span class="idx"></span><div><h3>Commit forensics</h3><p>Burst timing, diff uniformity, size-to-message ratio — the "all at once" shape typical of agent output.</p><span class="tag soft">inferred</span></div></div>
-      <div class="step"><span class="idx"></span><div><h3>Convention diffing</h3><p>Does the change respect the repo's own style and CODEOWNERS? An AI touching a human-owned path is the signal that matters.</p><span class="tag soft">inferred</span></div></div>
-      <div class="step"><span class="idx"></span><div><h3>Local model pass</h3><p>Only for ambiguous diffs, and it runs client-side. Your code never leaves the machine.</p><span class="tag strong">privacy-first</span></div></div>
+      <div class="step"><span class="idx"></span><div><h3>Attested at the source</h3><p>The agent's hook logs the lines it writes; the commit carries a signed note with exactly those lines. Recorded, not detected.</p><span class="tag strong">ground truth</span></div></div>
+      <div class="step"><span class="idx"></span><div><h3>Explicit signals</h3><p>Co-Authored-By trailers, agent commit signatures, <span class="mono">*[bot]</span> accounts, explicit tags.</p><span class="tag strong">high confidence</span></div></div>
+      <div class="step"><span class="idx"></span><div><h3>Content and forensics</h3><p>A lexical classifier calibrated per repository, plus burst timing and diff shape. Capped at 0.70, always labelled.</p><span class="tag soft">inferred</span></div></div>
+      <div class="step"><span class="idx"></span><div><h3>Where it landed, and who looked</h3><p>AI lines in auth, billing, workflows without review evidence, down to the commit; and how often AI lines get reworked vs human ones.</p><span class="tag strong">risk · outcomes</span></div></div>
     </div>
     <div class="principle"><b>Design principle:</b> Grain reports <b>signals, not verdicts</b>. "62% of these lines carry AI signals" — never "this person cheated." That single choice is the difference between adoption and backlash.</div>
   </div>
@@ -438,34 +453,34 @@
         <h3>grain CLI</h3>
         <div class="who">Solo devs & OSS maintainers</div>
         <ul>
-          <li>Single-binary CLI</li>
-          <li>GitHub Action</li>
-          <li>README badge</li>
-          <li>Local PROVENANCE.md</li>
+          <li>Single-binary CLI, GitHub Action, badge</li>
+          <li>Signed line-level attestations</li>
+          <li>blame, verify, calibrate</li>
+          <li>PROVENANCE.md with Outcomes and Risk</li>
         </ul>
         <div class="oss-badge">// the whole engine, in the open</div>
       </div>
       <div class="tier feature">
-        <div class="price" style="color:var(--brand)">Team · $ / seat</div>
+        <div class="price" style="color:var(--brand)">Cloud · free, then $29 / workspace</div>
         <h3>grain Cloud</h3>
         <div class="who">Teams shipping with agents</div>
         <ul>
-          <li>Org dashboard & trends</li>
-          <li>Merge-policy engine</li>
-          <li>Multi-repo rollups</li>
-          <li>Slack / PR gating</li>
+          <li>Scans on every push (GitHub App)</li>
+          <li>Review evidence from the PR API</li>
+          <li>Email alerts: threshold, risk hotspots</li>
+          <li>Signed authorship report (Team)</li>
         </ul>
         <div class="oss-badge">// where the workflow lives</div>
       </div>
       <div class="tier">
-        <div class="price">Compliance · $$</div>
+        <div class="price">Audit · from $199 / month</div>
         <h3>grain Audit</h3>
-        <div class="who">Regulated & enterprise</div>
+        <div class="who">Regulated, due diligence</div>
         <ul>
-          <li>EU AI Act / SOC2 export</li>
-          <li>SSO & retention policy</li>
-          <li>Signed provenance ledger</li>
-          <li>On-prem option</li>
+          <li>Verifiable Bill of Materials</li>
+          <li>Retention rules, audit exports</li>
+          <li>SSO on request, invoicing</li>
+          <li>Unlimited seats</li>
         </ul>
         <div class="oss-badge">// the moat, long-term</div>
       </div>
@@ -480,8 +495,8 @@
       <h2>Built to be launched, not just shipped.</h2>
       <div class="hn">
         <div class="kicker">▲ Show HN</div>
-        <div class="title">Show HN: Grain – see how much of your codebase was written by AI vs humans</div>
-        <div class="sub">github.com/you/grain · MIT · one npx command</div>
+        <div class="title">Show HN: Grain – records which lines your AI agent wrote and signs it into Git</div>
+        <div class="sub">github.com/FrontTribe/grain · MIT · two commands</div>
       </div>
       <div class="alt">
         <b>Alt 1 —</b> Grain: a provenance layer that labels AI-assisted code in your repo<br>
