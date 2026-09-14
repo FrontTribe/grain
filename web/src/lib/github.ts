@@ -1,8 +1,8 @@
 // Server-side GitHub scan: fetch a repo's commit history via the REST API and
-// classify provenance across two tiers — DECLARED (Co-Authored-By agent
-// trailers, bot identities: the high-confidence signals grain's engine trusts)
-// and INFERRED (the content classifier run over each non-declared commit's diff,
-// a capped estimate). `grain push` from the CLI remains the line-weighted,
+// classify provenance across all three tiers — ATTESTED (a grain git note on
+// refs/notes/grain, authoritative), DECLARED (Co-Authored-By agent trailers, bot
+// identities), and INFERRED (the content classifier over each remaining commit's
+// diff, a capped estimate). `grain push` from the CLI remains the line-weighted,
 // per-directory path; this is commit-weighted.
 
 import { classifyDiff } from "@/lib/classify";
@@ -173,6 +173,95 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (t: T) => Promise<R
   return out;
 }
 
+// --- attested tier: read grain's git notes (refs/notes/grain) ---
+
+type Attested = "ai" | "human";
+
+// Parse a git note body into an authoritative class. Faithful to
+// internal/signal's note handling; the last recognized line wins.
+function parseAttestedClass(note: string): Attested | "" {
+  let cls: Attested | "" = "";
+  for (const raw of note.split("\n")) {
+    const line = raw.trim();
+    const idx = line.indexOf(":");
+    if (idx < 0) continue;
+    const k = line.slice(0, idx).trim().toLowerCase();
+    const v = line.slice(idx + 1).trim();
+    const lv = v.toLowerCase();
+    switch (k) {
+      case "provenance":
+        if (["ai", "ai-authored", "ai_authored", "assisted", "ai-assisted"].includes(lv)) cls = "ai";
+        else if (["human", "human-authored", "manual"].includes(lv)) cls = "human";
+        break;
+      case "ai-authored": {
+        if (truthy(v)) cls = "ai";
+        else {
+          const f = Number(v);
+          if (!Number.isNaN(f) && v !== "") cls = f > 0.5 ? "ai" : "human";
+        }
+        break;
+      }
+      case "human-authored":
+        if (truthy(v)) cls = "human";
+        break;
+      case "co-authored-by":
+      case "generated-by":
+      case "assisted-by":
+        if (isAgent(v) || truthy(v)) cls = "ai";
+        break;
+      case "ai-assisted":
+        if (truthy(v)) cls = "ai";
+        break;
+    }
+  }
+  return cls;
+}
+
+// Fetch attested provenance notes for the given commit SHAs. Walks the
+// refs/notes/grain ref → notes commit → tree, then reads a blob only for the
+// commits that actually carry a note. Returns an empty map when the ref is
+// absent (most repos) or on any error.
+async function fetchAttestedNotes(
+  owner: string,
+  repo: string,
+  commitShas: string[],
+  headers: Record<string, string>,
+): Promise<Map<string, Attested>> {
+  const result = new Map<string, Attested>();
+  const base = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}`;
+  const get = async (path: string) => {
+    const res = await fetch(`${base}${path}`, { headers, cache: "no-store" });
+    return res.ok ? res.json() : null;
+  };
+  try {
+    const ref = await get(`/git/ref/notes/grain`);
+    const notesCommit = ref?.object?.sha;
+    if (!notesCommit) return result;
+    const commit = await get(`/git/commits/${notesCommit}`);
+    const treeSha = commit?.tree?.sha;
+    if (!treeSha) return result;
+    const tree = await get(`/git/trees/${treeSha}?recursive=1`);
+    const wanted = new Set(commitShas);
+    const blobByCommit = new Map<string, string>();
+    for (const e of (tree?.tree ?? []) as { path?: string; type?: string; sha?: string }[]) {
+      if (e.type !== "blob" || !e.path || !e.sha) continue;
+      const sha = e.path.replace(/\//g, ""); // notes trees fan out as ab/cdef…
+      if (wanted.has(sha)) blobByCommit.set(sha, e.sha);
+    }
+    await mapLimit([...blobByCommit.entries()], 5, async ([commitSha, blobSha]) => {
+      const blob = await get(`/git/blobs/${blobSha}`);
+      if (!blob) return null;
+      const text = blob.encoding === "base64" ? Buffer.from(String(blob.content), "base64").toString("utf8") : String(blob.content ?? "");
+      const cls = parseAttestedClass(text);
+      if (cls) result.set(commitSha, cls);
+      return null;
+    });
+  } catch {
+    return result;
+  }
+  return result;
+}
+
 export async function scanGithubRepo(
   owner: string,
   repo: string,
@@ -205,12 +294,34 @@ export async function scanGithubRepo(
   }
 
   const total = Math.max(1, commits.length);
+  const shas = commits.map((c) => c.sha ?? "");
   const declaredFlags = commits.map(isDeclaredAI);
-  const declaredCount = declaredFlags.filter(Boolean).length;
 
-  // Deep-scan the most recent commits (declared and not) in one bounded window —
-  // one API call each, fewer without a token to respect rate limits. Their diffs
-  // drive both the inferred tier and the per-directory breakdown.
+  // Attested provenance from grain's git notes is authoritative when present.
+  const attested = await fetchAttestedNotes(owner, repo, shas.filter(Boolean), headers);
+  const basisOf = (i: number): "attested-ai" | "attested-human" | "declared" | "infer" => {
+    const cls = attested.get(shas[i]);
+    if (cls === "ai") return "attested-ai";
+    if (cls === "human") return "attested-human";
+    if (declaredFlags[i]) return "declared";
+    return "infer";
+  };
+
+  // Basis of every commit: attested (note) > declared (metadata) > inferred.
+  let attestedAI = 0;
+  let declaredCount = 0;
+  let inferCandidates = 0;
+  for (let i = 0; i < commits.length; i++) {
+    const b = basisOf(i);
+    if (b === "attested-ai") attestedAI++;
+    else if (b === "declared") declaredCount++;
+    else if (b === "infer") inferCandidates++;
+    // attested-human counts as human (in the remainder)
+  }
+
+  // Deep-scan the most recent commits in one bounded window — one API call each,
+  // fewer without a token. Their diffs drive both the inferred sampling and the
+  // per-directory breakdown.
   const deepMax = opts.token ? 40 : 12;
   const window = commits.slice(0, deepMax);
   const diffs = await mapLimit(window, 5, (c) => fetchCommitAddedLines(owner, repo, c.sha ?? "", headers));
@@ -224,17 +335,20 @@ export async function scanGithubRepo(
     dirs.set(dir, cur);
   };
 
-  let sampled = 0; // non-declared commits with substantive code
+  let sampled = 0; // infer-candidate commits with substantive code
   let inferredInSample = 0;
   let totalLines = 0;
 
   for (let i = 0; i < window.length; i++) {
     const d = diffs[i];
     if (!d) continue; // fetch failed — skip
-    const declared = declaredFlags[i];
-    let commitAI = declared;
-    if (!declared) {
+    const b = basisOf(i);
+    let commitAI: boolean;
+    if (b === "attested-ai" || b === "declared") commitAI = true;
+    else if (b === "attested-human") commitAI = false;
+    else {
       const { ai: isAI, ok } = classifyDiff(d);
+      commitAI = false;
       if (ok) {
         sampled++;
         if (isAI) inferredInSample++;
@@ -248,11 +362,11 @@ export async function scanGithubRepo(
     }
   }
 
-  const nonDeclared = total - declaredCount;
   const inferredRate = sampled > 0 ? inferredInSample / sampled : 0;
+  const attestedFrac = attestedAI / total;
   const declaredFrac = declaredCount / total;
-  const inferredFrac = inferredRate * (nonDeclared / total);
-  const aiFrac = Math.min(1, declaredFrac + inferredFrac);
+  const inferredFrac = inferredRate * (inferCandidates / total);
+  const aiFrac = Math.min(1, attestedFrac + declaredFrac + inferredFrac);
   const humanFrac = 1 - aiFrac;
 
   // Top directories by line volume, as human/AI fractions (matches the CLI's
@@ -280,7 +394,7 @@ export async function scanGithubRepo(
       ai_assisted: aiFrac,
       unclassified: 0,
       lines: totalLines,
-      ai_by_basis: { attested: 0, declared: declaredFrac, inferred: inferredFrac },
+      ai_by_basis: { attested: attestedFrac, declared: declaredFrac, inferred: inferredFrac },
     },
     by_path: byPath,
   };
