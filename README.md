@@ -353,8 +353,6 @@ web/                 grain Cloud (Next.js, Supabase, Stripe, GitHub App)
 - [`docs/provenance-capture.md`](./docs/provenance-capture.md) — `grain hook`, `attest`, `blame`
 - [`docs/outcomes.md`](./docs/outcomes.md) · [`docs/risk.md`](./docs/risk.md) — what Outcomes and Risk measure, and don't
 - [`docs/detection/calibration-study.md`](./docs/detection/calibration-study.md) — why the content classifier is calibrated per repo
-- [`docs/design-system.html`](./docs/design-system.html) — visual design system
-- [`design/brand/`](./design/brand) — brand guidelines · [`design/product/`](./design/product) — full product design (auth, dashboard, landing)
 
 ## Contributing
 
