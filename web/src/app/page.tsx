@@ -6,6 +6,8 @@ import { TiltCard } from "@/components/marketing/TiltCard";
 import { Fingerprint } from "@/components/Fingerprint";
 import { StepsScrolly, type StepData } from "@/components/marketing/StepsScrolly";
 import { CountUp } from "@/components/marketing/CountUp";
+import { Terminal } from "@/components/marketing/Terminal";
+import { InstallPicker, CopyCommand } from "@/components/marketing/InstallPicker";
 
 const REPO = "https://github.com/FrontTribe/grain";
 const SPEC = `${REPO}/blob/main/docs/spec/provenance-v1.md`;
@@ -84,8 +86,8 @@ const STEPS: StepData[] = [
       "$ git clone https://github.com/FrontTribe/grain && cd grain",
       "$ git fetch origin refs/notes/grain:refs/notes/grain",
       "$ grain verify",
-      "grain verify: 87 commits, 10 attested",
-      "  signed, valid     1",
+      "grain verify: 91 commits, 14 attested",
+      "  signed, valid     5",
       "  signed, invalid   0",
       "  unsigned          9",
       "  ✓ every attestation checks out",
@@ -122,8 +124,10 @@ export default function Home() {
           </Link>
           <div className="hidden items-center gap-6 text-[14px] text-muted md:flex">
             <a href="#how" className="hover:text-ink">How it works</a>
+            <a href="#try" className="hover:text-ink">Try it</a>
             <a href="#cloud" className="hover:text-ink">Cloud</a>
             <a href="#pricing" className="hover:text-ink">Pricing</a>
+            <a href={`${REPO}#readme`} className="hover:text-ink">Docs</a>
             <a href={REPO} className="hover:text-ink">GitHub</a>
           </div>
           <span className="flex-1" />
@@ -199,7 +203,43 @@ export default function Home() {
           <StepsScrolly steps={STEPS} />
         </section>
 
-        {/* What it tells you: a three-cell bento with real numbers. Risk gets
+        {/* Try it: no sign-up, one command, the real output. */}
+        <section id="try" aria-labelledby="try-h" className="border-t border-line bg-surface">
+          <div className={`${container} py-20 lg:py-24`}>
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
+              <div>
+                <h2 id="try-h" className="text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
+                  Run it on your repository first.
+                </h2>
+                <p className="mt-4 text-[16.5px] leading-relaxed text-muted">
+                  No account, nothing uploaded. The CLI reads your git history and writes <code className="font-mono text-[14px]">PROVENANCE.md</code> and <code className="font-mono text-[14px]">grain.json</code> next to your code.
+                </p>
+                <div className="mt-7">
+                  <InstallPicker />
+                </div>
+                <p className="mt-4 text-[13px] text-muted">Single static binary, MIT, no dependencies. Windows via Scoop, or a binary from Releases.</p>
+              </div>
+              <Terminal
+                animate={false}
+                className="self-start"
+                lines={[
+                  "$ grain scan",
+                  "grain 0.1.0 · scanning FrontTribe/grain",
+                  "  reading 91 commits done",
+                  "  provenance:",
+                  "    human-authored    2%  ░░░░░░░░░░░░░░░░░░░░",
+                  "    ai-assisted      98%  ████████████████████",
+                  "    unclassified      0%  ░░░░░░░░░░░░░░░░░░░░",
+                  "  outcomes (strict · 3595 AI lines, 303 human): AI reworked 8% vs human 17% · 0.48× as often",
+                  "  risk: 416 AI lines in critical paths, 416 (100%) without review evidence · workflows 155, auth 129, login 74",
+                  "  wrote PROVENANCE.md · grain.json",
+                ]}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* What it tells you: a four-cell bento with real numbers. Risk gets
             the width because it is the number a lead acts on. */}
         <section aria-labelledby="tells-h" className="border-t border-line">
           <div className={`${container} py-20 lg:py-24`}>
@@ -318,6 +358,55 @@ export default function Home() {
           </div>
         </section>
 
+        {/* In the pull request: the Action, and the comment it leaves. */}
+        <section id="pr" aria-labelledby="pr-h" className={`${container} py-20 lg:py-24`}>
+          <h2 id="pr-h" className="max-w-[24ch] text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
+            A calm comment on every pull request.
+          </h2>
+          <p className="mt-4 max-w-[62ch] text-[16.5px] leading-relaxed text-muted">
+            Add the GitHub Action and each PR gets an itemised note from grain: how much of the change carries AI signals, whether it touches paths you marked human-owned, and what your policy asks for. Framed as signals, never as an accusation.
+          </p>
+          <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:items-start">
+            <figure>
+              <div className="rounded-[14px] border border-line bg-surface p-5 sm:p-6">
+                <div className="flex items-center gap-2.5 text-[13px]">
+                  <span className="inline-flex size-6 items-center justify-center rounded-full bg-ink font-display text-[11px] font-extrabold text-ground">g</span>
+                  <b className="font-semibold text-ink">grain</b>
+                  <span className="rounded-[5px] border border-line px-1.5 py-px font-mono text-[10.5px] text-muted">bot</span>
+                  <span className="text-muted">commented</span>
+                </div>
+                <pre className="mt-4 overflow-x-auto font-mono text-[12.5px] leading-[1.8] text-ink">
+{`grain report · #482
+› 62% of +214 lines carry AI-authorship signals  (1 Co-Authored-By: Claude)
+› 2 files touch src/auth/, human-owned per CODEOWNERS
+› convention check: 3 deviations from repo style
+policy: AI share > 40% in a human-owned path, 1 human review requested`}
+                </pre>
+              </div>
+              <figcaption className="mt-2.5 text-[12.5px] text-faint">Example comment. The Action also sets a check, so a policy can block the merge until a human has reviewed.</figcaption>
+            </figure>
+            <div>
+              <div className="text-[13px] font-semibold text-ink">.github/workflows/grain.yml</div>
+              <pre className="mt-2 overflow-x-auto rounded-[14px] border border-line bg-surface-2 px-4 py-3.5 font-mono text-[12px] leading-[1.7] text-ink">
+{`name: Grain
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  provenance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: FrontTribe/grain@v1`}
+              </pre>
+              <p className="mt-3 text-[13.5px] text-muted">Twelve lines. No token beyond the one Actions already has.</p>
+            </div>
+          </div>
+        </section>
+
         {/* Cloud: stacked heading, then the real alert next to what the
             GitHub App does. */}
         <section id="cloud" aria-labelledby="cloud-h" className="border-t border-line bg-surface">
@@ -352,6 +441,24 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Who it's for: three jobs, three concrete outcomes. Plain columns. */}
+        <section aria-labelledby="who-h" className={`${container} py-20 lg:py-24`}>
+          <h2 id="who-h" className="max-w-[24ch] text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
+            Built for the three people who get asked about AI code.
+          </h2>
+          <div className="mt-10 grid gap-x-10 gap-y-8 md:grid-cols-3">
+            <Role title="Engineering leads" href="#cloud" link="See Cloud alerts">
+              You approved the agents. Now you want to know where their code lands unreviewed, and to hear about it before an incident does.
+            </Role>
+            <Role title="Open-source maintainers" href="#pr" link="See the PR check">
+              Your contribution policy asks for AI disclosure. grain turns the honour system into a number on every pull request, with a badge for the README.
+            </Role>
+            <Role title="Compliance and due diligence" href="/verify" link="Verify a report">
+              An auditor, an acquirer, or the EU AI Act asks what was machine-written. Hand them a signed Bill of Materials they can check themselves.
+            </Role>
+          </div>
+        </section>
+
         {/* Open standard: prose, then the links that let anyone check the work. */}
         <section aria-labelledby="open-h" className="border-t border-line">
           <div className={`${container} py-20 lg:py-24`}>
@@ -369,6 +476,33 @@ export default function Home() {
               <LinkRow href={REPO} title="Read the source">CLI, engine, and Cloud in one repository. Star it, fork it, audit it.</LinkRow>
             </ul>
           </div>
+        </section>
+
+        {/* Objections, answered plainly. Two columns, no accordion. */}
+        <section aria-labelledby="faq-h" className={`${container} py-20 lg:py-24`}>
+          <h2 id="faq-h" className="max-w-[24ch] text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
+            The questions people ask before they run it.
+          </h2>
+          <dl className="mt-10 grid gap-x-12 gap-y-8 md:grid-cols-2">
+            <QA q="Does my code leave my machine?">
+              Not with the CLI: it reads your git history locally and writes two files into the repo. The edit ledger stores content hashes, never text. Cloud reads repositories through the GitHub App you install, with read-only access you can revoke.
+            </QA>
+            <QA q="Can it be wrong?">
+              Inference can, which is why it is capped at 0.70 confidence and always labelled. Attested and declared provenance are records, not guesses. Every report separates the three so you can see what rests on what.
+            </QA>
+            <QA q="What about code written before the hook existed?">
+              It is scored from what git already knows: Co-Authored-By trailers, bot accounts, tags, then capped inference. Lines nobody attested are shown as human, never claimed as AI.
+            </QA>
+            <QA q="Will it slow down commits?">
+              The post-commit hook hashes the lines the commit added and writes one note. On this repository that is a few milliseconds. Nothing runs in the editor loop.
+            </QA>
+            <QA q="Which agents does it capture?">
+              Claude Code today, through its PostToolUse hook. The ledger format is a JSON line per edit, so any tool that can run a command after writing a file can attest.
+            </QA>
+            <QA q="Is it really open source?">
+              The engine, CLI, GitHub Action and the provenance format are MIT, in one repository. Cloud is the hosted dashboard, alerts and signed reports on top of the same engine.
+            </QA>
+          </dl>
         </section>
 
         {/* Pricing: two columns, the recommended one by colour, not height. */}
@@ -391,6 +525,7 @@ export default function Home() {
                 </ul>
                 <div className="mt-8">
                   <Link href="/signup" className={`${btnSecondary} w-full`}>Start free</Link>
+                  <p className="mt-2.5 text-center text-[12.5px] text-muted">No card required.</p>
                 </div>
               </div>
               <div className="flex flex-col rounded-[14px] border border-human bg-ground p-7">
@@ -419,10 +554,13 @@ export default function Home() {
           <h2 className="mx-auto max-w-[20ch] text-balance font-display text-[32px] font-bold tracking-tight sm:text-[40px]">
             See the grain of your own codebase.
           </h2>
-          <p className="mx-auto mt-3 max-w-[44ch] text-[16.5px] text-muted">One command locally, or connect a repository and let Cloud keep watching.</p>
+          <p className="mx-auto mt-3 max-w-[44ch] text-[16.5px] text-muted">Connect a repository and let Cloud keep watching, or run one command locally right now.</p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link href="/signup" className={btnPrimary}>Start free</Link>
             <a href={`${REPO}#readme`} className={btnSecondary}>Read the docs</a>
+          </div>
+          <div className="mx-auto mt-6 max-w-[360px]">
+            <CopyCommand cmd="npx grain scan" />
           </div>
         </section>
       </main>
@@ -475,6 +613,27 @@ function LinkRow({ href, title, children }: { href: string; title: string; child
     </>
   );
   return <li>{external ? <a href={href} className={cls}>{inner}</a> : <Link href={href} className={cls}>{inner}</Link>}</li>;
+}
+
+function Role({ title, href, link, children }: { title: string; href: string; link: string; children: React.ReactNode }) {
+  const inner = <>{link} <span aria-hidden>→</span></>;
+  const cls = "mt-3 inline-block text-[13.5px] font-semibold text-human underline decoration-human/40 underline-offset-4 hover:decoration-human";
+  return (
+    <div className="border-t border-line pt-5">
+      <h3 className="font-display text-[19px] font-bold tracking-tight">{title}</h3>
+      <p className="mt-2 text-[14.5px] leading-relaxed text-muted">{children}</p>
+      {href.startsWith("#") ? <a href={href} className={cls}>{inner}</a> : <Link href={href} className={cls}>{inner}</Link>}
+    </div>
+  );
+}
+
+function QA({ q, children }: { q: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <dt className="font-display text-[17px] font-bold tracking-tight">{q}</dt>
+      <dd className="mt-1.5 max-w-[52ch] text-[14.5px] leading-relaxed text-muted">{children}</dd>
+    </div>
+  );
 }
 
 function Tier({ swatch, name, value, children }: { swatch: string; name: string; value: string; children: React.ReactNode }) {
