@@ -1,8 +1,11 @@
 // Server-side GitHub scan: fetch a repo's commit history via the REST API and
-// classify DECLARED provenance signals (Co-Authored-By agent trailers, bot
-// identities) — the same high-confidence signals grain's engine trusts. This is
-// commit-weighted and declared-only (no line counts or directories from the API);
-// `grain push` from the CLI remains the line-weighted, per-directory path.
+// classify provenance across two tiers — DECLARED (Co-Authored-By agent
+// trailers, bot identities: the high-confidence signals grain's engine trusts)
+// and INFERRED (the content classifier run over each non-declared commit's diff,
+// a capped estimate). `grain push` from the CLI remains the line-weighted,
+// per-directory path; this is commit-weighted.
+
+import { classifyDiff } from "@/lib/classify";
 
 const AGENTS = ["claude", "copilot", "cursor", "codex", "devin", "chatgpt", "gemini", "anthropic"];
 
@@ -42,6 +45,7 @@ function isAgent(s: string): boolean {
 }
 
 type Commit = {
+  sha?: string;
   commit?: { message?: string; author?: { name?: string; email?: string } };
   author?: { login?: string; type?: string } | null;
   committer?: { login?: string; type?: string } | null;
@@ -105,6 +109,64 @@ export class GithubScanError extends Error {
   }
 }
 
+// --- inferred tier: fetch a commit's diff and classify its added lines ---
+
+type CommitFile = { filename?: string; patch?: string; additions?: number };
+
+// Extract added lines (without the leading '+') from a unified-diff patch,
+// skipping the '+++' file header. Capped to keep memory bounded on big commits.
+function addedLinesFromPatch(patch: string, cap = 4000): string[] {
+  const out: string[] = [];
+  for (const line of patch.split("\n")) {
+    if (line.startsWith("+++")) continue;
+    if (line.startsWith("+")) {
+      out.push(line.slice(1));
+      if (out.length >= cap) break;
+    }
+  }
+  return out;
+}
+
+// Fetch one commit's files and return its added lines grouped by path. Returns
+// null on any error so a single failed commit never aborts the scan.
+async function fetchCommitAddedLines(
+  owner: string,
+  repo: string,
+  sha: string,
+  headers: Record<string, string>,
+): Promise<Record<string, string[]> | null> {
+  try {
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/commits/${encodeURIComponent(sha)}`;
+    const res = await fetch(url, { headers, cache: "no-store" });
+    if (!res.ok) return null;
+    const body = (await res.json()) as { files?: CommitFile[] };
+    const files = body.files ?? [];
+    const added: Record<string, string[]> = {};
+    for (const f of files) {
+      if (!f.filename || !f.patch) continue;
+      const lines = addedLinesFromPatch(f.patch);
+      if (lines.length > 0) added[f.filename] = lines;
+    }
+    return added;
+  } catch {
+    return null;
+  }
+}
+
+// Run an async mapper over items with bounded concurrency (rate-limit friendly).
+async function mapLimit<T, R>(items: T[], limit: number, fn: (t: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) {
+      const idx = i++;
+      out[idx] = await fn(items[idx]);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
 export async function scanGithubRepo(
   owner: string,
   repo: string,
@@ -136,10 +198,33 @@ export async function scanGithubRepo(
     throw new GithubScanError("No commits found on the default branch.", 422);
   }
 
-  let ai = 0;
-  let human = 0;
-  for (const c of commits) (isDeclaredAI(c) ? ai++ : human++);
   const total = Math.max(1, commits.length);
+  const declaredFlags = commits.map(isDeclaredAI);
+  const declaredCount = declaredFlags.filter(Boolean).length;
+
+  // Inferred tier: run the content classifier over the diffs of the most recent
+  // non-declared commits, then extrapolate the sampled AI-rate to all
+  // non-declared commits. Bounded (and lower without a token) to respect rate
+  // limits — each sampled commit is one extra API call.
+  const deepMax = opts.token ? 40 : 12;
+  const candidates = commits.filter((_, i) => !declaredFlags[i]).slice(0, deepMax);
+  const diffs = await mapLimit(candidates, 5, (c) => fetchCommitAddedLines(owner, repo, c.sha ?? "", headers));
+  let sampled = 0;
+  let inferredInSample = 0;
+  for (const d of diffs) {
+    if (!d) continue; // fetch failed — don't let it bias the rate
+    const { ai: isAI, ok } = classifyDiff(d);
+    if (!ok) continue; // no substantive added code (deletions, binaries, config)
+    sampled++;
+    if (isAI) inferredInSample++;
+  }
+
+  const nonDeclared = total - declaredCount;
+  const inferredRate = sampled > 0 ? inferredInSample / sampled : 0;
+  const declaredFrac = declaredCount / total;
+  const inferredFrac = inferredRate * (nonDeclared / total);
+  const aiFrac = Math.min(1, declaredFrac + inferredFrac);
+  const humanFrac = 1 - aiFrac;
 
   const report: GhReport = {
     schema: "grain/v0.1",
@@ -147,19 +232,18 @@ export async function scanGithubRepo(
     generated_at: new Date().toISOString(),
     range: { commits: commits.length },
     summary: {
-      human: human / total,
-      ai_assisted: ai / total,
+      human: humanFrac,
+      ai_assisted: aiFrac,
       unclassified: 0,
       lines: 0,
-      // API scan classifies declared signals only → all AI is declared.
-      ai_by_basis: { attested: 0, declared: ai / total, inferred: 0 },
+      ai_by_basis: { attested: 0, declared: declaredFrac, inferred: inferredFrac },
     },
     by_path: [],
   };
   return {
     report,
-    human: Math.round((human / total) * 100),
-    ai: Math.round((ai / total) * 100),
+    human: Math.round(humanFrac * 100),
+    ai: Math.round(aiFrac * 100),
     commits: commits.length,
   };
 }
