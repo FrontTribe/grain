@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { Mark } from "@/components/Mark";
-import { Fingerprint } from "@/components/Fingerprint";
 import { SELF_SCAN, SELF_COMMITS } from "@/lib/self-scan";
+import { BlameReveal, type BlameLine } from "@/components/marketing/BlameReveal";
+import { GrainShaderLazy } from "@/components/marketing/GrainShaderLazy";
+import { Fingerprint } from "@/components/Fingerprint";
+import { StepsScrolly, type StepData } from "@/components/marketing/StepsScrolly";
+import { CountUp } from "@/components/marketing/CountUp";
 
 const REPO = "https://github.com/FrontTribe/grain";
 const SPEC = `${REPO}/blob/main/docs/spec/provenance-v1.md`;
@@ -11,7 +15,7 @@ const SPEC = `${REPO}/blob/main/docs/spec/provenance-v1.md`;
 // the alert email as it was delivered. Nothing is mocked.
 
 const BLAME_FILE = "cmd/grain/provenance.go";
-const BLAME_LINES: { ai: boolean; sha: string; n: number; text: string }[] = [
+const BLAME_LINES: BlameLine[] = [
   { ai: true, sha: "c8ee52a", n: 39, text: "// One definition, shared with blame and outcome tracking, so hashes never drift." },
   { ai: true, sha: "c8ee52a", n: 40, text: "func lineHash(line string) string { return outcomes.LineHash(line) }" },
   { ai: false, sha: "2a65cf1", n: 41, text: "" },
@@ -28,16 +32,38 @@ const BLAME_LINES: { ai: boolean; sha: string; n: number; text: string }[] = [
   { ai: true, sha: "2a65cf1", n: 52, text: "func readLedger(root string) map[string]map[string]bool {" },
 ];
 
+// Transcripts copied from a terminal, run on this repository.
+const STEPS: StepData[] = [
+  {
+    cmd: "grain hook install",
+    title: "Install the hook once",
+    body: "A git post-commit hook plus a Claude Code hook. From then on, every line the agent writes is logged as a content hash, never as text.",
+    out: `✓ installed .git/hooks/post-commit\n\nAdd this to .claude/settings.json so AI edits are captured at the source:\n{ "hooks": { "PostToolUse": [ { "matcher": "Edit|Write|MultiEdit", ... } ] } }`,
+  },
+  {
+    cmd: "git commit",
+    title: "Commit as usual",
+    body: "The hook matches the commit's added lines against the ledger and writes a signed note: exactly which lines were AI-written, bound to that commit.",
+    out: `grain attest, 5f49f3c: Provenance: assisted · 889/961 added lines AI-written\n(note on refs/notes/grain, signed 336b33f8517eb53b)\n\nProvenance: assisted\nAI-Lines: 889/961\nAI-Hashes: 0320d2bd7a,1c9e0f77b2,…\nSigned-By: ed25519:gsnAw0076ceAPFu8U35z7QjoQYD8ZTrNksSjzdPF6B4=\nSignature: ikJWlrLo5T6OlaBlxNr9brS5D5n1qBo5aLnd7aTJlP92Ieak…`,
+  },
+  {
+    cmd: "grain verify",
+    title: "Check it, anywhere",
+    body: "Any clone can verify every attestation offline. A note that was edited or moved to another commit fails. Teams list trusted keys in .grain/signers.",
+    out: `grain verify: 87 commits, 10 attested\n  signed, valid     1\n  signed, invalid   0\n  unsigned          9\n  ✓ every attestation checks out`,
+  },
+];
+
 const btn = "press inline-flex h-11 items-center justify-center whitespace-nowrap rounded-[10px] px-5 text-[14px] font-semibold";
 const btnPrimary = `${btn} bg-ink text-ground`;
 const btnSecondary = `${btn} border border-line-strong text-ink hover:border-ink`;
 const container = "mx-auto w-full max-w-[1120px] px-5 sm:px-8";
-const figure = "overflow-hidden rounded-[14px] border border-line bg-surface";
 
 export default function Home() {
   const s = SELF_SCAN;
   return (
     <>
+      <div className="grain-overlay" aria-hidden />
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-[10px] focus:bg-ink focus:px-4 focus:py-2 focus:text-ground">
         Skip to content
       </a>
@@ -62,7 +88,9 @@ export default function Home() {
       <main id="main">
         {/* Hero: asymmetric split. Text carries the claim; the proof is real
             `grain blame` output from this repository. */}
-        <header className={`${container} grid items-center gap-10 pb-14 pt-14 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14 lg:pb-20 lg:pt-20`}>
+        <header className="relative overflow-hidden">
+          <GrainShaderLazy />
+          <div className={`${container} relative grid items-center gap-10 pb-14 pt-14 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14 lg:pb-20 lg:pt-20`}>
           <div>
             <h1 className="rise text-balance font-display text-[40px] font-extrabold leading-[1.02] tracking-[-0.03em] sm:text-[54px] lg:text-[62px]" style={{ "--i": 0 } as React.CSSProperties}>
               Know which lines the <span className="text-ai">AI</span> wrote.
@@ -77,27 +105,16 @@ export default function Home() {
           </div>
 
           <figure className="rise min-w-0" style={{ "--i": 3 } as React.CSSProperties}>
-            <div className={figure}>
-              <div className="flex items-center justify-between border-b border-line px-4 py-2.5 font-mono text-[12px] text-muted">
-                <span>$ grain blame {BLAME_FILE}</span>
-              </div>
-              <pre className="overflow-x-auto px-4 py-3.5 font-mono text-[11.5px] leading-[1.75] text-ink" tabIndex={0}>
-                {BLAME_LINES.map((l) => (
-                  <div key={l.n} className={l.ai ? "blame-ai" : "blame-h"}>
-                    <span className="text-faint">{l.sha} </span>
-                    <span className="text-faint">{String(l.n).padStart(3)}  </span>
-                    {l.text.replace("\t", "    ")}
-                  </div>
-                ))}
-              </pre>
-              <div className="border-t border-line px-4 py-2.5 font-mono text-[12px] text-muted">
-                515 lines, <span className="text-ai">368 AI-written</span> (71%), attested from git notes
-              </div>
-            </div>
+            <BlameReveal
+              file={BLAME_FILE}
+              lines={BLAME_LINES}
+              summary={<>515 lines, <span className="text-ai">368 AI-written</span> (71%), attested from git notes</>}
+            />
             <figcaption className="mt-2.5 text-[12.5px] text-faint">
               Real output. Each line is resolved from a signed attestation on the commit that added it.
             </figcaption>
           </figure>
+          </div>
         </header>
 
         {/* Proof band: grain's own history as a barcode of real commits. */}
@@ -131,27 +148,7 @@ export default function Home() {
             Detecting AI code after the fact is unreliable. Grain hooks into the agent instead, so provenance is captured at the source and travels with the commit.
           </p>
 
-          <ol className="mt-12 flex flex-col">
-            <Step
-              cmd="grain hook install"
-              title="Install the hook once"
-              body="A git post-commit hook plus a Claude Code hook. From then on, every line the agent writes is logged as a content hash, never as text."
-              out={`✓ installed .git/hooks/post-commit\n\nAdd this to .claude/settings.json so AI edits are captured at the source:\n{ "hooks": { "PostToolUse": [ { "matcher": "Edit|Write|MultiEdit", ... } ] } }`}
-            />
-            <Step
-              cmd="git commit"
-              title="Commit as usual"
-              body="The hook matches the commit's added lines against the ledger and writes a signed note: exactly which lines were AI-written, bound to that commit."
-              out={`grain attest, 5f49f3c: Provenance: assisted · 889/961 added lines AI-written\n(note on refs/notes/grain, signed 336b33f8517eb53b)\n\nProvenance: assisted\nAI-Lines: 889/961\nAI-Hashes: 0320d2bd7a,1c9e0f77b2,…\nSigned-By: ed25519:gsnAw0076ceAPFu8U35z7QjoQYD8ZTrNksSjzdPF6B4=\nSignature: ikJWlrLo5T6OlaBlxNr9brS5D5n1qBo5aLnd7aTJlP92Ieak…`}
-            />
-            <Step
-              cmd="grain verify"
-              title="Check it, anywhere"
-              body="Any clone can verify every attestation offline. A note that was edited or moved to another commit fails. Teams list trusted keys in .grain/signers."
-              out={`grain verify: 87 commits, 10 attested\n  signed, valid     1\n  signed, invalid   0\n  unsigned          9\n  ✓ every attestation checks out`}
-              last
-            />
-          </ol>
+          <StepsScrolly steps={STEPS} />
         </section>
 
         {/* What it tells you: a three-cell bento with real numbers. Risk gets
@@ -168,7 +165,7 @@ export default function Home() {
                   AI-written lines in security- and money-sensitive paths that carry no review evidence: no pull request, no reviewer trailer, applied by the author.
                 </p>
                 <p className="mt-6 font-display text-[44px] font-extrabold leading-none tracking-tight text-ai sm:text-[56px]">
-                  {s.risk.unreviewed}
+                  <CountUp value={s.risk.unreviewed} className="tabular-nums" />
                   <span className="ml-2 text-[16px] font-semibold text-muted">of {s.risk.lines} critical AI lines unreviewed</span>
                 </p>
                 <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 font-mono text-[13px] sm:grid-cols-4">
@@ -350,21 +347,6 @@ function Stat({ label, value, tone, note }: { label: string; value: string; tone
         {note && <span className="ml-1.5 text-[13px] font-medium text-muted">{note}</span>}
       </dd>
     </div>
-  );
-}
-
-function Step({ cmd, title, body, out, last }: { cmd: string; title: string; body: string; out: string; last?: boolean }) {
-  return (
-    <li className={`reveal grid gap-5 py-9 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12 ${last ? "" : "border-b border-line"}`}>
-      <div>
-        <code className="inline-block rounded-[8px] bg-surface-2 px-2.5 py-1 font-mono text-[13.5px] font-semibold text-ink">
-          <span className="text-human">$</span> {cmd}
-        </code>
-        <h3 className="mt-3.5 font-display text-[22px] font-bold tracking-tight">{title}</h3>
-        <p className="mt-2 max-w-[46ch] text-[15px] leading-relaxed text-muted">{body}</p>
-      </div>
-      <pre className={`${figure} min-w-0 overflow-x-auto px-4 py-3.5 font-mono text-[12.5px] leading-[1.7] text-ink`} tabIndex={0}>{out}</pre>
-    </li>
   );
 }
 
