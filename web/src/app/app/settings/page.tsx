@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TopBar, Card } from "@/components/dashboard/ui";
-import { getUserAndOrg, getIngestTokens, getOrgMembers, getInvites, getMyOrgs, getActiveOrgId } from "@/lib/data";
+import { getUserAndOrg, getIngestTokens, getOrgMembers, getInvites, getMyOrgs, getActiveOrgId, getRepos } from "@/lib/data";
+import { FREE_LIMITS } from "@/lib/plan";
 import { IngestTokens } from "@/components/dashboard/IngestTokens";
 import { MembersCard } from "@/components/dashboard/MembersCard";
 import { GithubPanel } from "@/components/dashboard/GithubPanel";
@@ -23,11 +24,27 @@ const TABS = [
   { key: "integrations", label: "Integrations" },
 ];
 
+function Usage({ label, used, limit }: { label: string; used: number; limit: number }) {
+  const pct = Math.min(100, (used / limit) * 100);
+  const full = used >= limit;
+  return (
+    <div>
+      <div className="mb-1 flex justify-between text-[13px]">
+        <span className="font-medium">{label}</span>
+        <span className={`font-mono ${full ? "text-ai" : "text-muted"}`}>{used} / {limit}</span>
+      </div>
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-line-strong/50">
+        <div className={`h-full rounded-full ${full ? "bg-ai" : "bg-brand"}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
 export default async function Settings({ searchParams }: { searchParams: Promise<{ saved?: string; error?: string; billing?: string; tab?: string }> }) {
   const { saved, error, billing, tab: tabParam } = await searchParams;
   const tab = TABS.some((t) => t.key === tabParam) ? tabParam! : "general";
-  const [{ org }, tokens, members, invites, myOrgs, activeId] = await Promise.all([
-    getUserAndOrg(), getIngestTokens(), getOrgMembers(), getInvites(), getMyOrgs(), getActiveOrgId(),
+  const [{ org }, tokens, members, invites, myOrgs, activeId, repos] = await Promise.all([
+    getUserAndOrg(), getIngestTokens(), getOrgMembers(), getInvites(), getMyOrgs(), getActiveOrgId(), getRepos(),
   ]);
   const name = org?.name ?? "Workspace";
   const slug = org?.slug ?? "workspace";
@@ -115,11 +132,19 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                   ? `$20 / month${periodEnd ? ` · renews ${new Date(periodEnd).toLocaleDateString()}` : ""}`
                   : "Free during early access"}
               </div>
-              <ul className="mt-3.5 flex flex-col gap-1.5 text-[13px]">
-                <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">Unlimited repos</li>
-                <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">Org dashboard &amp; policy</li>
-                <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">{members.length} {members.length === 1 ? "seat" : "seats"} used</li>
-              </ul>
+              {subscribed ? (
+                <ul className="mt-3.5 flex flex-col gap-1.5 text-[13px]">
+                  <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">Unlimited repositories</li>
+                  <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">Org dashboard &amp; policy</li>
+                  <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">{members.length} {members.length === 1 ? "seat" : "seats"} used</li>
+                </ul>
+              ) : (
+                <div className="mt-4 flex flex-col gap-3">
+                  <Usage label="Repositories" used={repos.length} limit={FREE_LIMITS.repos} />
+                  <Usage label="Seats" used={members.length + invites.length} limit={FREE_LIMITS.seats} />
+                  <p className="mt-1 text-[12.5px] text-muted">Upgrade to Team for unlimited repositories and seats.</p>
+                </div>
+              )}
               <div className="mt-5 flex justify-end">
                 {!canInvite ? (
                   <span className="font-mono text-[11.5px] text-faint">Ask an admin to manage billing</span>

@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { parseRepoInput, scanGithubRepo, GithubScanError } from "@/lib/github";
+import { getRepos } from "@/lib/data";
+import { planSubscribed, FREE_LIMITS } from "@/lib/plan";
 
 export type ConnectState = {
   ok?: boolean;
@@ -20,6 +22,16 @@ export async function connectGithubRepo(
 ): Promise<ConnectState> {
   const parsed = parseRepoInput(String(formData.get("repo") ?? ""));
   if (!parsed) return { error: "Enter a repository as owner/name or a github.com URL." };
+
+  // Plan gate: free workspaces cap the number of repositories. Re-scanning one
+  // that's already connected is always allowed.
+  if (!(await planSubscribed())) {
+    const existing = await getRepos();
+    const already = existing.some((r) => r.full_name === `${parsed.owner}/${parsed.repo}` || r.name === parsed.repo);
+    if (!already && existing.length >= FREE_LIMITS.repos) {
+      return { error: `Free workspaces include ${FREE_LIMITS.repos} repositories. Upgrade to Team for unlimited.` };
+    }
+  }
 
   const supabase = await createClient();
   // Use the stored GitHub token when present — enables private repos + higher rate limits.
@@ -53,8 +65,15 @@ export async function connectGithubRepo(
 // Onboarding step 3: scan the repositories selected on /connect, then show
 // the result on /onboarding. Bounded so a large selection can't hang the flow.
 export async function onboardScan(formData: FormData) {
-  const selected = formData.getAll("repo").map(String).filter(Boolean).slice(0, 10);
+  let selected = formData.getAll("repo").map(String).filter(Boolean).slice(0, 10);
   const supabase = await createClient();
+
+  // Plan gate: don't scan past the free repository cap.
+  if (!(await planSubscribed())) {
+    const remaining = Math.max(0, FREE_LIMITS.repos - (await getRepos()).length);
+    selected = selected.slice(0, remaining);
+  }
+
   const { data: token } = await supabase.rpc("get_github_token");
 
   for (const full of selected) {

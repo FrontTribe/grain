@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { getActiveOrgId } from "@/lib/data";
+import { getActiveOrgId, getOrgMembers, getInvites } from "@/lib/data";
+import { planSubscribed, FREE_LIMITS } from "@/lib/plan";
 
 export type InviteState = { link?: string; email?: string; error?: string };
 
@@ -15,6 +16,14 @@ export async function createInvite(_prev: InviteState, formData: FormData): Prom
 
   const orgId = await getActiveOrgId();
   if (!orgId) return { error: "No active workspace." };
+
+  // Plan gate: free workspaces cap seats (members + pending invites).
+  if (!(await planSubscribed())) {
+    const [members, invites] = await Promise.all([getOrgMembers(), getInvites()]);
+    if (members.length + invites.length >= FREE_LIMITS.seats) {
+      return { error: `Free workspaces include ${FREE_LIMITS.seats} seats. Upgrade to Team to add more.` };
+    }
+  }
 
   const supabase = await createClient();
   const { data: token, error } = await supabase.rpc("create_invite", {
