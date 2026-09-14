@@ -3,11 +3,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendEmail, attentionEmail } from "@/lib/email";
 import { getOrgMembers, getOrgPolicy, getUserAndOrg } from "@/lib/data";
 
-type MemberRow = { email: string; role: string };
+type EmailRow = { email: string };
 
 // Session-less attention alert for the webhook path. Takes an explicit org and a
 // service-role client (no user session), reads the org's policy threshold and
-// admins directly, and emails them when a re-scan crosses the threshold.
+// admins directly, and emails them when a re-scan crosses the threshold. Uses
+// org_admin_emails (service-role only) rather than org_members, which is gated
+// on the caller being a member (auth.uid()) and returns nothing for the webhook.
 export async function notifyAttentionForOrg(
   db: SupabaseClient,
   orgId: string,
@@ -15,17 +17,14 @@ export async function notifyAttentionForOrg(
   aiPercent: number,
 ): Promise<void> {
   const { data: policy } = await db.from("org_policy").select("threshold").eq("org_id", orgId).maybeSingle();
-  const threshold = Math.round(((policy?.threshold as number | undefined) ?? 0.4) * 100);
+  const threshold = Math.round(Number((policy?.threshold as number | string | undefined) ?? 0.4) * 100);
   if (aiPercent <= threshold) return;
 
-  const [{ data: org }, { data: members }] = await Promise.all([
+  const [{ data: org }, { data: rows }] = await Promise.all([
     db.from("orgs").select("name").eq("id", orgId).maybeSingle(),
-    db.rpc("org_members", { p_org: orgId }),
+    db.rpc("org_admin_emails", { p_org: orgId }),
   ]);
-  const admins = ((members ?? []) as MemberRow[])
-    .filter((m) => m.role === "admin" || m.role === "owner")
-    .map((m) => m.email)
-    .filter(Boolean);
+  const admins = ((rows ?? []) as EmailRow[]).map((r) => r.email).filter(Boolean);
   if (admins.length === 0) return;
 
   const href = `https://getgrain.dev/app/repos/${encodeURIComponent(repoName)}`;
