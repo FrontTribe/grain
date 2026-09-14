@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { headers, cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
-import { getActiveOrgId, getOrgMembers, getInvites } from "@/lib/data";
+import { getActiveOrgId, getOrgMembers, getInvites, getUserAndOrg } from "@/lib/data";
 import { planSubscribed, FREE_LIMITS } from "@/lib/plan";
+import { sendEmail, inviteEmail } from "@/lib/email";
 
-export type InviteState = { link?: string; email?: string; error?: string };
+export type InviteState = { link?: string; email?: string; emailed?: boolean; error?: string };
 
 export async function createInvite(_prev: InviteState, formData: FormData): Promise<InviteState> {
   const email = String(formData.get("email") ?? "").trim();
@@ -34,8 +35,16 @@ export async function createInvite(_prev: InviteState, formData: FormData): Prom
   if (error) return { error: error.message };
 
   const origin = (await headers()).get("origin") ?? "";
+  const link = `${origin}/invite/${token}`;
+
+  // Best-effort email — the link is always returned as a fallback.
+  const { user, org } = await getUserAndOrg();
+  const inviter = (user?.user_metadata?.full_name as string | undefined) ?? undefined;
+  const { subject, html } = inviteEmail(org?.name ?? "your workspace", link, inviter);
+  const { sent } = await sendEmail({ to: email, subject, html });
+
   revalidatePath("/app/settings");
-  return { link: `${origin}/invite/${token}`, email };
+  return { link, email, emailed: sent };
 }
 
 export async function revokeInvite(formData: FormData) {

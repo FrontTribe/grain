@@ -48,7 +48,9 @@ export function MembersCard({ members, invites, canInvite }: { members: Member[]
           {state.error && <div className="mt-3 rounded-[9px] border border-ai/40 bg-ai-soft px-3 py-2 text-[12.5px] text-ai">{state.error}</div>}
           {state.link && (
             <div className="mt-3 rounded-[9px] border border-human/40 bg-human-soft p-3">
-              <div className="mb-1.5 text-[12.5px] font-medium text-human">Invite link for {state.email} — share it (no email is sent):</div>
+              <div className="mb-1.5 text-[12.5px] font-medium text-human">
+                {state.emailed ? `We emailed ${state.email} an invite. You can also share this link:` : `Invite link for ${state.email} — copy and share it:`}
+              </div>
               <div className="flex items-center gap-2">
                 <code className="flex-1 overflow-x-auto whitespace-nowrap rounded-[7px] border border-line bg-surface px-2.5 py-1.5 font-mono text-[12px]">{state.link}</code>
                 <button

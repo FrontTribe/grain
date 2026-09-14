@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import { parseRepoInput, scanGithubRepo, GithubScanError } from "@/lib/github";
 import { getRepos } from "@/lib/data";
 import { planSubscribed, FREE_LIMITS } from "@/lib/plan";
+import { notifyIfOverThreshold } from "@/lib/notify";
 
 export type ConnectState = {
   ok?: boolean;
@@ -50,6 +51,8 @@ export async function connectGithubRepo(
     const noOrg = error.message?.includes("no org");
     return { error: noOrg ? "No workspace for your account." : error.message };
   }
+
+  try { await notifyIfOverThreshold(parsed.repo, scan.ai); } catch { /* best-effort */ }
 
   revalidatePath("/app");
   revalidatePath("/app/repos");
@@ -105,6 +108,7 @@ export async function rescanRepo(formData: FormData) {
   try {
     const scan = await scanGithubRepo(p.owner, p.repo, { token: token ?? undefined, max: 100 });
     await supabase.rpc("ingest_grain_member", { p_payload: scan.report });
+    try { await notifyIfOverThreshold(p.repo, scan.ai); } catch { /* best-effort */ }
   } catch (e) {
     err = e instanceof GithubScanError ? e.message : "Re-scan failed — try again.";
   }
