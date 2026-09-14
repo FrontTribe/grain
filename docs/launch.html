@@ -143,7 +143,8 @@
       <p class="lead-p">Grain is unusually well-suited to Hacker News, and the launch should lean into exactly that:</p>
       <ul>
         <li><b>Culturally charged, right now.</b> "How much of this code is AI?" is a live, unresolved debate. HN will have opinions — which means comments, which means the front page.</li>
-        <li><b>Developer-native.</b> It's a Go CLI you run in your own repo in one command. No signup to try. HN rewards "I can run this in 10 seconds."</li>
+        <li><b>Records instead of guessing.</b> A hook in the agent logs the lines it writes; the commit gets a signed git note with exactly those lines. "git blame for AI" is a concrete, checkable claim, not another classifier.</li>
+        <li><b>Developer-native.</b> It's a stdlib-only Go CLI you run in your own repo in one command. No signup to try. HN rewards "I can run this in 10 seconds."</li>
         <li><b>Self-distributing.</b> The README badge is an ad on every repo that adopts it.</li>
         <li><b>Honest by construction.</b> "Signals, not verdicts" and openly-stated limits are catnip for a skeptical audience. The honesty <em>is</em> the pitch.</li>
       </ul>
@@ -166,12 +167,12 @@
 
     <section id="title">
       <h2><span class="sn">02</span> The title</h2>
-      <div class="asset"><div class="ahead">Primary — use this</div><div class="abody"><div class="titlebox"><span class="kick">Show HN:</span> Grain – see how much of your codebase was written by AI vs humans</div></div></div>
-      <p>Concrete, instantly clear, mildly provocative, zero buzzwords. The reader knows exactly what it does before clicking.</p>
+      <div class="asset"><div class="ahead">Primary — use this</div><div class="abody"><div class="titlebox"><span class="kick">Show HN:</span> Grain – records which lines your AI agent wrote and signs it into Git</div></div></div>
+      <p>Concrete, instantly clear, mildly provocative, zero buzzwords. The reader knows exactly what it does before clicking, and "signs it into Git" tells the skeptic this isn't a detector.</p>
       <h3>Backups (if you want a different angle)</h3>
       <ul>
-        <li class="mono" style="font-size:13.5px">Show HN: Grain – a provenance layer that labels AI-assisted code in your repo</li>
-        <li class="mono" style="font-size:13.5px">Show HN: I built a "nutrition label" for AI vs human code in Git</li>
+        <li class="mono" style="font-size:13.5px">Show HN: Grain – know which lines the AI wrote, where they landed, and whether anyone reviewed them</li>
+        <li class="mono" style="font-size:13.5px">Show HN: I built "git blame for AI": signed, line-level provenance in your repo</li>
       </ul>
       <div class="callout warn"><div class="ct">Title rules</div>No "revolutionary", no "AI-powered", no emoji in the HN title. Say what it does, not how it feels. The URL should point straight at the GitHub repo (not the marketing site) — HN prefers the source.</div>
     </section>
@@ -179,26 +180,29 @@
     <section id="comment">
       <h2><span class="sn">03</span> The first comment</h2>
       <p>Post this as the <b>first comment</b> immediately after submitting (from your own account). It's the single most important asset of the launch — it frames the whole thread. Draft:</p>
-      <div class="asset dark"><div class="ahead">first comment — paste as-is, tweak the repo URL</div><div class="abody">Hi HN. I built Grain because two things collided this year: AI agents now commit directly to repos, and maintainers have started rewriting their contribution policies to ask "what did an AI write here?" There was no neutral way to actually measure that, so I made one.
+      <div class="asset dark"><div class="ahead">first comment — paste as-is, tweak the repo URL</div><div class="abody">Hi HN. I built Grain because two things collided this year: AI agents now commit directly to repos, and maintainers have started rewriting their contribution policies to ask "what did an AI write here?" Detecting that after the fact is unreliable, so Grain records it at the source instead.
 
-Grain reads your git history and reports how much of a repo is human-written vs AI-assisted, with a confidence level on every claim. One command:
+A hook in the agent (Claude Code today) logs the lines it writes as content hashes. On commit, a post-commit hook matches them against the diff and writes a git note: exactly which lines were AI-written, signed with your Ed25519 key and bound to that commit. `grain blame &lt;file&gt;` then shows it per line, and `grain verify` checks every note in a clone, offline. The note format is a public spec; the engine is stdlib-only Go, MIT.
 
-    npx grain scan
+    grain hook install
+    grain scan
 
-It writes a PROVENANCE.md, a grain.json, and a README badge. A GitHub Action posts a calm, itemized comment on each PR.
+On top of that it reports two things a "38% AI" number can't: where AI-written lines landed in critical paths (auth, billing, workflows…) with no review evidence, down to the commits, and how often AI lines get reworked later versus human lines from the same commits.
 
-The core principle is "signals, not verdicts," and it is NOT an AI-cheating detector — I've worked hard to keep it from becoming one:
+The core principle is "signals, not verdicts," and it is NOT an AI-cheating detector:
 
-- Declared signals (Co-Authored-By trailers, bot accounts, explicit tags) are high-confidence. Behavioral inference (diff shape, burst timing) is deliberately weak and capped at 0.70 confidence — it never claims certainty from a guess.
-- It can be defeated by stripping a trailer. That's fine: it's a transparency tool for cooperative repos, not an anti-cheat. I say so in the README, because overclaiming is exactly what would make a tool like this harmful.
-- The whole engine is dependency-free Go and runs locally — your code never leaves your machine. MIT licensed.
+- Attested beats declared (Co-Authored-By, bot accounts) beats inferred. Inference is capped at 0.70 confidence and always labeled; it never claims certainty from a guess. I published the calibration study, including the part where the global model didn't generalize and why it's per-repo now.
+- It can be defeated by not installing the hook or stripping a trailer. That's fine: it's a transparency tool for cooperative repos, not an anti-cheat, and the README says so.
+- Your code never leaves your machine. The CLI reads git history locally; the ledger stores hashes, not text.
 
-Honest dogfood: Grain scans its own repo as 100% AI-assisted, because every commit is Co-Authored-By Claude. It doesn't pretend otherwise.
+Honest dogfood: Grain reports its own repo as 97% AI-assisted, and since the hook landed the exact lines are attested and signed. It also reports 449 AI-written lines in its own auth/billing/workflows paths with no review evidence, because I'm a solo dev and nobody reviewed them. It doesn't pretend otherwise.
 
-Two things I'd genuinely love feedback on: (1) does the behavioral-inference layer earn its place, or should it be declared-signals-only? (2) as a maintainer, what would make the PR comment useful instead of noise?
+There's a hosted dashboard (getgrain.dev, free for 3 repos) that scans on push through a GitHub App, checks the PR API for review evidence, and emails you when unreviewed AI code lands in a critical path. The engine is the same.
+
+Two things I'd genuinely love feedback on: (1) which other agents should get a capture hook first (the ledger format is one JSON line per edit), and (2) as a maintainer, what would make the PR comment useful instead of noise?
 
 Repo: github.com/FrontTribe/grain — happy to answer anything.</div></div>
-      <div class="callout good"><div class="ct">Why this works</div>It's personal (why you built it), concrete (one command), and it raises the two biggest objections — "it'll falsely accuse people" and "it can be gamed" — before the crowd does, then answers them. Ending on two real questions invites discussion instead of applause.</div>
+      <div class="callout good"><div class="ct">Why this works</div>It's personal (why you built it), concrete (two commands and a mechanism a reader can picture), and it raises the biggest objections — "it'll falsely accuse people", "it can be gamed", "it's just self-reporting" — before the crowd does, then answers them. The unflattering dogfood (449 unreviewed lines in its own critical paths) is the credibility. Ending on two real questions invites discussion instead of applause.</div>
     </section>
 
     <section id="checklist">
@@ -206,11 +210,12 @@ Repo: github.com/FrontTribe/grain — happy to answer anything.</div></div>
       <p>Do all of this the day <em>before</em>. On launch morning you only hit submit.</p>
       <ul class="check">
         <li><span class="box"></span><span class="tx"><b>Repo is public</b><small>Flip FrontTribe/grain to public. Every link in the launch dies if it's private.</small></span></li>
-        <li><span class="box"></span><span class="tx"><b>README opens strong</b><small>First screen: one-line what-it-is, the <code>npx grain scan</code> command, and the example output. HN reads the README, not the site.</small></span></li>
-        <li><span class="box"></span><span class="tx"><b>The install path actually works</b><small>Test <code>npx grain</code> / <code>go install</code> on a clean machine. A broken first command kills the launch. If npx isn't wired yet, lead the README with <code>go install</code> or a curl script.</small></span></li>
-        <li><span class="box"></span><span class="tx"><b>Grain badge on grain's own README</b><small>Dogfood is the demo. The 100%-AI badge on your own repo is a great, honest talking point.</small></span></li>
-        <li><span class="box"></span><span class="tx"><b>Demo GIF embedded in the README</b><small>A 20–30s asciinema/GIF of <code>grain scan</code>. See §05.</small></span></li>
-        <li><span class="box"></span><span class="tx"><b>Landing site live &amp; real links</b><small>Deploy site/ to Pages/Vercel. Fill the waitlist and contact placeholders, or remove those CTAs for launch.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>README opens strong</b><small>First screen: one-line what-it-is, the install commands, and today's real output of <code>grain scan</code>, <code>grain explain</code> and <code>grain verify</code> on this repo. HN reads the README, not the site.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>The install paths actually work</b><small>Test the curl script, <code>brew install FrontTribe/tap/grain</code>, <code>npx grain scan</code> and <code>go install</code> on a clean machine. A broken first command kills the launch.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>Grain badge on grain's own README shows the current number</b><small>Dogfood is the demo. 97% AI-assisted, with the exact lines attested, is a great honest talking point. Regenerate the number the day before.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b><code>grain verify</code> passes and the notes are pushed</b><small><code>git push origin refs/notes/grain</code>. The first thing a skeptic will do is clone and run verify.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>Demo GIF embedded in the README</b><small>A 20–30s GIF of <code>grain scan</code>, then <code>grain blame</code>, then <code>grain verify</code>. See §05.</small></span></li>
+        <li><span class="box"></span><span class="tx"><b>getgrain.dev is up end to end</b><small>Landing, sign-up, GitHub App connect, <code>/verify</code>, <code>/.well-known/grain-keys.json</code>. Stripe live (not sandbox) if you want Team sign-ups on day one (see <code>docs/go-live-stripe.md</code>); Resend domain verified so alert emails deliver.</small></span></li>
         <li><span class="box"></span><span class="tx"><b>LICENSE, CONTRIBUTING, CI badge present</b><small>Signals a real project, not a weekend dump. CI is green.</small></span></li>
         <li><span class="box"></span><span class="tx"><b>No broken links, no lorem, no TODOs in sight</b><small>Skim the README and site once more as a stranger.</small></span></li>
         <li><span class="box"></span><span class="tx"><b>You've drafted the FAQ answers (§06)</b><small>So you reply in 2 minutes, not 20.</small></span></li>
@@ -219,31 +224,36 @@ Repo: github.com/FrontTribe/grain — happy to answer anything.</div></div>
 
     <section id="demo">
       <h2><span class="sn">05</span> Demo assets</h2>
-      <p>Two visuals do 90% of the work. Prepare both before launch:</p>
+      <p>Three visuals do 90% of the work. Prepare them before launch:</p>
       <ol>
-        <li><b>A terminal recording of <code>grain scan</code></b> (20–30s). Use <code>asciinema</code> (crisp, copy-pasteable) or a GIF via <code>vhs</code>. Show: the command, the bars filling, "wrote PROVENANCE.md", then <code>grain explain &lt;sha&gt;</code> revealing the Co-Authored-By signal. End on the honest 100%-AI dogfood.</li>
+        <li><b>A terminal recording</b> (20–30s). Use <code>asciinema</code> (crisp, copy-pasteable) or a GIF via <code>vhs</code>. Show: <code>grain scan</code> with the bars, the outcomes and risk lines, "wrote PROVENANCE.md"; then <code>grain blame cmd/grain/main.go</code> lighting up the AI lines; then <code>grain verify</code> passing. End on the honest 97% dogfood.</li>
         <li><b>A screenshot of the PR comment</b> from the GitHub Action on a real PR (you already have one on PR #1). It shows the product in its natural habitat.</li>
+        <li><b>A screenshot of the risk alert email</b> ("24 unreviewed AI-written lines landed in auth") as it was delivered. It makes "where it landed, and whether anyone looked" concrete in one glance.</li>
       </ol>
-      <div class="callout good"><div class="ct">Keep it real</div>Don't stage a fake "73% human" repo for the demo. The 100%-AI dogfood is more memorable and more credible <em>because</em> it's honest — that's the whole brand.</div>
+      <div class="callout good"><div class="ct">Keep it real</div>Don't stage a fake "73% human" repo for the demo. The 97%-AI dogfood with 449 unreviewed critical-path lines is more memorable and more credible <em>because</em> it's honest — that's the whole brand.</div>
     </section>
 
     <section id="faq">
       <h2><span class="sn">06</span> Objection FAQ — prepared answers</h2>
       <p>These are the comments you <em>will</em> get. Reply fast, agree where they're right, never get defensive.</p>
 
-      <div class="qa"><div class="q"><span class="mk">Q</span>"This is just heuristics — it can be trivially gamed."</div><div class="a"><span class="mk">A</span>Correct, and it's in the README. Grain is a transparency tool for cooperative repos, not an anti-cheat. Declared signals (Co-Authored-By, bot commits) carry the weight; inference is a weak, capped hint. If someone wants to hide AI use they can — grain measures the honest signal that exists, it doesn't claim to catch adversaries.</div></div>
+      <div class="qa"><div class="q"><span class="mk">Q</span>"This is just heuristics — it can be trivially gamed."</div><div class="a"><span class="mk">A</span>The inferred tier is heuristics, capped at 0.70 and labeled as such, and yes it can be gamed. The attested tier isn't: the agent's hook records the lines as they're written and the commit carries a signed note bound to that SHA. Someone can decline to install the hook; they can't quietly edit or move a note without <code>grain verify</code> failing. Grain is a transparency tool for cooperative repos, not an anti-cheat, and the README says so.</div></div>
+
+      <div class="qa"><div class="q"><span class="mk">Q</span>"A signed note is still self-reported. What does the signature prove?"</div><div class="a"><span class="mk">A</span>Exactly what it says: who wrote the note (the key), for which commit, and that it hasn't changed since. It doesn't prove the claim is true; nothing can, short of surveillance, which is a non-goal. What it gives a team is tamper-evidence: a record written at the moment of the edit, by the tooling, that can't be edited later without leaving a mark. That's the same trust model as signed commits.</div></div>
+
+      <div class="qa"><div class="q"><span class="mk">Q</span>"What about Cursor / Copilot / Codex?"</div><div class="a"><span class="mk">A</span>Claude Code first because it has a post-tool hook that hands over the exact edit. The ledger is one JSON line per edit (file, content hashes); any tool that can run a command after writing a file can attest, and <code>grain attest</code> does the rest. Tell me which one you use; that's the roadmap question I most want answered in this thread.</div></div>
 
       <div class="qa"><div class="q"><span class="mk">Q</span>"False positives will flame innocent developers."</div><div class="a"><span class="mk">A</span>That's the failure mode I designed hardest against. Inference confidence is capped at 0.70 and always labeled "inferred"; the output says "62% of lines carry AI signals," never "this person cheated"; and the default is comment-only, never a merge block. A human who writes clean code reads as human unless there's a declared signal.</div></div>
 
       <div class="qa"><div class="q"><span class="mk">Q</span>"This will be used by managers to surveil/punish devs."</div><div class="a"><span class="mk">A</span>A real risk, and an explicit non-goal. Grain is framed for maintainer transparency, not dev policing; there's no per-developer leaderboard, and the copy avoids blame language. I'd rather it be less "powerful" than become a weapon — that's a deliberate product choice, not an oversight.</div></div>
 
-      <div class="qa"><div class="q"><span class="mk">Q</span>"Why not just grep for Co-Authored-By?"</div><div class="a"><span class="mk">A</span>That's exactly grain's highest-confidence signal — grain just aggregates it across the whole history, weights by lines, renders a badge + PR comment + PROVENANCE.md, adds CODEOWNERS-aware policy, and falls back to (clearly-labeled) inference when the trailer is absent. The grep is the seed; the product is everything around it.</div></div>
+      <div class="qa"><div class="q"><span class="mk">Q</span>"Why not just grep for Co-Authored-By?"</div><div class="a"><span class="mk">A</span>The grep gets you a commit-level count of declared trailers. Grain adds the line level (which lines, via the hook), the signature, where those lines landed (critical paths without review evidence, down to the commit), what happened to them later (rework vs human lines from the same commits), and the badge, PR comment and PROVENANCE.md around it. The grep is the seed; the product is everything around it.</div></div>
 
-      <div class="qa"><div class="q"><span class="mk">Q</span>"GitHub will just build this in."</div><div class="a"><span class="mk">A</span>Maybe. If they ship declared-signal counting, great — that validates the need. The defensible part isn't the counter; it's owning the norm early, plus the org policy engine and the compliance/audit layer (EU AI Act, signed provenance) where the actual budgets are.</div></div>
+      <div class="qa"><div class="q"><span class="mk">Q</span>"GitHub will just build this in."</div><div class="a"><span class="mk">A</span>Maybe. If they ship declared-signal counting, great — that validates the need. The defensible part isn't the counter; it's the open, signed provenance format (published, stdlib-only, verifiable offline by anyone), the capture hooks inside the agents, and the review-evidence and audit layer where the actual budgets are.</div></div>
 
       <div class="qa"><div class="q"><span class="mk">Q</span>"Who even cares what % is AI? AI-assisted isn't bad."</div><div class="a"><span class="mk">A</span>Agreed — grain is neutral, not a purity test. The people who care are already telling us: maintainers rewriting contribution policies, and orgs facing provenance/disclosure requirements (EU AI Act). Grain is for them; if you don't need it, the badge is opt-in.</div></div>
 
-      <div class="qa"><div class="q"><span class="mk">Q</span>"Your own repo is 100% AI — isn't that embarrassing?"</div><div class="a"><span class="mk">A</span>It's the honest result and I lead with it. Every commit is Co-Authored-By Claude, so grain reports 100% AI-assisted. A provenance tool that fudged its own number would be worthless — the dogfood being unflattering is the point.</div></div>
+      <div class="qa"><div class="q"><span class="mk">Q</span>"Your own repo is 97% AI, with 449 unreviewed lines in auth and billing — isn't that embarrassing?"</div><div class="a"><span class="mk">A</span>It's the honest result and I lead with it. Nearly every commit is Co-Authored-By Claude and, since the hook landed, the exact lines are attested; I'm a solo dev, so nobody reviewed the auth and billing code and grain says so. A provenance tool that fudged its own number would be worthless — the dogfood being unflattering is the point. (The report is signed; you can check it at getgrain.dev/verify.)</div></div>
     </section>
 
     <section id="conduct">
@@ -263,7 +273,7 @@ Repo: github.com/FrontTribe/grain — happy to answer anything.</div></div>
         <div class="tl"><div class="t">Day 0, evening</div><h4>Harvest the feedback</h4><p>Collect every concrete suggestion and objection into GitHub issues. The thread is a free product-research session.</p></div>
         <div class="tl"><div class="t">Day 1–2</div><h4>Ship the top ask</h4><p>Pick the single most-requested improvement and ship it. Reply in the (still-live) thread that you did.</p></div>
         <div class="tl"><div class="t">Day 2–3</div><h4>Thank-you + recap</h4><p>A short post/tweet: "Show HN takeaways + what I shipped from your feedback." Keeps momentum and shows you listen.</p></div>
-        <div class="tl"><div class="t">Week 1</div><h4>Convert interest</h4><p>Point Cloud-curious commenters at the waitlist. Note which objection recurred most — that's your next roadmap item.</p></div>
+        <div class="tl"><div class="t">Week 1</div><h4>Convert interest</h4><p>Point Cloud-curious commenters at getgrain.dev (free for 3 repos, no card). Watch which agents people ask hooks for and which objection recurred most — those are the next two roadmap items.</p></div>
       </div>
     </section>
 
@@ -276,7 +286,7 @@ Repo: github.com/FrontTribe/grain — happy to answer anything.</div></div>
           <tr><td>Launch day</td><td>Hacker News (Show HN)</td><td>The main event. Source repo link.</td></tr>
           <tr><td>+1 day</td><td>Lobste.rs</td><td>Same, more technical framing (Go, git internals, the scoring model).</td></tr>
           <tr><td>+2 days</td><td>r/programming, r/opensource</td><td>The "two trends collided" story; link the repo, engage in comments.</td></tr>
-          <tr><td>+3 days</td><td>X / Bluesky</td><td>Short thread with the demo GIF + the honest 100%-AI dogfood hook.</td></tr>
+          <tr><td>+3 days</td><td>X / Bluesky</td><td>Short thread with the <code>grain blame</code> GIF + the honest 97%-AI dogfood hook.</td></tr>
           <tr><td>+1 week</td><td>dev.to / a blog post</td><td>"Why I built a provenance layer, and why it reports signals not verdicts."</td></tr>
         </tbody>
       </table></div>
@@ -288,13 +298,14 @@ Repo: github.com/FrontTribe/grain — happy to answer anything.</div></div>
         <thead><tr><th>Horizon</th><th>Signal</th><th>Good result</th></tr></thead>
         <tbody>
           <tr><td>Launch day</td><td>HN front page + stars</td><td>Front page (top 30); 500–1,500 stars</td></tr>
-          <tr><td>Week 1</td><td>Badges in the wild</td><td>50–100 repos rendering a grain badge</td></tr>
-          <tr><td>Week 1</td><td>GitHub Action installs</td><td>100+ repos</td></tr>
-          <tr><td>Week 2</td><td>Cloud waitlist</td><td>300+ signups</td></tr>
+          <tr><td>Week 1</td><td>Attested notes in the wild</td><td>20+ repos with <code>refs/notes/grain</code> that aren't yours</td></tr>
+          <tr><td>Week 1</td><td>Badges + Action installs</td><td>50–100 badges, 100+ repos running the Action</td></tr>
+          <tr><td>Week 2</td><td>Cloud sign-ups</td><td>300+ workspaces; a handful on Team</td></tr>
+          <tr><td>Week 2</td><td>Hook requests</td><td>A clear #1 agent to build the next capture hook for</td></tr>
           <tr><td>Ongoing</td><td>False-positive complaints</td><td>Trending to zero — the health metric that matters most</td></tr>
         </tbody>
       </table></div>
-      <div class="callout good"><div class="ct">The one number to watch</div>Badges in the wild. Stars are vanity; a badge on someone else's repo means the norm is forming — and that's the whole thesis of grain.</div>
+      <div class="callout good"><div class="ct">The one number to watch</div>Attested notes in the wild. Stars are vanity; a signed <code>refs/notes/grain</code> on someone else's repo means the norm is forming, and a badge means they're proud of it — that's the whole thesis of grain.</div>
     </section>
   </main>
 </div>
