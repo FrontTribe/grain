@@ -56,7 +56,7 @@ func cmdPush(args []string) error {
 		}
 		added := addedFor(root, "", *max, cfg)
 		rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg, added), cfg)
-		attachOutcomes(&rep, root, *max, commits, added, cfg, *checkRegistry) // Cloud shows the Outcomes card from this
+		attachOutcomes(&rep, root, "", *max, commits, added, cfg, *checkRegistry) // Cloud shows the Outcomes card from this
 		var buf bytes.Buffer
 		if err := rep.WriteJSON(&buf); err != nil {
 			return err

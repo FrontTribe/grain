@@ -319,7 +319,7 @@ func (r Report) WriteMarkdown(w io.Writer) {
 
 // WriteCheckMarkdown renders the PR-comment body for `grain check`. The leading
 // HTML marker lets the Action find and update its own sticky comment.
-func (r Report) WriteCheckMarkdown(w io.Writer, threshold float64, flagged []string, over bool) {
+func (r Report) WriteCheckMarkdown(w io.Writer, threshold float64, flagged []string, over bool, gates Gates) {
 	p := func(format string, a ...any) { fmt.Fprintf(w, format, a...) }
 	p("<!-- grain-provenance -->\n")
 	p("## 🌾 Provenance report\n\n")
@@ -348,6 +348,15 @@ func (r Report) WriteCheckMarkdown(w io.Writer, threshold float64, flagged []str
 	default:
 		p("> ✅ Within policy.\n\n")
 	}
+	for _, g := range gates {
+		if g.Block {
+			p("> ⛔ **Policy:** %s → **blocked** (`%s = \"block\"` in `.grain.toml`). A maintainer can still merge; this is a gate, not a verdict.\n\n", g.Reason, g.Key)
+		} else {
+			p("> ⚠️ **Policy:** %s → a human should look (`%s = \"warn\"`). This is a signal, not a block.\n\n", g.Reason, g.Key)
+		}
+	}
+	p("%s", securityCheckMarkdown(r.Security))
+	p("%s", depsCheckMarkdown(r.Deps))
 	p("<sub>signals, not verdicts · grain %s</sub>\n", EngineVersion)
 }
 

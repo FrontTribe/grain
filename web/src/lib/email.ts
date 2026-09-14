@@ -101,3 +101,43 @@ export function riskEmail(
     ),
   };
 }
+
+export type SecurityAlertFinding = { sha: string; subject: string; path: string; title: string; severity: string; excerpt: string };
+export type SecurityAlertDep = { sha: string; name: string; ecosystem: string; url: string; ai: boolean; exists: boolean; age_days: number };
+
+// One email per push: the AI-written security findings and the dependencies
+// the registry does not know (or that are young and AI-added). Either list may
+// be empty; the caller only sends when at least one is not.
+export function securityEmail(
+  workspace: string,
+  repo: string,
+  findings: SecurityAlertFinding[],
+  deps: SecurityAlertDep[],
+  href: string,
+): { subject: string; html: string } {
+  const missing = deps.filter((d) => !d.exists);
+  const parts: string[] = [];
+  if (findings.length) parts.push(`${findings.length} AI-written security ${findings.length === 1 ? "finding" : "findings"}`);
+  if (missing.length) parts.push(`${missing.length} ${missing.length === 1 ? "package" : "packages"} not on the registry`);
+  else if (deps.length) parts.push(`${deps.length} young AI-added ${deps.length === 1 ? "package" : "packages"}`);
+  const subject = `${repo}: ${parts.join(", ")}`;
+
+  const fItems = findings
+    .slice(0, 6)
+    .map((f) => `<li><code>${esc(f.sha.slice(0, 7))}</code> <code>${esc(f.path)}</code> — ${esc(f.title)} (${esc(f.severity)})${f.excerpt ? `<br><code style="color:#948D80">${esc(f.excerpt)}</code>` : ""}</li>`)
+    .join("");
+  const dItems = deps
+    .slice(0, 6)
+    .map((d) => {
+      const reg = !d.exists ? "<b>not found</b>" : `${d.age_days} days old`;
+      return `<li><code>${esc(d.sha.slice(0, 7))}</code> <a href="${esc(d.url)}"><code>${esc(d.name)}</code></a> <span style="color:#948D80">${esc(d.ecosystem)}</span> — ${reg}, added by ${d.ai ? "an AI-written line" : "a human"}</li>`;
+    })
+    .join("");
+
+  const body =
+    `<p style="margin:0 0 12px">A push to <b>${esc(repo)}</b> in <b>${esc(workspace)}</b> landed lines worth a second look before they spread.</p>` +
+    (findings.length ? `<p style="margin:0 0 6px;font-weight:600">Security patterns in AI-written lines</p><ul style="margin:0 0 14px;padding-left:18px;font-size:13px">${fItems}</ul>` : "") +
+    (deps.length ? `<p style="margin:0 0 6px;font-weight:600">Dependencies</p><ul style="margin:0 0 14px;padding-left:18px;font-size:13px">${dItems}</ul>` : "") +
+    `<p style="margin:0 0 16px;color:#948D80;font-size:12.5px">Pattern matches and registry answers joined with provenance, not confirmed vulnerabilities. A name the registry does not know is the slopsquatting seed: look before someone registers it.</p>`;
+  return { subject, html: emailShell("Security signals in a push", body, { label: "Review the findings", href }) };
+}

@@ -76,6 +76,27 @@ Findings rank AI-written + unreviewed + critical path first, then severity.
 `ai_critical_unreviewed` is the headline: dangerous-looking lines an agent
 wrote, in a sensitive path, that nobody has evidence of reviewing.
 
+## Gating a pull request
+
+`grain check` (and the GitHub Action) lists the findings of the change set in
+the PR comment, AI-written first. What happens next is a `.grain.toml` choice:
+
+```toml
+[policy]
+security = "warn"    # default: listed, exit code unchanged
+security = "block"   # a finding in an AI-written line fails the check
+security = "off"     # not evaluated in check
+```
+
+The gate fires on **AI-written** findings only. A dangerous line a human wrote
+is your SAST's job; a dangerous line an agent wrote is exactly what provenance
+can say something about, and the review the gate asks for is the fix. With
+`fail_on: policy` in the Action, "block" turns into a failed commit status a
+branch rule can require. A maintainer can still merge: a gate, not a verdict.
+
+Grain Cloud emails the workspace admins (Team plan) when a push to the default
+branch lands AI-written security findings, with the lines and the commits.
+
 ## What it deliberately does not claim
 
 - A match is a shape, not a verdict. `Access-Control-Allow-Origin: *` on a

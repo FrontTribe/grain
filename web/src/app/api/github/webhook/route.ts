@@ -3,7 +3,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { installationToken } from "@/lib/githubApp";
 import { scanGithubRepo, parseRepoInput } from "@/lib/github";
-import { notifyAttentionForOrg, notifyRiskForOrg } from "@/lib/notify";
+import { notifyAttentionForOrg, notifyRiskForOrg, notifySecurityForOrg } from "@/lib/notify";
 
 export const runtime = "nodejs";
 
@@ -104,6 +104,12 @@ async function rescanFromWebhook(fullName: string, installationId: number, pushe
       } catch (err) {
         console.error("[gh-webhook] risk notify failed:", (err as Error).message);
       }
+    }
+    // …or landed AI-written security findings or packages the registry does not know.
+    try {
+      await notifySecurityForOrg(db, orgId, parsed.repo, scan.report.security, scan.report.dependencies, pushedShas);
+    } catch (err) {
+      console.error("[gh-webhook] security notify failed:", (err as Error).message);
     }
   }
 }

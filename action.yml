@@ -38,6 +38,10 @@ inputs:
     description: 'Set a "grain/provenance" commit status ("true"/"false").'
     required: false
     default: 'true'
+  check_registry:
+    description: 'Ask npm/PyPI/Go/crates.io/RubyGems whether dependencies this PR added exist and how old they are ("true"/"false"). Sends package names only.'
+    required: false
+    default: 'true'
   go-version:
     description: 'Go version used to build grain.'
     required: false
@@ -81,7 +85,9 @@ runs:
           RANGE="$BASE..$HEAD"
         fi
         echo "Checking range: ${RANGE:-<recent commits>}"
-        "$RUNNER_TEMP/grain" check ${RANGE:+--range "$RANGE"} --format md --no-color \
+        REG=""
+        [ "${{ inputs.check_registry }}" = "true" ] && REG="--check-registry"
+        "$RUNNER_TEMP/grain" check ${RANGE:+--range "$RANGE"} $REG --format md --no-color \
           > "$RUNNER_TEMP/grain-comment.md"
         CODE=$?
         set -e
@@ -143,7 +149,7 @@ runs:
           // signals, not verdicts: only a hard failure when the repo opts into fail_on=policy.
           const state = (flagged && gate) ? 'failure' : 'success';
           const description = flagged
-            ? 'AI-assisted change flagged — a human should look'
+            ? 'flagged by provenance policy — a human should look'
             : 'within provenance policy';
           try {
             await github.rest.repos.createCommitStatus({
@@ -166,5 +172,5 @@ runs:
       if: ${{ inputs.fail_on == 'policy' && steps.grain.outputs.exit_code != '0' }}
       shell: bash
       run: |
-        echo "::error title=grain::AI-assisted share exceeds the policy threshold (see the PR comment)."
+        echo "::error title=grain::This change is outside the provenance policy: AI share, a human-owned path, or a security or dependency gate (see the PR comment)."
         exit 1

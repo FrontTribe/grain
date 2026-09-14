@@ -24,6 +24,9 @@ jobs:
           fail_on: never          # comment only; set to "policy" to gate merges
           comment: 'true'
           status_check: 'true'    # publishes a requireable "grain/provenance" check
+          check_registry: 'true'  # ask the registries about dependencies the PR added (names only)
+          # security = "block" / dependencies = "block" in .grain.toml fail the check on
+          # AI-written security findings or unknown packages; with fail_on: policy that blocks the merge.
           # Route review when an AI-heavy change hits a human-owned path:
           request_review: 'false' # set true and list reviewers to enable
           # reviewers: 'octocat, some-maintainer'

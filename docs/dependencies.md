@@ -37,6 +37,29 @@ it, review evidence, registry answer with age); `grain.json` carries the
 `dependencies` block; Cloud shows a **Dependencies** card on the repo page,
 computed over its scan window with the registries consulted.
 
+## Gating a pull request
+
+`grain check` lists every dependency the change set added in the PR comment,
+with the registry answer when it was consulted (`--check-registry`, or
+`check_registry: true` in the Action, the default there). The gate is a
+`.grain.toml` choice:
+
+```toml
+[policy]
+dependencies = "warn"    # default: listed, exit code unchanged
+dependencies = "block"   # fails the check; implies the registry lookup
+dependencies = "off"     # not evaluated in check
+```
+
+It fires on a package the registry does not know, whoever added it, and on a
+package younger than 30 days that an **AI-written** line added. New packages
+happen; a new package an agent reached for is the one to look at before it
+is installed everywhere. With `fail_on: policy` in the Action, "block" is a
+failed commit status a branch rule can require.
+
+Grain Cloud emails the workspace admins (Team plan) when a push to the default
+branch adds a package the registry does not know.
+
 ## What it deliberately does not claim
 
 - Existence is not safety. A package that exists can still be malicious;

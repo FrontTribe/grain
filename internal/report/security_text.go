@@ -12,7 +12,7 @@ func securityLine(s *security.Summary) string {
 	if s == nil || s.Total == 0 {
 		return ""
 	}
-	line := fmt.Sprintf("  security: %d signals, %d in AI-written lines, %d of those unreviewed", s.Total, s.AI, s.AIUnreviewed)
+	line := fmt.Sprintf("  security: %d %s, %d in AI-written lines, %d of those unreviewed", s.Total, plural(s.Total, "signal", "signals"), s.AI, s.AIUnreviewed)
 	if s.AICriticalUnrev > 0 {
 		line += fmt.Sprintf(" (%d in critical paths)", s.AICriticalUnrev)
 	}
@@ -80,5 +80,35 @@ func securityMarkdown(s *security.Summary) string {
 		shown++
 	}
 	b.WriteString("\n")
+	return b.String()
+}
+
+// securityCheckMarkdown is the PR-comment "Security" section: the findings in
+// this change set, AI-written first, capped. Empty when nothing matched.
+func securityCheckMarkdown(s *security.Summary) string {
+	if s == nil || s.Total == 0 {
+		return ""
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "### Security · %d %s, %d in AI-written lines\n\n", s.Total, plural(s.Total, "signal", "signals"), s.AI)
+	b.WriteString("| Line | Pattern | Written by |\n|---|---|---|\n")
+	shown := 0
+	for _, f := range s.Findings {
+		if shown == 10 {
+			fmt.Fprintf(&b, "| … %d more in the full report | | |\n", len(s.Findings)-shown)
+			break
+		}
+		who := "human"
+		if f.AI {
+			who = "**AI**"
+		}
+		sha := f.SHA
+		if len(sha) > 7 {
+			sha = sha[:7]
+		}
+		fmt.Fprintf(&b, "| `%s` `%s` | %s (%s) | %s |\n", sha, f.Path, f.Title, f.Severity, who)
+		shown++
+	}
+	b.WriteString("\nPattern matches joined with provenance, not confirmed vulnerabilities. Tests and fixtures are not scanned.\n\n")
 	return b.String()
 }

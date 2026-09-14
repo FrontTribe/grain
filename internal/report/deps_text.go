@@ -72,3 +72,51 @@ func depsMarkdown(d *deps.Summary) string {
 	b.WriteString("\n")
 	return b.String()
 }
+
+// depsCheckMarkdown is the PR-comment "Dependencies" section: every package
+// this change set added, with the registry answer when it was consulted.
+// Empty when the range added none.
+func depsCheckMarkdown(d *deps.Summary) string {
+	if d == nil || d.Total == 0 {
+		return ""
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "### Dependencies · %d added, %d by AI-written lines\n\n", d.Total, d.AI)
+	b.WriteString("| Package | Added by | Registry |\n|---|---|---|\n")
+	shown := 0
+	for _, x := range d.Deps {
+		if shown == 12 {
+			fmt.Fprintf(&b, "| … %d more in the full report | | |\n", len(d.Deps)-shown)
+			break
+		}
+		who := "human"
+		if x.AI {
+			who = "**AI**"
+		}
+		reg := "not checked"
+		if x.Checked {
+			switch {
+			case !x.Exists:
+				reg = "**not found**"
+			case x.AgeDays >= 0 && x.AgeDays < deps.YoungDays:
+				reg = fmt.Sprintf("**%d days old**", x.AgeDays)
+			case x.AgeDays >= 0:
+				reg = fmt.Sprintf("%d days old", x.AgeDays)
+			default:
+				reg = "exists"
+			}
+		}
+		name := x.Name
+		if x.URL != "" {
+			name = fmt.Sprintf("[%s](%s)", x.Name, x.URL)
+		}
+		fmt.Fprintf(&b, "| %s `%s` | %s | %s |\n", name, x.Ecosystem, who, reg)
+		shown++
+	}
+	if d.Checked {
+		b.WriteString("\nExistence is not safety: a name the registry does not know is the slopsquatting seed, and a package that exists can still be malicious.\n\n")
+	} else {
+		b.WriteString("\nRegistries were not consulted (`--check-registry`, or `check_registry: true` in the Action).\n\n")
+	}
+	return b.String()
+}

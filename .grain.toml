@@ -7,6 +7,10 @@ ai_threshold        = 0.40
 require_review_over  = 0.40
 # Paths considered human-owned. An AI-assisted change here raises an attention flag.
 human_owned         = ["src/auth/**", "src/payments/**"]
+# `grain check` gates. "warn" lists the findings and leaves the exit code alone;
+# "block" fails the check (with fail_on: policy in the Action, that blocks the merge).
+security            = "warn"   # security patterns in AI-written lines
+dependencies        = "warn"   # packages the registry does not know, or young and AI-added
 
 [detection]
 # Turn behavioral inference on/off. Declared signals always run.

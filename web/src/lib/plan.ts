@@ -20,7 +20,7 @@ export const PLAN_FEATURES = {
   ],
   team: [
     `Unlimited repositories, up to ${TEAM_SEATS} seats`,
-    "Email alerts: threshold crossings and unreviewed AI code in critical paths",
+    "Email alerts: threshold crossings, unreviewed AI code in critical paths, AI-written security findings, packages the registry does not know",
     "Signed authorship report (Bill of Materials) export",
     "Everything in Free",
   ],

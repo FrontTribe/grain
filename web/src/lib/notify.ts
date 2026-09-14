@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { sendEmail, attentionEmail, riskEmail } from "@/lib/email";
+import { sendEmail, attentionEmail, riskEmail, securityEmail } from "@/lib/email";
+import type { Security, Dependencies } from "@/lib/data";
 import { getOrgMembers, getOrgPolicy, getUserAndOrg } from "@/lib/data";
 import { orgSubscribed, planSubscribed } from "@/lib/plan";
 
@@ -64,6 +65,39 @@ export async function notifyRiskForOrg(
 
   const href = `https://getgrain.dev/app/repos/${encodeURIComponent(repoName)}`;
   const { subject, html } = riskEmail((org?.name as string | undefined) ?? "your workspace", repoName, lines, hot, href);
+  await sendEmail({ to: admins, subject, html });
+}
+
+// Session-less security alert for the webhook path: AI-written security
+// findings and unknown or young AI-added packages in the commits that were
+// just pushed, in one email. Only the pushed commits count, so one push
+// produces at most one alert; a clean push produces none.
+export async function notifySecurityForOrg(
+  db: SupabaseClient,
+  orgId: string,
+  repoName: string,
+  security: Security | null | undefined,
+  dependencies: Dependencies | null | undefined,
+  pushedShas: string[],
+): Promise<void> {
+  if (pushedShas.length === 0) return;
+  const pushed = new Set(pushedShas);
+  const findings = (security?.findings ?? []).filter((f) => f.ai && pushed.has(f.sha));
+  const deps = (dependencies?.deps ?? []).filter(
+    (d) => d.checked && pushed.has(d.sha) && (!d.exists || (d.ai && d.age_days >= 0 && d.age_days < 30)),
+  );
+  if (findings.length === 0 && deps.length === 0) return;
+  if (!(await orgSubscribed(db, orgId))) return;
+
+  const [{ data: org }, { data: rows }] = await Promise.all([
+    db.from("orgs").select("name").eq("id", orgId).maybeSingle(),
+    db.rpc("org_admin_emails", { p_org: orgId }),
+  ]);
+  const admins = ((rows ?? []) as EmailRow[]).map((r) => r.email).filter(Boolean);
+  if (admins.length === 0) return;
+
+  const href = `https://getgrain.dev/app/repos/${encodeURIComponent(repoName)}`;
+  const { subject, html } = securityEmail((org?.name as string | undefined) ?? "your workspace", repoName, findings, deps, href);
   await sendEmail({ to: admins, subject, html });
 }
 

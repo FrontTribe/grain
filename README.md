@@ -222,7 +222,13 @@ jobs:
           fail_on: never        # comment only; "policy" fails the check on attention
 ```
 
-Inputs: `fail_on` (`never` | `policy`), `comment`, `range`, `config`, `go-version`.
+Inputs: `fail_on` (`never` | `policy`), `comment`, `range`, `config`,
+`check_registry`, `request_review`, `reviewers`, `status_check`, `go-version`.
+The PR comment carries the security findings and the dependencies the change
+added (with the registry answer). `security = "block"` and `dependencies =
+"block"` in `.grain.toml` make `grain check` fail on AI-written security
+findings or on packages the registry does not know; with `fail_on: policy`
+that blocks the merge. Defaults are `warn`: shown, never blocking.
 The comment is a single sticky comment that updates in place. This repo dogfoods
 it — see [`.github/workflows/grain.yml`](./.github/workflows/grain.yml).
 
@@ -235,6 +241,8 @@ it — see [`.github/workflows/grain.yml`](./.github/workflows/grain.yml).
 ai_threshold = 0.40
 human_owned  = ["src/auth/**", "src/payments/**"]
 # critical   = ["auth", "billing", "workflows"]   # override the built-in critical-path list (see docs/risk.md)
+security     = "warn"   # grain check: AI-written security findings → "off" | "warn" | "block"
+dependencies = "warn"   # grain check: packages not on the registry, or young and AI-added → "off" | "warn" | "block"
 
 [detection]
 inference          = true

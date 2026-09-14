@@ -166,7 +166,7 @@ func cmdScan(args []string) error {
 	}
 	added := addedFor(root, "", *max, cfg)
 	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg, added), cfg)
-	attachOutcomes(&rep, root, *max, commits, added, cfg, *checkRegistry)
+	attachOutcomes(&rep, root, "", *max, commits, added, cfg, *checkRegistry)
 
 	if err := writeFile(filepath.Join(root, cfg.Output), rep.WriteMarkdown); err != nil {
 		return err
@@ -187,6 +187,7 @@ func cmdCheck(args []string) error {
 	max := fs.Int("max", 50, "cap commits when no range is given")
 	format := fs.String("format", "text", "output format: text | md")
 	noColor := fs.Bool("no-color", false, "disable colored output")
+	checkRegistry := fs.Bool("check-registry", false, "ask the registries whether added dependencies exist (sends package names only; implied by dependencies = \"block\")")
 	fs.Parse(args)
 
 	root, cfg, err := setup(*dir)
@@ -207,10 +208,13 @@ func cmdCheck(args []string) error {
 	}
 	added := addedFor(root, *rev, capN, cfg)
 	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg, added), cfg)
+	// A dependency gate needs the registry answer; blocking on it implies the lookup.
+	attachOutcomes(&rep, root, *rev, capN, commits, added, cfg, *checkRegistry || cfg.Deps == "block")
 	flagged, over := rep.Attention(cfg.AIThreshold)
+	gates := rep.Gates(cfg.Security, cfg.Deps)
 
 	if *format == "md" {
-		rep.WriteCheckMarkdown(os.Stdout, cfg.AIThreshold, flagged, over)
+		rep.WriteCheckMarkdown(os.Stdout, cfg.AIThreshold, flagged, over, gates)
 	} else {
 		rep.WriteText(os.Stdout, useColor(*noColor))
 		switch {
@@ -223,9 +227,16 @@ func cmdCheck(args []string) error {
 		default:
 			fmt.Println("  ✓ within policy")
 		}
+		for _, g := range gates {
+			if g.Block {
+				fmt.Printf("  ✗ %s → blocked by policy (%s = \"block\")\n", g.Reason, g.Key)
+			} else {
+				fmt.Printf("  ⚠ %s → a human should look (%s = \"warn\")\n", g.Reason, g.Key)
+			}
+		}
 	}
 
-	if len(flagged) > 0 || over {
+	if len(flagged) > 0 || over || gates.Blocked() {
 		return policyExit(1)
 	}
 	return nil
@@ -349,6 +360,8 @@ const defaultConfig = `# Grain configuration. All fields are optional; shown val
 [policy]
 ai_threshold = 0.40
 human_owned  = ["src/auth/**", "src/payments/**"]
+security     = "warn"        # grain check: findings in AI-written lines → "off" | "warn" | "block"
+dependencies = "warn"        # grain check: packages not on the registry, or young and AI-added → "off" | "warn" | "block"
 
 [detection]
 inference          = true

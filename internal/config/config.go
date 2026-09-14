@@ -20,6 +20,8 @@ type Config struct {
 	Inference         bool     // whether behavioral inference runs
 	ContentClassifier bool     // use the content classifier for the inferred path
 	Output            string   // human-readable report filename
+	Security          string   // `grain check` gate for security findings in AI-written lines: off | warn | block
+	Deps              string   // `grain check` gate for dependencies (not on the registry, or young and AI-added): off | warn | block
 
 	// Per-repo calibrated classifier weights, loaded from .grain/model.json when
 	// present (written by `grain calibrate`). Empty → the built-in default model.
@@ -42,6 +44,10 @@ func Default() Config {
 		// content_classifier = false in .grain.toml for declared-only scans.
 		ContentClassifier: true,
 		Output:            "PROVENANCE.md",
+		// Gates default to warn: `grain check` reports the findings and leaves the
+		// exit code alone. Set "block" to fail the check on them.
+		Security: "warn",
+		Deps:     "warn",
 	}
 }
 
@@ -91,6 +97,10 @@ func Load(root string) (Config, error) {
 			cfg.ContentClassifier = val == "true"
 		case "output":
 			cfg.Output = unquote(val)
+		case "security":
+			cfg.Security = gateMode(val, cfg.Security)
+		case "dependencies":
+			cfg.Deps = gateMode(val, cfg.Deps)
 		}
 	}
 	loadModel(root, &cfg)
@@ -114,6 +124,15 @@ func loadModel(root string, cfg *Config) {
 	cfg.ModelWeights = m.Weights
 	cfg.ModelBias = m.Bias
 	cfg.HasModel = true
+}
+
+// gateMode validates a check-gate value; anything unknown keeps the default.
+func gateMode(val, def string) string {
+	switch v := unquote(val); v {
+	case "off", "warn", "block":
+		return v
+	}
+	return def
 }
 
 func parseList(val string) []string {
