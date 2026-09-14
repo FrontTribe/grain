@@ -77,17 +77,26 @@ export function Fingerprint({ height = 100, bars = 132, data }: { height?: numbe
     };
 
     fit();
+    // Draw in once, when the graphic scrolls into view (storytelling: the
+    // history "prints" as you reach it). Reduced motion: complete at once.
+    let io: IntersectionObserver | null = null;
     if (reduce) {
       draw(1);
     } else {
-      let start: number | null = null;
-      const step = (ts: number) => {
-        if (start === null) start = ts;
-        const t = Math.min((ts - start) / 950, 1);
-        draw(1 - Math.pow(1 - t, 3));
-        if (t < 1) raf = requestAnimationFrame(step);
-      };
-      raf = requestAnimationFrame(step);
+      draw(0);
+      io = new IntersectionObserver(([entry]) => {
+        if (!entry.isIntersecting) return;
+        io?.disconnect();
+        let start: number | null = null;
+        const step = (ts: number) => {
+          if (start === null) start = ts;
+          const t = Math.min((ts - start) / 1100, 1);
+          draw(1 - Math.pow(1 - t, 3));
+          if (t < 1) raf = requestAnimationFrame(step);
+        };
+        raf = requestAnimationFrame(step);
+      }, { threshold: 0.35 });
+      io.observe(canvas);
     }
 
     const onResize = () => {
@@ -103,6 +112,7 @@ export function Fingerprint({ height = 100, bars = 132, data }: { height?: numbe
 
     return () => {
       cancelAnimationFrame(raf);
+      io?.disconnect();
       window.removeEventListener("resize", onResize);
       mq.removeEventListener("change", onScheme);
       obs.disconnect();

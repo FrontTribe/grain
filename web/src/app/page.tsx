@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Mark } from "@/components/Mark";
 import { SELF_SCAN, SELF_COMMITS } from "@/lib/self-scan";
 import { BlameReveal, type BlameLine } from "@/components/marketing/BlameReveal";
-import { GrainShaderLazy } from "@/components/marketing/GrainShaderLazy";
+import { TiltCard } from "@/components/marketing/TiltCard";
 import { Fingerprint } from "@/components/Fingerprint";
 import { StepsScrolly, type StepData } from "@/components/marketing/StepsScrolly";
 import { CountUp } from "@/components/marketing/CountUp";
@@ -14,43 +14,82 @@ const SPEC = `${REPO}/blob/main/docs/spec/provenance-v1.md`;
 // (numbers in @/lib/self-scan), command transcripts copied from a terminal,
 // the alert email as it was delivered. Nothing is mocked.
 
-const BLAME_FILE = "cmd/grain/provenance.go";
+// grain's own command dispatch: the annotate/eval/calibrate cases were
+// captured by the hook; hook/attest/blame predate it, so they show as human.
+const BLAME_FILE = "cmd/grain/main.go";
 const BLAME_LINES: BlameLine[] = [
-  { ai: true, sha: "c8ee52a", n: 39, text: "// One definition, shared with blame and outcome tracking, so hashes never drift." },
-  { ai: true, sha: "c8ee52a", n: 40, text: "func lineHash(line string) string { return outcomes.LineHash(line) }" },
-  { ai: false, sha: "2a65cf1", n: 41, text: "" },
-  { ai: true, sha: "c8ee52a", n: 42, text: "func substantive(line string) bool { return outcomes.Substantive(line) }" },
-  { ai: false, sha: "2a65cf1", n: 43, text: "" },
-  { ai: true, sha: "2a65cf1", n: 44, text: "type ledgerEntry struct {" },
-  { ai: true, sha: "2a65cf1", n: 45, text: "\tFile   string   `json:\"file\"`" },
-  { ai: true, sha: "2a65cf1", n: 46, text: "\tHashes []string `json:\"hashes\"`" },
-  { ai: false, sha: "2a65cf1", n: 47, text: "}" },
-  { ai: false, sha: "2a65cf1", n: 48, text: "" },
-  { ai: true, sha: "2a65cf1", n: 49, text: "func ledgerPath(root string) string { return filepath.Join(root, ledgerFile) }" },
-  { ai: false, sha: "2a65cf1", n: 50, text: "" },
-  { ai: true, sha: "2a65cf1", n: 51, text: "// readLedger returns, per repo-relative file, the set of AI-written line hashes." },
-  { ai: true, sha: "2a65cf1", n: 52, text: "func readLedger(root string) map[string]map[string]bool {" },
+  { ai: true, sha: "04ef67e", n: 37, text: "\tcase \"annotate\":" },
+  { ai: true, sha: "04ef67e", n: 38, text: "\t\terr = cmdAnnotate(os.Args[2:])" },
+  { ai: true, sha: "25d0dfc", n: 39, text: "\tcase \"eval\":" },
+  { ai: true, sha: "25d0dfc", n: 40, text: "\t\terr = cmdEval(os.Args[2:])" },
+  { ai: true, sha: "1ca4935", n: 41, text: "\tcase \"calibrate\":" },
+  { ai: true, sha: "1ca4935", n: 42, text: "\t\terr = cmdCalibrate(os.Args[2:])" },
+  { ai: false, sha: "2a65cf1", n: 43, text: "\tcase \"hook\":" },
+  { ai: false, sha: "2a65cf1", n: 44, text: "\t\terr = cmdHook(os.Args[2:])" },
+  { ai: false, sha: "2a65cf1", n: 45, text: "\tcase \"attest\":" },
+  { ai: false, sha: "2a65cf1", n: 46, text: "\t\terr = cmdAttest(os.Args[2:])" },
+  { ai: false, sha: "2a65cf1", n: 47, text: "\tcase \"blame\":" },
+  { ai: false, sha: "2a65cf1", n: 48, text: "\t\terr = cmdBlame(os.Args[2:])" },
 ];
 
-// Transcripts copied from a terminal, run on this repository.
+// Terminal sessions, run on this repository. Lines starting with "$ " are
+// the commands; everything else is what grain printed.
 const STEPS: StepData[] = [
   {
     cmd: "grain hook install",
     title: "Install the hook once",
     body: "A git post-commit hook plus a Claude Code hook. From then on, every line the agent writes is logged as a content hash, never as text.",
-    out: `✓ installed .git/hooks/post-commit\n\nAdd this to .claude/settings.json so AI edits are captured at the source:\n{ "hooks": { "PostToolUse": [ { "matcher": "Edit|Write|MultiEdit", ... } ] } }`,
+    out: [
+      "$ grain hook install",
+      "✓ installed .git/hooks/post-commit",
+      "",
+      "Add this to .claude/settings.json so AI edits are captured at the source:",
+      "",
+      "{",
+      '  "hooks": {',
+      '    "PostToolUse": [{',
+      '      "matcher": "Edit|Write|MultiEdit",',
+      '      "hooks": [{ "type": "command",',
+      '        "command": "command -v grain >/dev/null 2>&1 && grain hook claude || true" }]',
+      "    }]",
+      "  }",
+      "}",
+      "",
+      "From then on every commit is attested automatically. Try: grain blame <file>",
+    ],
   },
   {
     cmd: "git commit",
     title: "Commit as usual",
     body: "The hook matches the commit's added lines against the ledger and writes a signed note: exactly which lines were AI-written, bound to that commit.",
-    out: `grain attest, 5f49f3c: Provenance: assisted · 889/961 added lines AI-written\n(note on refs/notes/grain, signed 336b33f8517eb53b)\n\nProvenance: assisted\nAI-Lines: 889/961\nAI-Hashes: 0320d2bd7a,1c9e0f77b2,…\nSigned-By: ed25519:gsnAw0076ceAPFu8U35z7QjoQYD8ZTrNksSjzdPF6B4=\nSignature: ikJWlrLo5T6OlaBlxNr9brS5D5n1qBo5aLnd7aTJlP92Ieak…`,
+    out: [
+      '$ git commit -m "feat: signed provenance standard"',
+      "grain attest  5f49f3c: Provenance: assisted, 889/961 added lines AI-written",
+      "  note on refs/notes/grain, signed 336b33f8517eb53b",
+      "  push it with: git push origin refs/notes/grain",
+      "",
+      "$ git notes --ref=grain show HEAD",
+      "Provenance: assisted",
+      "AI-Lines: 889/961",
+      "AI-Hashes: 0320d2bd7a,1c9e0f77b2,3a8f1c02de,…",
+      "Signed-By: ed25519:gsnAw0076ceAPFu8U35z7QjoQYD8ZTrNksSjzdPF6B4=",
+      "Signature: ikJWlrLo5T6OlaBlxNr9brS5D5n1qBo5aLnd7aTJlP92Ieak…",
+    ],
   },
   {
     cmd: "grain verify",
     title: "Check it, anywhere",
     body: "Any clone can verify every attestation offline. A note that was edited or moved to another commit fails. Teams list trusted keys in .grain/signers.",
-    out: `grain verify: 87 commits, 10 attested\n  signed, valid     1\n  signed, invalid   0\n  unsigned          9\n  ✓ every attestation checks out`,
+    out: [
+      "$ git clone https://github.com/FrontTribe/grain && cd grain",
+      "$ git fetch origin refs/notes/grain:refs/notes/grain",
+      "$ grain verify",
+      "grain verify: 87 commits, 10 attested",
+      "  signed, valid     1",
+      "  signed, invalid   0",
+      "  unsigned          9",
+      "  ✓ every attestation checks out",
+    ],
   },
 ];
 
@@ -88,12 +127,11 @@ export default function Home() {
       <main id="main">
         {/* Hero: asymmetric split. Text carries the claim; the proof is real
             `grain blame` output from this repository. */}
-        <header className="relative overflow-hidden">
-          <GrainShaderLazy />
-          <div className={`${container} relative grid items-center gap-10 pb-14 pt-14 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14 lg:pb-20 lg:pt-20`}>
+        <header>
+          <div className={`${container} grid items-center gap-10 pb-16 pt-14 lg:grid-cols-[minmax(0,13fr)_minmax(0,11fr)] lg:gap-14 lg:pb-24 lg:pt-20`}>
           <div>
-            <h1 className="rise text-balance font-display text-[40px] font-extrabold leading-[1.02] tracking-[-0.03em] sm:text-[54px] lg:text-[62px]" style={{ "--i": 0 } as React.CSSProperties}>
-              Know which lines the <span className="text-ai">AI</span> wrote.
+            <h1 className="rise text-balance font-display text-[40px] font-extrabold leading-[1.02] tracking-[-0.03em] sm:text-[54px] lg:text-[58px]" style={{ "--i": 0 } as React.CSSProperties}>
+              Know which lines the <span className="ai-word text-ai">AI</span> wrote.
             </h1>
             <p className="rise mt-5 max-w-[42ch] text-[18px] leading-relaxed text-muted sm:text-[19px]" style={{ "--i": 1 } as React.CSSProperties}>
               Grain records AI edits as they happen, signs them into git, and shows where they landed without review.
@@ -105,13 +143,15 @@ export default function Home() {
           </div>
 
           <figure className="rise min-w-0" style={{ "--i": 3 } as React.CSSProperties}>
-            <BlameReveal
-              file={BLAME_FILE}
-              lines={BLAME_LINES}
-              summary={<>515 lines, <span className="text-ai">368 AI-written</span> (71%), attested from git notes</>}
-            />
+            <TiltCard className="hero-card rounded-[14px]">
+              <BlameReveal
+                file={BLAME_FILE}
+                lines={BLAME_LINES}
+                summary={<>362 lines, <span className="text-ai">260 AI-written</span> (71%), attested from git notes</>}
+              />
+            </TiltCard>
             <figcaption className="mt-2.5 text-[12.5px] text-faint">
-              Real output. Each line is resolved from a signed attestation on the commit that added it.
+              Real output. Lines the hook captured are tagged; lines from before the hook existed are shown as human, not guessed.
             </figcaption>
           </figure>
           </div>

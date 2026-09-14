@@ -97,6 +97,51 @@ body {
     animation-range: entry 0% entry 28%;
   }
 }
+/* Hero: the word "AI" underlines itself once the headline has landed, and
+   the blame card carries a shadow tinted with the brand colour. */
+@keyframes underline-in {
+  from { background-size: 0% 0.09em; }
+  to { background-size: 100% 0.09em; }
+}
+.ai-word {
+  background-image: linear-gradient(var(--ai), var(--ai));
+  background-repeat: no-repeat;
+  background-position: 0 92%;
+  background-size: 100% 0.09em;
+  animation: underline-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.9s both;
+}
+.hero-card {
+  box-shadow:
+    0 1px 2px rgba(32, 29, 25, 0.05),
+    0 28px 70px -30px color-mix(in oklab, var(--human) 45%, transparent);
+}
+
+/* Terminal sessions on the landing page: one dark palette in both themes,
+   accents taken from the dark-mode authorship colours for contrast. */
+.term {
+  --term-bg: #1E1B16;
+  --term-fg: #ECE7DB;
+  --term-muted: #9C9384;
+  --term-ok: #57C6A8;
+  --term-cmd: #F3EFE6;
+  background: var(--term-bg);
+  color: var(--term-fg);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 18px 48px -28px rgba(32, 29, 25, 0.55);
+}
+.term-prompt { color: var(--term-ok); font-weight: 600; }
+.term-cmd { color: var(--term-cmd); font-weight: 600; }
+.term-ok { color: var(--term-ok); }
+.term-muted { color: var(--term-muted); }
+@keyframes term-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.term-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.05em;
+  vertical-align: -0.2em;
+  background: var(--term-fg);
+  animation: term-blink 1.1s steps(1) infinite;
+}
+
 .press {
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s, color 0.2s, background-color 0.2s;
 }
@@ -121,7 +166,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .popover-in, .rise, .reveal { animation: none; }
+  .popover-in, .rise, .reveal, .ai-word, .term-cursor { animation: none; }
   .press, .press:hover, .press:active { transform: none; }
 }
 
