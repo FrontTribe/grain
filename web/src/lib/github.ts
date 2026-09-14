@@ -21,8 +21,14 @@ export type GhReport = {
     lines: number;
     ai_by_basis: { attested: number; declared: number; inferred: number };
   };
-  by_path: never[];
+  by_path: { path: string; human: number; ai: number; lines: number; human_owned: boolean }[];
 };
+
+// Top-level directory of a path; root-level files group under "(root)".
+function topDir(path: string): string {
+  const i = path.indexOf("/");
+  return i < 0 ? "(root)" : path.slice(0, i);
+}
 
 export function parseRepoInput(input: string): { owner: string; repo: string } | null {
   let s = input.trim();
@@ -202,21 +208,44 @@ export async function scanGithubRepo(
   const declaredFlags = commits.map(isDeclaredAI);
   const declaredCount = declaredFlags.filter(Boolean).length;
 
-  // Inferred tier: run the content classifier over the diffs of the most recent
-  // non-declared commits, then extrapolate the sampled AI-rate to all
-  // non-declared commits. Bounded (and lower without a token) to respect rate
-  // limits — each sampled commit is one extra API call.
+  // Deep-scan the most recent commits (declared and not) in one bounded window —
+  // one API call each, fewer without a token to respect rate limits. Their diffs
+  // drive both the inferred tier and the per-directory breakdown.
   const deepMax = opts.token ? 40 : 12;
-  const candidates = commits.filter((_, i) => !declaredFlags[i]).slice(0, deepMax);
-  const diffs = await mapLimit(candidates, 5, (c) => fetchCommitAddedLines(owner, repo, c.sha ?? "", headers));
-  let sampled = 0;
+  const window = commits.slice(0, deepMax);
+  const diffs = await mapLimit(window, 5, (c) => fetchCommitAddedLines(owner, repo, c.sha ?? "", headers));
+
+  // per top-level directory line tallies, human vs AI
+  const dirs = new Map<string, { human: number; ai: number }>();
+  const bump = (dir: string, ai: boolean, n: number) => {
+    const cur = dirs.get(dir) ?? { human: 0, ai: 0 };
+    if (ai) cur.ai += n;
+    else cur.human += n;
+    dirs.set(dir, cur);
+  };
+
+  let sampled = 0; // non-declared commits with substantive code
   let inferredInSample = 0;
-  for (const d of diffs) {
-    if (!d) continue; // fetch failed — don't let it bias the rate
-    const { ai: isAI, ok } = classifyDiff(d);
-    if (!ok) continue; // no substantive added code (deletions, binaries, config)
-    sampled++;
-    if (isAI) inferredInSample++;
+  let totalLines = 0;
+
+  for (let i = 0; i < window.length; i++) {
+    const d = diffs[i];
+    if (!d) continue; // fetch failed — skip
+    const declared = declaredFlags[i];
+    let commitAI = declared;
+    if (!declared) {
+      const { ai: isAI, ok } = classifyDiff(d);
+      if (ok) {
+        sampled++;
+        if (isAI) inferredInSample++;
+        commitAI = isAI;
+      }
+    }
+    for (const [path, lns] of Object.entries(d)) {
+      const n = lns.length;
+      totalLines += n;
+      bump(topDir(path), commitAI, n);
+    }
   }
 
   const nonDeclared = total - declaredCount;
@@ -225,6 +254,21 @@ export async function scanGithubRepo(
   const inferredFrac = inferredRate * (nonDeclared / total);
   const aiFrac = Math.min(1, declaredFrac + inferredFrac);
   const humanFrac = 1 - aiFrac;
+
+  // Top directories by line volume, as human/AI fractions (matches the CLI's
+  // by_path schema so the ingest RPC stores them into repo_dirs).
+  const byPath = [...dirs.entries()]
+    .map(([path, v]) => ({ path, lines: v.human + v.ai, humanN: v.human, aiN: v.ai }))
+    .filter((p) => p.lines > 0)
+    .sort((a, b) => b.lines - a.lines)
+    .slice(0, 12)
+    .map((p) => ({
+      path: p.path,
+      human: p.humanN / p.lines,
+      ai: p.aiN / p.lines,
+      lines: p.lines,
+      human_owned: false,
+    }));
 
   const report: GhReport = {
     schema: "grain/v0.1",
@@ -235,10 +279,10 @@ export async function scanGithubRepo(
       human: humanFrac,
       ai_assisted: aiFrac,
       unclassified: 0,
-      lines: 0,
+      lines: totalLines,
       ai_by_basis: { attested: 0, declared: declaredFrac, inferred: inferredFrac },
     },
-    by_path: [],
+    by_path: byPath,
   };
   return {
     report,
