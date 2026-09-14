@@ -2,9 +2,14 @@ import { TopBar, Card, ProvBar, MiniBar, Spark, Pill, Kpi } from "@/components/d
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { Onboarding } from "@/components/dashboard/Onboarding";
 import { GithubPanel } from "@/components/dashboard/GithubPanel";
+import { SearchInput, SelectNav } from "@/components/dashboard/controls";
 import { getRepos, getOrgScans, getEvents, getUserAndOrg, ago, monthLabel, num } from "@/lib/data";
 
-const chip = "inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 text-[13px] text-muted";
+const RANGES = [
+  { value: "3", label: "Last 3 months" },
+  { value: "6", label: "Last 6 months" },
+  { value: "12", label: "Last 12 months" },
+];
 
 // derive a gentle sparkline from a repo's current AI share (no per-repo history yet)
 function spark(ai: number, attention: boolean): number[] {
@@ -13,7 +18,10 @@ function spark(ai: number, attention: boolean): number[] {
   return Array.from({ length: 6 }, (_, i) => start + ((end - start) * i) / 5);
 }
 
-export default async function Overview() {
+export default async function Overview({ searchParams }: { searchParams: Promise<{ range?: string; q?: string }> }) {
+  const { range, q } = await searchParams;
+  const months = RANGES.some((r) => r.value === range) ? Number(range) : 6;
+  const query = (q ?? "").trim().toLowerCase();
   const [repos, scans, events] = await Promise.all([getRepos(), getOrgScans(), getEvents()]);
 
   // Fresh workspace (e.g. a new GitHub OAuth user): guide them to first data.
@@ -37,12 +45,16 @@ export default async function Overview() {
     attention: repos.filter((r) => r.status === "attention").length,
     coverage: repos.length,
   };
+  const trendScans = scans.slice(-months);
   const trend = {
-    months: scans.map((s) => monthLabel(s.created_at)),
-    human: scans.map((s) => num(s.human)),
-    ai: scans.map((s) => num(s.ai)),
+    months: trendScans.map((s) => monthLabel(s.created_at)),
+    human: trendScans.map((s) => num(s.human)),
+    ai: trendScans.map((s) => num(s.ai)),
     threshold: 40,
   };
+  const shownRepos = query
+    ? repos.filter((r) => `${r.name} ${r.full_name ?? ""}`.toLowerCase().includes(query))
+    : repos;
   const attention = events
     .filter((e) => e.kind === "attention" && e.pr)
     .slice(0, 5)
@@ -54,8 +66,8 @@ export default async function Overview() {
         title="Overview"
         right={
           <>
-            <span className={`${chip} font-mono text-xs`}>Last 6 months ▾</span>
-            <span className={chip}>Search repos…</span>
+            <SelectNav param="range" value={String(months)} options={RANGES} mono />
+            <SearchInput placeholder="Search repos…" />
           </>
         }
       />
@@ -127,7 +139,7 @@ export default async function Overview() {
               </tr>
             </thead>
             <tbody className="[&_td]:border-b [&_td]:border-line/60 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:text-[13px] [&_tr:last-child_td]:border-none">
-              {repos.map((r) => (
+              {shownRepos.map((r) => (
                 <tr key={r.id}>
                   <td className="font-medium">{r.name} <span className="font-mono font-normal text-faint">{r.full_name?.split("/")[0] ?? ""}/</span></td>
                   <td><MiniBar human={num(r.human)} ai={num(r.ai)} /></td>
@@ -137,6 +149,9 @@ export default async function Overview() {
                   <td className="font-mono tabular-nums text-faint">{r.last_scan_at ? ago(r.last_scan_at) + " ago" : "—"}</td>
                 </tr>
               ))}
+              {shownRepos.length === 0 && (
+                <tr><td colSpan={6} className="py-8 text-center text-[13px] text-faint">No repositories match “{query}”.</td></tr>
+              )}
             </tbody>
           </table>
         </Card>

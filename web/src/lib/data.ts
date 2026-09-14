@@ -170,16 +170,17 @@ export async function getRepoDetail(name: string) {
 }
 
 // Org authorship trend: per-repo scans aggregated by month (averaged).
-export async function getOrgTrend(): Promise<{ month: string; human: number; ai: number }[]> {
+export async function getOrgTrend(repoId?: string): Promise<{ month: string; human: number; ai: number }[]> {
   const orgId = await getActiveOrgId();
   if (!orgId) return [];
   const s = await createClient();
-  const { data } = await s
+  let q = s
     .from("scans")
     .select("human,ai,created_at")
     .eq("org_id", orgId)
-    .not("repo_id", "is", null)
-    .order("created_at", { ascending: true });
+    .not("repo_id", "is", null);
+  if (repoId) q = q.eq("repo_id", repoId);
+  const { data } = await q.order("created_at", { ascending: true });
   const rows = (data ?? []) as { human: number; ai: number; created_at: string }[];
   const byMonth = new Map<string, { h: number; a: number; n: number; label: string }>();
   for (const r of rows) {

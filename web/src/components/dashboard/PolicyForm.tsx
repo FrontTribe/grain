@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Card } from "@/components/dashboard/ui";
+import { Slider } from "@/components/dashboard/controls";
 import { updateOrgPolicy } from "@/app/app/policy/actions";
 
 const ENFORCEMENTS = [
@@ -47,14 +48,10 @@ export function PolicyForm({
         <p className="mb-4 mt-1 text-[12.5px] text-muted">Applied to every repo unless overridden. Signals, never hard blocks by default.</p>
 
         <div className="mb-5">
-          <div className="mb-2 flex justify-between text-[13px] font-medium">
+          <div className="mb-2.5 flex justify-between text-[13px] font-medium">
             <span>AI-assisted attention threshold</span><span className="font-mono text-ai">{threshold}%</span>
           </div>
-          <input
-            type="range" min={0} max={100} value={threshold}
-            onChange={(e) => setThreshold(Number(e.target.value))}
-            className="w-full accent-[var(--ai)]"
-          />
+          <Slider value={threshold} onChange={setThreshold} tone="ai" ariaLabel="AI-assisted attention threshold" />
         </div>
 
         <div className="mb-5">
@@ -74,14 +71,10 @@ export function PolicyForm({
         </div>
 
         <div>
-          <div className="mb-2 flex justify-between text-[13px] font-medium">
+          <div className="mb-2.5 flex justify-between text-[13px] font-medium">
             <span>Inference confidence floor</span><span className="font-mono text-human">{(floor / 100).toFixed(2)}</span>
           </div>
-          <input
-            type="range" min={0} max={100} value={floor}
-            onChange={(e) => setFloor(Number(e.target.value))}
-            className="w-full accent-[var(--human)]"
-          />
+          <Slider value={floor} onChange={setFloor} tone="human" ariaLabel="Inference confidence floor" />
         </div>
       </Card>
 

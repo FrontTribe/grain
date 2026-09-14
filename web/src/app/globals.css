@@ -15,6 +15,7 @@
   --ai: #B0511C;
   --ai-soft: #F1E1D2;
   --brand: #1F6E5B;
+  --shadow: 0 14px 34px -12px rgba(43, 38, 28, 0.32);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,6 +33,7 @@
     --ai: #E28A50;
     --ai-soft: #35251A;
     --brand: #57C6A8;
+    --shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.6);
   }
 }
 
@@ -66,8 +68,19 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Popover / dropdown entrance — ease-out, motion-safe. */
+@keyframes popover-in {
+  from { opacity: 0; transform: translateY(-5px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.popover-in {
+  animation: popover-in 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: var(--popover-origin, top);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
+  .popover-in { animation: none; }
 }
 
 /* Print: the authorship report should print as a clean document. */

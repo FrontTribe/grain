@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Mark } from "@/components/Mark";
 import { Fingerprint } from "@/components/Fingerprint";
-import { login, signInWithGithub } from "@/app/auth/actions";
+import { login, signInWithGithub, requestPasswordReset } from "@/app/auth/actions";
 
 const gitIcon = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} className="size-[18px]">
@@ -45,7 +45,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
 
           <div className="mb-1.5 flex justify-between">
             <label className="text-[13px] font-medium">Password</label>
-            <a href="#" className="text-[12.5px] text-brand">Forgot?</a>
+            <button type="submit" formAction={requestPasswordReset} formNoValidate className="text-[12.5px] text-brand hover:underline">Forgot?</button>
           </div>
           <input name="password" required className={`${inputCls} mb-1.5`} type="password" placeholder="••••••••••••" defaultValue="demo1234" />
 

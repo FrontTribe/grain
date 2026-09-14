@@ -1,7 +1,13 @@
+import Link from "next/link";
 import { TopBar, Card } from "@/components/dashboard/ui";
 import { getEvents, ago, num, type EventRow } from "@/lib/data";
 
-const chip = "inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-[12.5px] text-muted";
+const FILTERS = [
+  { key: "", label: "All" },
+  { key: "attention", label: "Attention" },
+  { key: "scan", label: "Scans" },
+  { key: "policy", label: "Policy" },
+];
 
 function RichText({ text }: { text: string }) {
   const parts = text.split(/\*\*(.+?)\*\*/g);
@@ -27,8 +33,11 @@ function dayLabel(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default async function Activity() {
-  const events = await getEvents();
+export default async function Activity({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
+  const { filter } = await searchParams;
+  const active = FILTERS.some((f) => f.key === filter) ? (filter ?? "") : "";
+  const all = await getEvents();
+  const events = active ? all.filter((e) => e.kind === active) : all;
   const groups: { label: string; events: EventRow[] }[] = [];
   for (const e of events) {
     const label = dayLabel(e.created_at);
@@ -42,16 +51,31 @@ export default async function Activity() {
       <TopBar
         title="Activity"
         right={
-          <div className="flex items-center gap-2.5">
-            <span className="rounded-full bg-ink px-3 py-1.5 text-[12.5px] text-ground">All</span>
-            <span className={chip}>Attention</span>
-            <span className={chip}>Scans</span>
-            <span className={chip}>Policy</span>
+          <div className="flex items-center gap-1.5">
+            {FILTERS.map((f) => (
+              <Link
+                key={f.key}
+                href={f.key ? `/app/activity?filter=${f.key}` : "/app/activity"}
+                scroll={false}
+                className={`rounded-full px-3 py-1.5 text-[12.5px] transition-colors ${
+                  f.key === active
+                    ? "bg-ink text-ground"
+                    : "border border-line bg-surface text-muted hover:border-line-strong hover:text-ink"
+                }`}
+              >
+                {f.label}
+              </Link>
+            ))}
           </div>
         }
       />
       <div className="flex-1 overflow-y-auto p-7">
         <Card className="p-2">
+          {groups.length === 0 && (
+            <div className="py-14 text-center text-[13px] text-faint">
+              No {active || ""} activity yet.
+            </div>
+          )}
           {groups.map((day) => (
             <div key={day.label}>
               <div className="px-4 pb-2 pt-4 font-mono text-[11px] uppercase tracking-widest text-faint">{day.label}</div>

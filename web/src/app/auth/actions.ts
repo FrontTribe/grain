@@ -72,3 +72,27 @@ export async function signout() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+// Send a password-reset email. The recovery link lands on /reset-password,
+// where updatePassword sets the new one.
+export async function requestPasswordReset(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) redirect(`/login?error=${encodeURIComponent("Enter your email first, then tap Forgot.")}`);
+  const supabase = await createClient();
+  const origin = (await headers()).get("origin") ?? "http://localhost:3000";
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/callback?next=${encodeURIComponent("/reset-password")}`,
+  });
+  // Always report success so we never reveal whether an address is registered.
+  redirect(`/login?message=${encodeURIComponent("If that email has an account, a reset link is on its way.")}`);
+}
+
+export async function updatePassword(formData: FormData) {
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 8) redirect(`/reset-password?error=${encodeURIComponent("Use at least 8 characters.")}`);
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) redirect(`/reset-password?error=${encodeURIComponent(error.message)}`);
+  revalidatePath("/app", "layout");
+  redirect("/app");
+}

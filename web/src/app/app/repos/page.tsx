@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { TopBar, Card, MiniBar, Spark, Pill } from "@/components/dashboard/ui";
+import { SearchInput } from "@/components/dashboard/controls";
 import { getRepos, ago, num } from "@/lib/data";
 
 function spark(ai: number, attention: boolean): number[] {
@@ -8,13 +9,18 @@ function spark(ai: number, attention: boolean): number[] {
   return Array.from({ length: 6 }, (_, i) => start + ((end - start) * i) / 5);
 }
 
-export default async function Repositories() {
-  const repos = await getRepos();
+export default async function Repositories({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+  const { q } = await searchParams;
+  const query = (q ?? "").trim().toLowerCase();
+  const all = await getRepos();
+  const repos = query
+    ? all.filter((r) => `${r.name} ${r.full_name ?? ""}`.toLowerCase().includes(query))
+    : all;
   return (
     <>
       <TopBar
         title="Repositories"
-        right={<span className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5 text-[13px] text-muted">Search repos…</span>}
+        right={<SearchInput placeholder="Search repos…" />}
       />
       <div className="flex-1 overflow-y-auto p-7">
         <Card className="px-2 pb-1">
@@ -39,6 +45,13 @@ export default async function Repositories() {
                   <td className="font-mono tabular-nums text-faint">{r.last_scan_at ? ago(r.last_scan_at) + " ago" : "—"}</td>
                 </tr>
               ))}
+              {repos.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-[13px] text-faint">
+                    {query ? <>No repositories match “{query}”.</> : "No repositories yet."}
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </Card>

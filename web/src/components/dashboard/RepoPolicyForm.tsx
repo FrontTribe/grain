@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { RepoPolicy } from "@/lib/data";
+import { Slider } from "@/components/dashboard/controls";
 import { setRepoPolicy, clearRepoPolicy } from "@/app/app/repos/[name]/policy-actions";
 
 const ENF = [
@@ -47,10 +48,10 @@ export function RepoPolicyForm({
         <input type="hidden" name="enforcement" value={enforcement} />
 
         <div className="mb-3">
-          <div className="mb-1.5 flex justify-between text-[12.5px] font-medium">
+          <div className="mb-2 flex justify-between text-[12.5px] font-medium">
             <span>AI attention threshold</span><span className="font-mono text-ai">{threshold}%</span>
           </div>
-          <input type="range" min={0} max={100} value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} className="w-full accent-[var(--ai)]" />
+          <Slider value={threshold} onChange={setThreshold} tone="ai" ariaLabel="AI attention threshold" />
         </div>
 
         <div className="mb-3">
@@ -65,10 +66,10 @@ export function RepoPolicyForm({
         </div>
 
         <div className="mb-4">
-          <div className="mb-1.5 flex justify-between text-[12.5px] font-medium">
+          <div className="mb-2 flex justify-between text-[12.5px] font-medium">
             <span>Confidence floor</span><span className="font-mono text-human">{(floor / 100).toFixed(2)}</span>
           </div>
-          <input type="range" min={0} max={100} value={floor} onChange={(e) => setFloor(Number(e.target.value))} className="w-full accent-[var(--human)]" />
+          <Slider value={floor} onChange={setFloor} tone="human" ariaLabel="Confidence floor" />
         </div>
 
         <div className="flex items-center gap-2">
