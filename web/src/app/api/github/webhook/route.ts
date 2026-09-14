@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { createClient } from "@supabase/supabase-js";
 import { installationToken } from "@/lib/githubApp";
 import { scanGithubRepo, parseRepoInput } from "@/lib/github";
+import { notifyAttentionForOrg } from "@/lib/notify";
 
 export const runtime = "nodejs";
 
@@ -89,6 +90,12 @@ async function rescanFromWebhook(fullName: string, installationId: number): Prom
     // Service-role ingest: a thin, session-less wrapper around the member ingest
     // that takes an explicit org (see docs/github-app-setup.md).
     await db.rpc("ingest_grain_service", { p_org: orgId, p_payload: scan.report });
+    // Alert the workspace's admins if this push pushed the repo over threshold.
+    try {
+      await notifyAttentionForOrg(db, orgId, parsed.repo, scan.ai);
+    } catch (err) {
+      console.error("[gh-webhook] notify failed:", (err as Error).message);
+    }
   }
 }
 
