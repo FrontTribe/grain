@@ -66,7 +66,7 @@ export function Onboarding({ workspace, connect }: { workspace: string; connect:
               Let&apos;s read the grain of your first repo.
             </h2>
             <p className="mt-2 text-[14px] text-[#8F8778]">
-              Grain never uploads your code — the CLI scans locally and pushes only the
+              Grain never uploads your code: the CLI scans locally and pushes only the
               provenance report. Three steps and this dashboard fills in.
             </p>
           </div>
@@ -83,7 +83,7 @@ export function Onboarding({ workspace, connect }: { workspace: string; connect:
             <h3 className="font-display text-[15.5px] font-bold text-ink">Connect a GitHub repo</h3>
           </div>
           <p className="mb-3.5 text-[13px] text-muted">
-            Scan a public repo by name, or connect GitHub to pick a private one — Grain reads its commit history and scores it right here. No install.
+            Scan a public repo by name, or connect GitHub to pick a private one. Grain reads its commit history and scores it right here. No install.
           </p>
           {connect}
         </div>
@@ -106,7 +106,7 @@ export function Onboarding({ workspace, connect }: { workspace: string; connect:
 
           <Step n={2} title="Create an ingest token">
             <p>
-              A token lets the CLI push scans to this workspace. Mint one and copy it —
+              A token lets the CLI push scans to this workspace. Mint one and copy it:
               it&apos;s shown only once.
             </p>
             <Link
@@ -131,7 +131,7 @@ export function Onboarding({ workspace, connect }: { workspace: string; connect:
 
           <div className="flex items-center gap-2.5 border-t border-line pt-5 text-[13px] text-muted">
             <span className="size-2 flex-none animate-pulse rounded-full bg-human" />
-            Waiting for your first scan — this page updates as soon as one lands.
+            Waiting for your first scan. This page updates as soon as one lands.
           </div>
         </div>
       </div>

@@ -34,18 +34,27 @@ export function MiniBar({ human, ai, width = 130 }: { human: number; ai: number;
   );
 }
 
+// Buttons shared by the app, matching the marketing site: ink primary, bordered secondary.
+export const btnPrimary = "press inline-flex h-9 items-center gap-2 rounded-[9px] bg-ink px-4 text-[13.5px] font-semibold text-ground disabled:opacity-60";
+export const btnSecondary = "press inline-flex h-9 items-center gap-2 rounded-[9px] border border-line-strong bg-surface px-4 text-[13.5px] font-semibold text-ink hover:border-ink disabled:opacity-60";
+
 export function Spark({ series, w = 70, h = 22, up }: { series: number[]; w?: number; h?: number; up?: boolean }) {
   const max = 1;
-  const pts = series
-    .map((v, i) => {
-      const x = (i / (series.length - 1)) * w;
-      const y = h - 3 - (v / max) * (h - 6);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
+  const n = series.length;
+  const cls = up ? "stroke-ai" : "stroke-human";
+  const yOf = (v: number) => h - 3 - (v / max) * (h - 6);
+  // A single scan has no trend to draw: mark the point instead of dividing by zero.
+  if (n < 2) {
+    return (
+      <svg width={w} height={h} className="align-middle" aria-hidden>
+        {n === 1 && <circle cx={w - 3} cy={yOf(series[0])} r={2.5} className={up ? "fill-ai" : "fill-human"} />}
+      </svg>
+    );
+  }
+  const pts = series.map((v, i) => `${((i / (n - 1)) * w).toFixed(1)},${yOf(v).toFixed(1)}`).join(" ");
   return (
-    <svg width={w} height={h} className="align-middle">
-      <polyline points={pts} fill="none" strokeWidth={1.8} className={up ? "stroke-ai" : "stroke-human"} />
+    <svg width={w} height={h} className="align-middle" aria-hidden>
+      <polyline points={pts} fill="none" strokeWidth={1.8} className={cls} />
     </svg>
   );
 }

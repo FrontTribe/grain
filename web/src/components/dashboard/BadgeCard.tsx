@@ -24,7 +24,7 @@ export function BadgeCard({ repoId, name, badgeUrl }: { repoId: string; name: st
         </span>
       </div>
       <p className="mb-3 text-[12.5px] text-muted">
-        A live, always-current provenance badge for your README. The URL exposes only the AI-assisted % — no repo contents.
+        A live, always-current provenance badge for your README. The URL exposes only the AI-assisted %. No repo contents.
       </p>
 
       {badgeUrl ? (
@@ -55,7 +55,7 @@ export function BadgeCard({ repoId, name, badgeUrl }: { repoId: string; name: st
         <form action={enableBadge}>
           <input type="hidden" name="repo_id" value={repoId} />
           <input type="hidden" name="name" value={name} />
-          <button type="submit" className={`${btn} bg-brand text-surface`}>Enable public badge</button>
+          <button type="submit" className={`${btn} bg-ink text-ground`}>Enable public badge</button>
         </form>
       )}
     </div>

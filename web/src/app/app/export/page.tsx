@@ -22,7 +22,7 @@ export default async function ExportPage() {
                 Signed export: Team plan
               </a>
             )}
-            <PrintButton className={`${btn} bg-brand text-surface no-print`} />
+            <PrintButton className={`${btn} bg-ink text-ground no-print`} />
           </>
         }
       />
@@ -50,7 +50,7 @@ export default async function ExportPage() {
             <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-line-strong" />{s.unclassified}% unclassified</span>
           </div>
           <div className="mb-7 text-[12.5px] text-muted">
-            Of the AI-assisted share — <b className="text-ink">{s.ai_by_basis.declared}% declared</b>,{" "}
+            Of the AI-assisted share, <b className="text-ink">{s.ai_by_basis.declared}% declared</b>,{" "}
             <b className="text-ink">{s.ai_by_basis.attested}% attested</b>,{" "}
             <b className="text-ink">{s.ai_by_basis.inferred}% inferred</b> (a capped estimate, not certain).
           </div>
@@ -71,7 +71,7 @@ export default async function ExportPage() {
                   <td>{r.ai_by_basis.declared}%</td>
                   <td>{r.ai_by_basis.attested}%</td>
                   <td>{r.ai_by_basis.inferred}%</td>
-                  <td className="text-faint">{r.last_scan_at ? new Date(r.last_scan_at).toISOString().slice(0, 10) : "—"}</td>
+                  <td className="text-faint">{r.last_scan_at ? new Date(r.last_scan_at).toISOString().slice(0, 10) : "no scan yet"}</td>
                 </tr>
               ))}
               {bom.repositories.length === 0 && (
@@ -89,7 +89,7 @@ export default async function ExportPage() {
               {bom.integrity.algorithm}: <code className="break-all font-mono text-[11.5px] text-ink">{bom.integrity.digest}</code>
             </div>
             <div className="mt-1.5 text-[11.5px] text-faint">
-              Hash of the canonical report — recompute it from the JSON to verify this document is unaltered.
+              Hash of the canonical report. Recompute it from the JSON to verify this document is unaltered.
               {" "}
               <a href="/verify" target="_blank" rel="noreferrer" className="text-brand no-print hover:underline">Verify a report →</a>
             </div>

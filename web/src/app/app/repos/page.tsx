@@ -50,7 +50,7 @@ export default async function Repositories({ searchParams }: { searchParams: Pro
                   <td className="font-mono tabular-nums">{num(r.ai)}%</td>
                   <td><Spark {...sparkProps(r.id, num(r.ai), r.status === "attention")} /></td>
                   <td><Pill tone={r.status === "attention" ? "attention" : "ok"}>{r.status}</Pill></td>
-                  <td className="font-mono tabular-nums text-faint">{r.last_scan_at ? ago(r.last_scan_at) + " ago" : "—"}</td>
+                  <td className="font-mono tabular-nums text-faint">{r.last_scan_at ? ago(r.last_scan_at) + " ago" : "no scan yet"}</td>
                 </tr>
               ))}
               {repos.length === 0 && (

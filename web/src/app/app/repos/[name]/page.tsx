@@ -10,7 +10,7 @@ import { rescanRepo } from "@/app/app/integrations/actions";
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
 
 const BANNERS: Record<string, string> = {
-  rescanned: "Re-scanned from GitHub — provenance updated.",
+  rescanned: "Re-scanned from GitHub. Provenance updated.",
   "policy=saved": "Repo policy override saved.",
   "policy=cleared": "Reverted to the organization default policy.",
 };
@@ -40,7 +40,7 @@ export default async function RepoDetail({
             <form action={rescanRepo}>
               <input type="hidden" name="full_name" value={repo.full_name ?? ""} />
               <input type="hidden" name="name" value={repo.name} />
-              <button type="submit" className={`${btn} bg-brand text-surface`}>Re-scan</button>
+              <button type="submit" className={`${btn} bg-ink text-ground`}>Re-scan</button>
             </form>
           </>
         }
@@ -77,7 +77,7 @@ export default async function RepoDetail({
                   <code key={p} className="mr-1 rounded border border-line bg-surface-2 px-1.5 py-0.5 font-mono text-[11.5px]">{p}</code>
                 ))}· </>
               ) : null}
-              last scan {repo.last_scan_at ? ago(repo.last_scan_at) + " ago" : "—"}
+              last scan {repo.last_scan_at ? ago(repo.last_scan_at) + " ago" : "no scan yet"}
             </div>
           </div>
           <div className="text-right">
@@ -95,7 +95,7 @@ export default async function RepoDetail({
               <span className="font-mono text-[11px] text-faint">how the {num(repo.ai)}% AI-assisted was determined</span>
             </div>
             <p className="mb-3 text-[12.5px] text-muted">
-              High-confidence (attested + declared) vs an inferred guess. Signals, not verdicts — inferred is capped, never certain.
+              High-confidence (attested + declared) vs an inferred guess. Signals, not verdicts: inferred is capped, never certain.
             </p>
             {(() => {
               const att = num(repo.ai_attested), dec = num(repo.ai_declared), inf = num(repo.ai_inferred);
@@ -151,7 +151,7 @@ export default async function RepoDetail({
               </div>
               <p className="mb-3.5 text-[12.5px] text-muted">
                 {which === "strict"
-                  ? "AI-written and human-written lines from the same attested commits — author, style and era held constant."
+                  ? "AI-written and human-written lines from the same attested commits, so author, style and era are held constant."
                   : "Across all commits; undeclared AI counts as human, so the AI figures are a floor."}
               </p>
               <div className="flex flex-col gap-2.5">
@@ -192,7 +192,7 @@ export default async function RepoDetail({
                 <>
                   <p className="mb-3.5 text-[12.5px] text-muted">
                     <b className={share > 0.5 ? "text-ai" : "text-ink"}>{rk.critical_ai_unreviewed}</b> of {rk.critical_ai_lines} AI-written lines in critical paths
-                    (<b className="text-ink">{Math.round(share * 100)}%</b>) landed with no review evidence — no pull request, no reviewer trailer, applied by the author.
+                    (<b className="text-ink">{Math.round(share * 100)}%</b>) landed with no review evidence, no pull request, no reviewer trailer, applied by the author.
                     {typeof rk.approved_ai_lines === "number" && rk.approved_ai_lines > 0 && (
                       <> Of the reviewed ones, <b className="text-human">{rk.approved_ai_lines}</b> went through a PR someone else approved.</>
                     )}

@@ -65,7 +65,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
     if (t && t.points >= 2) return { series: t.series, up: t.delta > 0 };
     return { series: spark(ai, attention), up: attention };
   };
-  // Repos currently over their policy threshold — the same set the
+  // Repos currently over their policy threshold, the same set the
   // "Open attention" KPI counts, so the card and the number always agree.
   const attention = repos
     .filter((r) => r.status === "attention")
@@ -76,7 +76,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
       name: r.name,
       owner: r.full_name?.split("/")[0] ?? "",
       ai: num(r.ai),
-      ago: r.last_scan_at ? ago(r.last_scan_at) : "—",
+      ago: r.last_scan_at ? ago(r.last_scan_at) : "no scan yet",
     }));
 
   return (
@@ -165,7 +165,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
                   <td className="font-mono tabular-nums">{num(r.ai)}%</td>
                   <td><Spark {...sparkProps(r.id, num(r.ai), r.status === "attention")} /></td>
                   <td><Pill tone={r.status === "attention" ? "attention" : "ok"}>{r.status}</Pill></td>
-                  <td className="font-mono tabular-nums text-faint">{r.last_scan_at ? ago(r.last_scan_at) + " ago" : "—"}</td>
+                  <td className="font-mono tabular-nums text-faint">{r.last_scan_at ? ago(r.last_scan_at) + " ago" : "no scan yet"}</td>
                 </tr>
               ))}
               {shownRepos.length === 0 && (

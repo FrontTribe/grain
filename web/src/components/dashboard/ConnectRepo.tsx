@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { connectGithubRepo, type ConnectState } from "@/app/app/integrations/actions";
 
@@ -44,14 +45,14 @@ export function ConnectRepo({ compact = false }: { compact?: boolean }) {
           <div className="font-semibold">Connected {state.repo}</div>
           <div className="mt-0.5 text-human/90">
             {state.commits} commits scanned · {state.human}% human · {state.ai}% AI-assisted.{" "}
-            <a href="/app/repos" className="underline">View it →</a>
+            <Link href="/app/repos" className="underline">View it →</Link>
           </div>
         </div>
       )}
       {!compact && (
         <p className="mt-3 text-[12px] text-faint">
-          Public repos scan instantly. Declared signals only (Co-Authored-By, bot commits) —
-          for line-level directories, push from the CLI. Private repos: connect a token (soon).
+          Public repos scan instantly. Declared signals only (Co-Authored-By, bot commits).
+          For line-level detail, push from the CLI. Private repos: connect GitHub in Settings.
         </p>
       )}
     </div>

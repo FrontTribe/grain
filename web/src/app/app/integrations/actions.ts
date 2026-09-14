@@ -35,7 +35,7 @@ export async function connectGithubRepo(
   }
 
   const supabase = await createClient();
-  // Use the stored GitHub token when present — enables private repos + higher rate limits.
+  // Use the stored GitHub token when present, enables private repos + higher rate limits.
   const { data: token } = await supabase.rpc("get_github_token");
 
   let scan;
@@ -110,7 +110,7 @@ export async function rescanRepo(formData: FormData) {
     await supabase.rpc("ingest_grain_member", { p_payload: scan.report });
     try { await notifyIfOverThreshold(p.repo, scan.ai); } catch { /* best-effort */ }
   } catch (e) {
-    err = e instanceof GithubScanError ? e.message : "Re-scan failed — try again.";
+    err = e instanceof GithubScanError ? e.message : "Re-scan failed. Try again.";
   }
   revalidatePath(base);
   revalidatePath("/app");

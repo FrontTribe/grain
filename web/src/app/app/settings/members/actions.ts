@@ -37,7 +37,7 @@ export async function createInvite(_prev: InviteState, formData: FormData): Prom
   const origin = (await headers()).get("origin") ?? "";
   const link = `${origin}/invite/${token}`;
 
-  // Best-effort email — the link is always returned as a fallback.
+  // Best-effort email, the link is always returned as a fallback.
   const { user, org } = await getUserAndOrg();
   const inviter = (user?.user_metadata?.full_name as string | undefined) ?? undefined;
   const { subject, html } = inviteEmail(org?.name ?? "your workspace", link, inviter);

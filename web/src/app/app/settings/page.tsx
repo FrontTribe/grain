@@ -11,7 +11,7 @@ import { startCheckout, openPortal } from "@/app/app/settings/billing/actions";
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
 
 const BILLING_MSG: Record<string, { ok: boolean; text: string }> = {
-  success: { ok: true, text: "Subscription active — welcome to Team." },
+  success: { ok: true, text: "Subscription active. Welcome to Team." },
   cancelled: { ok: false, text: "Checkout cancelled." },
   error: { ok: false, text: "Something went wrong with billing. Try again." },
   unconfigured: { ok: false, text: "Billing isn't configured yet." },
@@ -100,14 +100,14 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                     <span className="text-faint">getgrain.dev/</span>{slug}
                   </div>
                 </div>
-                <div className="mt-4 flex justify-end"><button type="submit" className={`${btn} bg-brand text-surface`}>Save changes</button></div>
+                <div className="mt-4 flex justify-end"><button type="submit" className={`${btn} bg-ink text-ground`}>Save changes</button></div>
               </form>
             </Card>
 
             <Card className="p-6">
               <h3 className="font-display text-base font-bold">Authorship report</h3>
               <p className="mb-4 mt-1 text-[12.5px] text-muted">
-                A timestamped, integrity-hashed Bill of Materials of human vs AI authorship across your repos — for audits, IP due diligence, or M&amp;A.
+                A timestamped, integrity-hashed Bill of Materials of human vs AI authorship across your repos, for audits, IP due diligence, or M&amp;A.
               </p>
               <a href="/app/export" className={`${btn} border border-line bg-surface text-ink`}>Open authorship report →</a>
             </Card>
@@ -159,7 +159,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 ) : subscribed ? (
                   <form action={openPortal}><button type="submit" className={`${btn} border border-line bg-surface text-muted`}>Manage subscription</button></form>
                 ) : (
-                  <form action={startCheckout}><button type="submit" className={`${btn} bg-brand text-surface`}>Upgrade to Team, ${TEAM_PRICE_USD}/mo</button></form>
+                  <form action={startCheckout}><button type="submit" className={`${btn} bg-ink text-ground`}>Upgrade to Team, ${TEAM_PRICE_USD}/mo</button></form>
                 )}
               </div>
             </Card>

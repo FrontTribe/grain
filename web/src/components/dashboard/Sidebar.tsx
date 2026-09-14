@@ -90,7 +90,7 @@ export function Sidebar({ orgName, plan, userName, userEmail, orgs = [], activeO
       </nav>
 
       <div className="mt-auto flex items-center gap-2.5 border-t border-[#2a2519] px-2 pt-2.5">
-        <span className="flex size-[30px] flex-none items-center justify-center rounded-lg bg-[#3a3323] text-xs font-semibold">{initials}</span>
+        <span title={userEmail} className="flex size-[30px] flex-none items-center justify-center rounded-lg bg-[#3a3323] text-xs font-semibold">{initials}</span>
         <div className="min-w-0">
           <div className="truncate text-[13px] font-medium text-[#E4DDCD]">{userName}</div>
           <div className="truncate text-[11px] text-[#7C7462] capitalize">{plan} plan</div>

@@ -66,7 +66,7 @@ export function OnboardRepoPicker({ repos, login }: { repos: GhRepo[]; login: st
 
         <div className="mt-[18px] rounded-[10px] border border-line bg-surface-2 px-4 py-3.5 text-[12.5px] text-ink">
           <div className="font-mono text-[11px] uppercase tracking-wider text-muted">What grain reads</div>
-          <div className="mt-1.5"><span className="font-semibold text-human">Read</span> — commit metadata, authorship trailers, pull requests. Source code stays on GitHub.</div>
+          <div className="mt-1.5"><span className="font-semibold text-human">Read</span>: commit metadata, authorship trailers, pull requests. Source code stays on GitHub.</div>
         </div>
       </div>
 

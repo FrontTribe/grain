@@ -45,7 +45,7 @@ export default async function Trends({ searchParams }: { searchParams: Promise<{
                 {yoy !== 0 && <span className={`rounded px-1.5 py-0.5 font-mono ${yoy > 0 ? "bg-ai-soft text-ai" : "bg-human-soft text-human"}`}>{yoy > 0 ? "▲ +" : "▼ "}{yoy} pts</span>}{" "}
                 {orgTrend.length > 1 ? "since first scan" : "current"}
               </Kpi>
-              <Kpi label="Highest-AI repo" value={top?.name ?? "—"} valueClass="!text-[26px]">
+              <Kpi label="Highest-AI repo" value={top?.name ?? "no scan yet"} valueClass="!text-[26px]">
                 currently <b className="text-ink">{top ? top.ai : 0}% AI</b>
               </Kpi>
               <Kpi label="Repos over 40% AI" value={`${over40}`}>
@@ -57,7 +57,7 @@ export default async function Trends({ searchParams }: { searchParams: Promise<{
 
         <Card className="p-5">
           <div className="mb-2 flex items-center justify-between">
-            <h3 className="font-display text-[15px] font-bold">Authorship over time — {scopeLabel}</h3>
+            <h3 className="font-display text-[15px] font-bold">Authorship over time, {scopeLabel}</h3>
             <div className="flex gap-3.5 font-mono text-[11.5px] text-muted">
               <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-human" />human</span>
               <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-ai" />AI-assisted</span>
@@ -65,7 +65,7 @@ export default async function Trends({ searchParams }: { searchParams: Promise<{
             </div>
           </div>
           {orgTrend.length === 0 ? (
-            <div className="py-16 text-center text-[13px] text-faint">No scan history yet — scans appear here as they land.</div>
+            <div className="py-16 text-center text-[13px] text-faint">No scan history yet. Scans appear here as they land.</div>
           ) : (
             <TrendChart months={trend.months} human={trend.human} ai={trend.ai} threshold={trend.threshold} height={300} />
           )}

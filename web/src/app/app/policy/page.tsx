@@ -35,7 +35,7 @@ export default async function Policy({ searchParams }: { searchParams: Promise<{
             <tbody className="[&_td]:border-b [&_td]:border-line/60 [&_td]:px-3.5 [&_td]:py-2.5 [&_td]:text-[12.5px] [&_tr:last-child_td]:border-none">
               {overrides.map((o) => (
                 <tr key={o.repo_id}>
-                  <td className="font-medium">{o.repos?.name ?? "—"}</td>
+                  <td className="font-medium">{o.repos?.name ?? "n/a"}</td>
                   <td className="font-mono tabular-nums">{Math.round(o.threshold * 100)}%</td>
                   <td>
                     <span className={`rounded-full px-2 py-0.5 font-mono text-[10.5px] ${o.enforcement === "block" ? "bg-ai-soft text-ai" : "bg-human-soft text-human"}`}>
@@ -52,7 +52,7 @@ export default async function Policy({ searchParams }: { searchParams: Promise<{
 
         <div className="flex items-start gap-3 rounded-2xl border border-human/30 bg-human-soft px-4 py-3.5 lg:col-span-2">
           <span className="text-[13px] text-human">
-            <b>Signals, not verdicts.</b> Even &ldquo;Block merge&rdquo; is a review gate a maintainer can override — grain measures and surfaces, it never decides who to blame. Defaults ship as comment-only for exactly this reason.
+            <b>Signals, not verdicts.</b> Even &ldquo;Block merge&rdquo; is a review gate a maintainer can override. grain measures and surfaces; it never decides who to blame. Defaults ship as comment-only for exactly this reason.
           </span>
         </div>
       </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useMemo, useState } from "react";
 import { connectGithubRepo, type ConnectState } from "@/app/app/integrations/actions";
 import type { GhRepo } from "@/lib/github";
@@ -53,7 +54,7 @@ export function RepoPicker({ repos }: { repos: GhRepo[] }) {
           <div className="font-semibold">Connected {state.repo}</div>
           <div className="mt-0.5 text-human/90">
             {state.commits} commits · {state.human}% human · {state.ai}% AI-assisted.{" "}
-            <a href="/app/repos" className="underline">View it →</a>
+            <Link href="/app/repos" className="underline">View it →</Link>
           </div>
         </div>
       )}
