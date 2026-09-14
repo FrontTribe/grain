@@ -159,7 +159,9 @@ A committable, diff-friendly "nutrition label" for the whole repo — repo-level
 mix, a per-directory breakdown, **Outcomes** (how often AI-written lines get
 reworked vs human lines from the same commits, [docs](docs/outcomes.md)),
 **Risk** (AI-written lines in critical paths with no review evidence, down to
-the commits, [docs](docs/risk.md)) and the engine version — backed by a
+the commits, [docs](docs/risk.md)), **Security** (added lines that look
+dangerous, joined with who wrote them and whether anyone reviewed them,
+[docs](docs/security.md)) and the engine version — backed by a
 machine-readable `grain.json`.
 
 ### 4. Signed attestations
@@ -171,6 +173,13 @@ note in a repo; anyone can — the format is open
 ([provenance v1](docs/spec/provenance-v1.md)), stdlib-only, and needs no
 service. Cloud authorship reports are signed the same way and checked at
 [getgrain.dev/verify](https://getgrain.dev/verify).
+
+The same hook watches for the lines that make vibe coding dangerous: a pasted
+token, `rejectUnauthorized: false`, a shell command built from input, SQL by
+concatenation. When Claude Code writes one, grain tells the agent
+immediately, before the commit; when one is committed anyway, `grain attest`
+warns; and every report says which of these lines an AI wrote and whether
+anyone reviewed them ([docs](docs/security.md)).
 
 ## How it works
 

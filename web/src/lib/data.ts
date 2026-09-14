@@ -71,10 +71,24 @@ export type Risk = {
   approved_ai_lines?: number;
 };
 
+// Security analysis (grain.json → security): added lines that tripped a
+// conservative danger pattern, joined with provenance. Matches internal/security.
+export type SecurityFinding = {
+  pattern: string; title: string; severity: "high" | "medium"; path: string; sha: string; subject: string;
+  excerpt: string; ai: boolean; reviewed: boolean; critical: string; note: string;
+};
+export type Security = {
+  total: number; ai: number; ai_unreviewed: number; ai_critical_unreviewed: number; human: number;
+  by_pattern: { id: string; title: string; severity: string; ai: number; human: number }[];
+  findings: SecurityFinding[];
+  commits?: number; source?: "cli" | "cloud";
+};
+
 export type Repo = {
   id: string; name: string; full_name: string | null;
   outcomes?: Outcomes | null;
   risk?: Risk | null;
+  security?: Security | null;
   human: number; ai: number; unc: number;
   status: "healthy" | "attention"; human_owned: string[]; last_scan_at: string | null;
   ai_attested: number; ai_declared: number; ai_inferred: number;

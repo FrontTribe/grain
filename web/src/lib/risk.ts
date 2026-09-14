@@ -158,7 +158,7 @@ export async function computeCloudRisk(opts: {
   headers: Record<string, string>;
   commits: CloudRiskCommit[];
   patterns?: string[];
-}): Promise<CloudRisk> {
+}): Promise<{ risk: CloudRisk; evidence: Map<string, ReviewEvidence> }> {
   const patterns = opts.patterns?.length ? opts.patterns : DEFAULT_CRITICAL;
   const risk: CloudRisk = {
     ai_lines: 0, ai_unreviewed: 0, critical_ai_lines: 0, critical_ai_unreviewed: 0, approved_ai_lines: 0,
@@ -236,5 +236,6 @@ export async function computeCloudRisk(opts: {
   risk.critical = [...byPattern.values()].sort((x, y) => y.ai_unreviewed - x.ai_unreviewed || y.ai_lines - x.ai_lines);
   risk.top.sort((x, y) => y.ai_lines - x.ai_lines);
   risk.top = risk.top.slice(0, 10);
-  return risk;
+  // The evidence map is returned so the security pass can reuse it.
+  return { risk, evidence };
 }

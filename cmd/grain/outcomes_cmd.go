@@ -6,6 +6,7 @@ import (
 	"github.com/FrontTribe/grain/internal/outcomes"
 	"github.com/FrontTribe/grain/internal/report"
 	"github.com/FrontTribe/grain/internal/risk"
+	"github.com/FrontTribe/grain/internal/security"
 )
 
 // attachOutcomes adds the two post-hoc analyses to a report: Outcomes (how
@@ -41,8 +42,14 @@ func attachOutcomes(rep *report.Report, root string, max int, commits []gitlog.C
 		patterns = risk.DefaultCritical
 	}
 	patterns = append(append([]string{}, patterns...), cfg.HumanOwned...)
-	r := risk.Compute(commits, added, gitlog.FirstParentSet(root, "", max), patterns, cfg)
+	firstParent := gitlog.FirstParentSet(root, "", max)
+	r := risk.Compute(commits, added, firstParent, patterns, cfg)
 	rep.Risk = &r
+
+	// Security: the same added lines through the danger patterns, joined with
+	// the same provenance and review evidence.
+	sec := security.Compute(commits, added, firstParent, patterns, cfg)
+	rep.Security = &sec
 }
 
 // without returns a copy of a per-commit diff map with the given paths dropped.

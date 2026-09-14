@@ -13,6 +13,7 @@ import (
 
 	"github.com/FrontTribe/grain/internal/gitlog"
 	"github.com/FrontTribe/grain/internal/outcomes"
+	"github.com/FrontTribe/grain/internal/security"
 	"github.com/FrontTribe/grain/internal/sign"
 	"github.com/FrontTribe/grain/internal/signal"
 )
@@ -209,6 +210,7 @@ func hookClaude(r io.Reader) error {
 
 	seen := map[string]bool{}
 	var hashes []string
+	var warnings []string
 	for _, block := range written {
 		for _, line := range strings.Split(block, "\n") {
 			if !substantive(line) {
@@ -219,9 +221,40 @@ func hookClaude(r io.Reader) error {
 				seen[h] = true
 				hashes = append(hashes, h)
 			}
+			// Security feedback in the agent's own loop: the line it just wrote
+			// looks dangerous, so say so now, before it is committed.
+			for _, p := range security.Check(rel, line) {
+				if len(warnings) < 5 {
+					warnings = append(warnings, fmt.Sprintf("%s: %s (%s): `%s`. %s", rel, p.Title, p.ID, security.Excerpt(p, line), p.Note))
+				}
+			}
 		}
 	}
-	return appendLedger(root, rel, hashes)
+	if err := appendLedger(root, rel, hashes); err != nil {
+		return err
+	}
+	if len(warnings) > 0 {
+		hookFeedback(os.Stdout, warnings)
+	}
+	return nil
+}
+
+// hookFeedback prints the JSON a Claude Code PostToolUse hook may return so the
+// model sees the warning as context and can fix the line before committing.
+// Signals, not verdicts: the text says what the line looks like, not that it
+// is wrong.
+func hookFeedback(w io.Writer, warnings []string) {
+	msg := "grain security: the edit you just made contains lines that match a danger pattern. " +
+		"If this is intended, leave it; otherwise fix it before committing.\n- " + strings.Join(warnings, "\n- ")
+	out := map[string]any{
+		"hookSpecificOutput": map[string]any{
+			"hookEventName":     "PostToolUse",
+			"additionalContext": msg,
+			"systemMessage":     fmt.Sprintf("grain: %d security signal(s) in this edit", len(warnings)),
+		},
+	}
+	b, _ := json.Marshal(out)
+	fmt.Fprintln(w, string(b))
 }
 
 const postCommitHook = `#!/bin/sh
@@ -293,6 +326,7 @@ func cmdAttest(args []string) error {
 	var aiHashes []string
 	var aiN, totalN int
 	consumed := map[string]map[string]bool{}
+	var secWarnings []string
 	for file, lines := range byFile {
 		set := ledger[file]
 		for _, l := range lines {
@@ -308,8 +342,19 @@ func cmdAttest(args []string) error {
 					consumed[file] = map[string]bool{}
 				}
 				consumed[file][h] = true
+				// The AI-written line just landed in history: warn right away,
+				// quiet mode or not, because this is the moment it is cheap to fix.
+				for _, p := range security.Check(file, l) {
+					if len(secWarnings) < 8 {
+						secWarnings = append(secWarnings, fmt.Sprintf("  %s: %s  `%s`", file, p.Title, security.Excerpt(p, l)))
+					}
+				}
 			}
 		}
+	}
+	if len(secWarnings) > 0 {
+		fmt.Fprintf(os.Stderr, "grain security: %d AI-written line(s) in %s match a danger pattern (a place to look, not a verdict):\n%s\n",
+			len(secWarnings), head[:7], strings.Join(secWarnings, "\n"))
 	}
 
 	if aiN == 0 {

@@ -1,0 +1,167 @@
+[
+  {
+    "id": "secret.aws-access-key",
+    "title": "AWS access key id",
+    "severity": "high",
+    "re": "\\bAKIA[0-9A-Z]{16}\\b",
+    "redact": true,
+    "note": "Looks like a long-lived AWS access key in source. Rotate it and load it from the environment."
+  },
+  {
+    "id": "secret.github-token",
+    "title": "GitHub token",
+    "severity": "high",
+    "re": "\\b(ghp|gho|ghu|ghs|ghr)_[A-Za-z0-9]{36}\\b|\\bgithub_pat_[A-Za-z0-9_]{22,}\\b",
+    "redact": true,
+    "note": "A GitHub token in source. Revoke it; use a secret store or an installation token."
+  },
+  {
+    "id": "secret.openai-key",
+    "title": "OpenAI-style API key",
+    "severity": "high",
+    "re": "\\bsk-(proj-|ant-|live-)?[A-Za-z0-9_-]{32,}\\b",
+    "redact": true,
+    "note": "Looks like an API key literal. Rotate it and read it from the environment."
+  },
+  {
+    "id": "secret.slack-token",
+    "title": "Slack token",
+    "severity": "high",
+    "re": "\\bxox[baprs]-[A-Za-z0-9-]{10,}\\b",
+    "redact": true,
+    "note": "A Slack token in source. Revoke it and use a secret store."
+  },
+  {
+    "id": "secret.stripe-key",
+    "title": "Stripe secret key",
+    "severity": "high",
+    "re": "\\b(sk|rk)_(live|test)_[A-Za-z0-9]{16,}\\b",
+    "redact": true,
+    "note": "A Stripe secret key in source. Roll it in the Stripe dashboard."
+  },
+  {
+    "id": "secret.private-key",
+    "title": "Private key material",
+    "severity": "high",
+    "re": "-----BEGIN (RSA |EC |DSA |OPENSSH |PGP |)PRIVATE KEY-----",
+    "note": "A private key block in source. Remove it from history and rotate the key."
+  },
+  {
+    "id": "secret.hardcoded-credential",
+    "title": "Hardcoded credential",
+    "severity": "medium",
+    "re": "\\b(api[_-]?key|apikey|secret|password|passwd|client_secret|auth[_-]?token|access[_-]?token)\\b\\s*[:=]\\s*[\"'`][A-Za-z0-9/+=_\\-.]{12,}[\"'`]",
+    "flags": "i",
+    "redact": true,
+    "unless": "process\\.env|os\\.Getenv|getenv|\\$\\{|<[A-Za-z_ ]+>|(?:x{4,}|changeme|example|your[_-]|placeholder|dummy|redacted)",
+    "note": "A credential-looking literal assigned to a secret-named variable. Read it from the environment or a secret store."
+  },
+  {
+    "id": "tls.verification-disabled",
+    "title": "TLS verification disabled",
+    "severity": "high",
+    "re": "InsecureSkipVerify\\s*:\\s*true|rejectUnauthorized\\s*:\\s*false|\\bverify\\s*=\\s*False\\b|CURLOPT_SSL_VERIFYPEER\\s*,\\s*(false|0)\\b|NODE_TLS_REJECT_UNAUTHORIZED\\s*=\\s*[\"']?0",
+    "note": "Certificate checks are turned off, so any network hop can impersonate the server. Fix the trust store instead."
+  },
+  {
+    "id": "exec.shell-with-input",
+    "title": "Shell command built from strings",
+    "severity": "high",
+    "re": "subprocess\\.(run|call|Popen|check_output|check_call)\\([^)]*(\\+|f[\"'])[^)]*shell\\s*=\\s*True|shell\\s*=\\s*True[^)]*(\\+|f[\"'])|(os\\.system|os\\.popen)\\((f[\"']|[^)]*\\+)|exec\\.Command\\(\\s*[\"'](sh|bash|zsh|cmd)[\"'],\\s*[\"']-c[\"'],\\s*[^)]*\\+|child_process\\.(exec|execSync)\\(\\s*(`[^`]*\\$\\{|[\"'][^\"']*[\"']\\s*\\+)",
+    "note": "A shell command assembled from runtime values. Pass arguments as a list (no shell) or validate them."
+  },
+  {
+    "id": "exec.eval",
+    "title": "eval / dynamic code execution",
+    "severity": "medium",
+    "re": "\\beval\\s*\\(|\\bnew Function\\s*\\(|\\bexec\\s*\\(\\s*[a-zA-Z_]\\w*\\s*\\)",
+    "paths": "\\.(js|jsx|ts|tsx|mjs|cjs|py|php|rb)$",
+    "note": "Executes code from a string. Almost always avoidable; if the input can come from outside, it is remote code execution."
+  },
+  {
+    "id": "sql.string-concat",
+    "title": "SQL built by string concatenation",
+    "severity": "high",
+    "re": "\"\\s*(SELECT|INSERT INTO|UPDATE|DELETE FROM)\\b[^\"]*\"\\s*\\+\\s*[a-zA-Z_]|'\\s*(SELECT|INSERT INTO|UPDATE|DELETE FROM)\\b[^']*'\\s*\\+\\s*[a-zA-Z_]|f[\"'](SELECT|INSERT INTO|UPDATE|DELETE FROM)\\b[^\"']*\\{|(SELECT|INSERT INTO|UPDATE|DELETE FROM)\\b[^\"'`]*\\$\\{",
+    "flags": "i",
+    "note": "Query text is built from values. Use parameters or a query builder; this is the classic injection shape."
+  },
+  {
+    "id": "xss.inner-html",
+    "title": "Raw HTML injection",
+    "severity": "medium",
+    "re": "dangerouslySetInnerHTML|\\.innerHTML\\s*=\\s*[^\"'`\\s;][^;]*|\\bv-html\\b|\\|\\s*safe\\b|\\bMarkup\\(|\\.html\\(\\s*[a-zA-Z_]",
+    "paths": "\\.(js|jsx|ts|tsx|vue|svelte|html|py|rb|erb)$",
+    "note": "HTML is rendered from a value. If any part can come from a user, this is cross-site scripting."
+  },
+  {
+    "id": "deser.unsafe-load",
+    "title": "Unsafe deserialization",
+    "severity": "high",
+    "re": "\\bpickle\\.loads?\\(|\\bmarshal\\.loads?\\(|\\byaml\\.load\\(|\\bunserialize\\(|ObjectInputStream|\\bMarshal\\.load\\b",
+    "unless": "Loader\\s*=\\s*yaml\\.(SafeLoader|CSafeLoader)|safe_load",
+    "note": "Deserializes untrusted bytes into objects; a crafted payload runs code. Use a safe loader or a data-only format."
+  },
+  {
+    "id": "perm.world-writable",
+    "title": "World-writable permissions",
+    "severity": "medium",
+    "re": "\\bchmod\\s+(-R\\s+)?0?777\\b|Chmod\\([^,]+,\\s*0o?777\\)|\\b0o777\\b|os\\.chmod\\([^,]+,\\s*0o?777\\)",
+    "note": "Everyone on the host can write this path. Use the narrowest mode that works."
+  },
+  {
+    "id": "net.cors-any-origin",
+    "title": "CORS open to any origin",
+    "severity": "medium",
+    "re": "Access-Control-Allow-Origin[\"']?\\s*[:,]\\s*[\"']\\*[\"']|\\borigin\\s*:\\s*[\"']\\*[\"']|AllowAllOrigins\\s*=\\s*true|AllowOrigins\\s*:\\s*\\[\\s*\"\\*\"|\\bcors\\(\\s*\\)",
+    "note": "Any site can call this API from a browser. Fine for public read-only data; wrong for anything with credentials."
+  },
+  {
+    "id": "crypto.weak-hash-for-password",
+    "title": "Weak hash for a password",
+    "severity": "high",
+    "re": "\\b(md5|sha1)\\b[^\\n]*(passw|pwd)|(passw|pwd)[^\\n]*\\b(md5|sha1)\\b",
+    "flags": "i",
+    "note": "MD5/SHA-1 are not password hashes. Use bcrypt, scrypt or Argon2."
+  },
+  {
+    "id": "crypto.math-random-secret",
+    "title": "Non-cryptographic randomness for a secret",
+    "severity": "medium",
+    "re": "(token|secret|nonce|otp|session|password|salt)[^\\n]*Math\\.random\\(|Math\\.random\\([^\\n]*(token|secret|nonce|otp|session|password|salt)|\\brandom\\.(random|randint|choice)\\([^\\n]*(token|secret|nonce|otp|password)",
+    "flags": "i",
+    "note": "Math.random / random are predictable. Use crypto.randomBytes, crypto.getRandomValues or secrets."
+  },
+  {
+    "id": "git.no-verify",
+    "title": "Git hooks bypassed",
+    "severity": "medium",
+    "re": "\\bgit\\s+(commit|push)\\b[^\\n]*--no-verify",
+    "note": "Skips pre-commit/pre-push hooks, including the checks that would have caught the rest of this list."
+  },
+  {
+    "id": "iam.wildcard",
+    "title": "Wildcard IAM policy",
+    "severity": "high",
+    "re": "\"(Action|Resource)\"\\s*:\\s*\"\\*\"|(Action|Resource)\\s*=\\s*\\[\\s*\"\\*\"",
+    "paths": "\\.(json|tf|ya?ml|hcl)$",
+    "note": "Grants everything on everything. Scope the action and resource."
+  },
+  {
+    "id": "debug.enabled-in-code",
+    "title": "Debug mode enabled",
+    "severity": "medium",
+    "re": "\\bDEBUG\\s*=\\s*True\\b|app\\.run\\([^)]*debug\\s*=\\s*True",
+    "paths": "\\.py$",
+    "note": "Debug mode leaks stack traces and, in Flask, an interactive console. Drive it from the environment."
+  },
+  {
+    "id": "env.file-committed",
+    "title": ".env file added",
+    "severity": "high",
+    "re": ".",
+    "paths": "(^|/)\\.env(\\.local|\\.production|\\.development|\\.staging)?$",
+    "once": true,
+    "note": "An environment file was added to the repository. It usually holds secrets; keep it in .gitignore."
+  }
+]

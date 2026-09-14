@@ -229,6 +229,59 @@ export default async function RepoDetail({
           );
         })()}
 
+        {(() => {
+          const sec = repo.security;
+          if (!sec) return null;
+          const scope = sec.source === "cloud" ? `last ${sec.commits ?? "?"} commits · GitHub scan` : sec.source === "cli" ? "full history · CLI scan" : "";
+          return (
+            <Card className="p-5">
+              <div className="mb-1 flex items-center justify-between">
+                <h3 className="font-display text-[15px] font-bold">Security</h3>
+                <span className="font-mono text-[11px] text-faint">{scope || "danger patterns in added lines"}</span>
+              </div>
+              {sec.total === 0 ? (
+                <p className="text-[12.5px] text-muted">No added line matched grain&apos;s danger patterns (secrets, disabled TLS, shell or SQL built from strings, unsafe deserialization, wildcard IAM). Tests and fixtures are not scanned.</p>
+              ) : (
+                <>
+                  <p className="mb-3.5 text-[12.5px] text-muted">
+                    <b className={sec.ai_unreviewed > 0 ? "text-ai" : "text-ink"}>{sec.total}</b> {sec.total === 1 ? "line looks" : "lines look"} worth a second look: <b className="text-ink">{sec.ai}</b> AI-written, <b className="text-ink">{sec.ai_unreviewed}</b> of those with no review evidence
+                    {sec.ai_critical_unreviewed > 0 && <>, <b className="text-ai">{sec.ai_critical_unreviewed}</b> in a critical path</>}. Pattern matches joined with provenance, not confirmed vulnerabilities.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {sec.by_pattern.slice(0, 6).map((p) => (
+                      <div key={p.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 text-[12.5px]">
+                        <span className="min-w-0 truncate">
+                          <code className="font-mono text-[11.5px] text-muted">{p.id}</code> <span className="text-ink">{p.title}</span>
+                          <span className={`ml-2 rounded-full px-1.5 py-px font-mono text-[10px] ${p.severity === "high" ? "bg-ai-soft text-ai" : "bg-surface-2 text-muted"}`}>{p.severity}</span>
+                        </span>
+                        <span className="font-mono tabular-nums text-muted"><b className="text-ai">{p.ai}</b> AI · {p.human} human</span>
+                      </div>
+                    ))}
+                  </div>
+                  {sec.findings.length > 0 && (
+                    <div className="mt-3.5 border-t border-line/60 pt-3">
+                      <div className="mb-1.5 font-mono text-[10.5px] uppercase tracking-wider text-muted">Start here</div>
+                      <div className="flex flex-col gap-1.5">
+                        {sec.findings.slice(0, 6).map((f) => (
+                          <div key={f.sha + f.path + f.pattern + f.excerpt} className="text-[12.5px]">
+                            <div className="flex items-center gap-2.5">
+                              <code className="font-mono text-[11px] text-faint">{f.sha.slice(0, 7)}</code>
+                              <code className="min-w-0 truncate font-mono text-[11.5px]">{f.path}</code>
+                              <span className="text-muted">{f.title}</span>
+                              <span className={`ml-auto font-mono text-[10.5px] ${f.ai ? "text-ai" : "text-muted"}`}>{f.ai ? "AI" : "human"}{f.reviewed ? "" : " · unreviewed"}{f.critical ? ` · ${f.critical}` : ""}</span>
+                            </div>
+                            {f.excerpt && <code className="mt-0.5 block truncate rounded bg-surface-2 px-2 py-1 font-mono text-[11px] text-muted">{f.excerpt}</code>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </Card>
+          );
+        })()}
+
         <Card className="p-5">
           <div className="mb-2.5 flex flex-wrap gap-3.5 font-mono text-[11px] text-muted">
             <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-human" />human</span>

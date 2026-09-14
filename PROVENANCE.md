@@ -1,6 +1,6 @@
 # Provenance
 
-Authorship mix for **FrontTribe/grain**, measured from 99 commits. Signals, not verdicts.
+Authorship mix for **FrontTribe/grain**, measured from 103 commits. Signals, not verdicts.
 
 | | Share |
 |---|---|
@@ -14,10 +14,10 @@ Authorship mix for **FrontTribe/grain**, measured from 99 commits. Signals, not 
 |---|---|---|---|---|
 | `web/src/` | 3% | 97% | 11979 |  |
 | `web/` | 0% | 100% | 7268 |  |
-| `docs/` | 6% | 94% | 2591 |  |
+| `docs/` | 6% | 94% | 2947 |  |
 | `cmd/grain/` | 8% | 92% | 1806 |  |
+| `(root)` | 2% | 98% | 1432 |  |
 | `design/product/` | 0% | 100% | 1426 |  |
-| `(root)` | 1% | 99% | 1093 |  |
 | `design/cloud/` | 0% | 100% | 664 |  |
 | `design/brand/` | 0% | 100% | 647 |  |
 
@@ -27,10 +27,10 @@ What happened to the code after it landed — AI-written and human-written lines
 
 | | Lines | Later reworked | In a fix/revert | Median commits until rework |
 |---|---|---|---|---|
-| AI-written | 4259 | 348 (8%) | 4 | 1 |
-| Human-written | 370 | 65 (18%) | 1 | 1 |
+| AI-written | 4683 | 348 (7%) | 4 | 1 |
+| Human-written | 374 | 65 (17%) | 1 | 1 |
 
-**AI-written lines were reworked 0.5× as often as human-written ones.**
+**AI-written lines were reworked 0.4× as often as human-written ones.**
 
 ## Risk
 
@@ -55,6 +55,19 @@ What happened to the code after it landed — AI-written and human-written lines
 - `6d8fd6b` feat(cloud): wire filters, search, custom dropdowns & sliders — `auth`, 19 lines
 - `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 19 lines
 - `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 18 lines
+
+## Security
+
+**1 lines look worth a second look; 1 were AI-written, 1 of those with no review evidence.** These are pattern matches joined with provenance, not confirmed vulnerabilities: a place to look, not a verdict.
+
+| Pattern | Severity | AI-written | Human |
+|---|---|---|---|
+| `net.cors-any-origin` CORS open to any origin | medium | 1 | 0 |
+
+**Findings** — worst first (AI-written, unreviewed, critical path):
+
+- `5f49f3c` `web/src/app/.well-known/grain-keys.json/route.ts` — CORS open to any origin (medium, AI, unreviewed)  
+  `{ headers: { "Cache-Control": "public, max-age=3600", "Access-Control-Allow-Origin": "*" } },`
 
 > **How this is measured:** declared signals (`Co-Authored-By`, bot commits, explicit tags) dominate; behavioral inference is capped at 0.70 confidence and never stated as fact.
 
