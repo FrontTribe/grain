@@ -347,11 +347,12 @@ internal/config/     .grain.toml loader
 web/                 grain Cloud (Next.js, Supabase, Stripe, GitHub App)
 ```
 
-## Design &amp; docs
+## Docs
 
 - [`docs/spec/provenance-v1.md`](./docs/spec/provenance-v1.md) — the signed provenance format (notes, line hashes, BOM)
 - [`docs/provenance-capture.md`](./docs/provenance-capture.md) — `grain hook`, `attest`, `blame`
 - [`docs/outcomes.md`](./docs/outcomes.md) · [`docs/risk.md`](./docs/risk.md) — what Outcomes and Risk measure, and don't
+- [`docs/security.md`](./docs/security.md) · [`docs/dependencies.md`](./docs/dependencies.md) — the danger patterns and the registry check, and how the PR gates use them
 - [`docs/detection/calibration-study.md`](./docs/detection/calibration-study.md) — why the content classifier is calibrated per repo
 
 ## Contributing
