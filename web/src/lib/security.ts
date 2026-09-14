@@ -36,7 +36,7 @@ export function patterns(): Pattern[] {
 
 const commentLine = /^\s*(\/\/|#|\*|\/\*|--|<!--)/;
 const defineLine = /regexp\.MustCompile\(|new RegExp\(|re\.compile\(|"re":\s*"/;
-const testPath = /(^|\/)(test|tests|__tests__|spec|specs|fixtures?|testdata|mocks?|examples?)(\/|$)|_test\.go$|\.(test|spec)\.[jt]sx?$|\.snap$|\.(md|mdx|markdown|rst|txt|adoc)$/i;
+const testPath = /(^|\/)(test|tests|__tests__|spec|specs|fixtures?|testdata|mocks?|examples?)(\/|$)|_test\.go$|\.(test|spec)\.[jt]sx?$|\.snap$|\.(md|mdx|markdown|rst|txt|adoc)$|(^|\/)(security-)?patterns\.json$/i;
 
 export function skipPath(path: string): boolean {
   return testPath.test(path);

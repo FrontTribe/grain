@@ -50,6 +50,7 @@ func TestPatternsHitAndMiss(t *testing.T) {
 		{"internal/x_test.go", `cfg := &tls.Config{InsecureSkipVerify: true}`, ""},
 		{"fixtures/keys.txt", `AKIAIOSFODNN7EXAMPLE`, ""},
 		{"docs/security.md", `a pasted token, rejectUnauthorized: false, a shell command`, ""},
+		{"web/src/lib/security-patterns.json", `"note": "MD5/SHA-1 are not password hashes."`, ""},
 	}
 	for _, c := range cases {
 		got := ids(Check(c.path, c.line))

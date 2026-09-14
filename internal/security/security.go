@@ -93,7 +93,7 @@ var (
 	defineLine  = regexp.MustCompile(`regexp\.MustCompile\(|new RegExp\(|re\.compile\(|"re":\s*"`)
 	// Test and fixture paths carry fake secrets and deliberately bad examples;
 	// prose (markdown, text) talks about dangerous lines without being code.
-	testPath = regexp.MustCompile(`(?i)(^|/)(test|tests|__tests__|spec|specs|fixtures?|testdata|mocks?|examples?)(/|$)|_test\.go$|\.(test|spec)\.[jt]sx?$|\.snap$|\.(md|mdx|markdown|rst|txt|adoc)$`)
+	testPath = regexp.MustCompile(`(?i)(^|/)(test|tests|__tests__|spec|specs|fixtures?|testdata|mocks?|examples?)(/|$)|_test\.go$|\.(test|spec)\.[jt]sx?$|\.snap$|\.(md|mdx|markdown|rst|txt|adoc)$|(^|/)(security-)?patterns\.json$`)
 )
 
 // Skip reports whether a path is out of scope for findings (tests, fixtures).

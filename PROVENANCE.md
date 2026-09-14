@@ -1,25 +1,25 @@
 # Provenance
 
-Authorship mix for **FrontTribe/grain**, measured from 103 commits. Signals, not verdicts.
+Authorship mix for **FrontTribe/grain**, measured from 105 commits. Signals, not verdicts.
 
 | | Share |
 |---|---|
-| Human-authored | **3%** |
-| AI-assisted | 97% |
+| Human-authored | **4%** |
+| AI-assisted | 96% |
 | Unclassified | 0% |
 
 ## By directory
 
 | Path | Human | AI | Lines | |
 |---|---|---|---|---|
-| `web/src/` | 3% | 97% | 11979 |  |
+| `web/src/` | 4% | 96% | 12379 |  |
 | `web/` | 0% | 100% | 7268 |  |
-| `docs/` | 6% | 94% | 2947 |  |
-| `cmd/grain/` | 8% | 92% | 1806 |  |
-| `(root)` | 2% | 98% | 1432 |  |
+| `docs/` | 6% | 94% | 3037 |  |
+| `cmd/grain/` | 8% | 92% | 1862 |  |
+| `(root)` | 3% | 97% | 1497 |  |
 | `design/product/` | 0% | 100% | 1426 |  |
+| `internal/report/` | 6% | 94% | 718 |  |
 | `design/cloud/` | 0% | 100% | 664 |  |
-| `design/brand/` | 0% | 100% | 647 |  |
 
 ## Outcomes
 
@@ -27,10 +27,10 @@ What happened to the code after it landed — AI-written and human-written lines
 
 | | Lines | Later reworked | In a fix/revert | Median commits until rework |
 |---|---|---|---|---|
-| AI-written | 4683 | 348 (7%) | 4 | 1 |
-| Human-written | 374 | 65 (17%) | 1 | 1 |
+| AI-written | 5363 | 354 (7%) | 4 | 1 |
+| Human-written | 601 | 65 (11%) | 1 | 1 |
 
-**AI-written lines were reworked 0.4× as often as human-written ones.**
+**AI-written lines were reworked 0.6× as often as human-written ones.**
 
 ## Risk
 
@@ -52,8 +52,8 @@ What happened to the code after it landed — AI-written and human-written lines
 - `63ffec5` Add Scoop bucket (Windows): manifest + updater + auto-publish + docs — `workflows`, 34 lines
 - `3817649` feat(web): sign-in, sign-up and reset pages aligned with the landing page — `login`, 33 lines
 - `a064bcb` web: wire real Supabase auth + data — `auth`, 27 lines
-- `6d8fd6b` feat(cloud): wire filters, search, custom dropdowns & sliders — `auth`, 19 lines
 - `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 19 lines
+- `6d8fd6b` feat(cloud): wire filters, search, custom dropdowns & sliders — `auth`, 19 lines
 - `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 18 lines
 
 ## Security
