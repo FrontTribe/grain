@@ -552,7 +552,7 @@ jobs:
                   {PLAN_FEATURES.audit.map((f) => <Li key={f}>{f}</Li>)}
                 </ul>
                 <div className="mt-auto pt-8">
-                  <a href={`${REPO}/issues/new?title=Audit%20plan&labels=audit`} className={`${btnSecondary} w-full`}>Talk to us</a>
+                  <a href="mailto:kresimir.galic@fronttribe.com?subject=grain%20Audit%20plan" className={`${btnSecondary} w-full`}>Talk to us</a>
                   <p className="mt-2.5 text-center text-[12.5px] text-muted">Tell us what your audit needs.</p>
                 </div>
               </div>
