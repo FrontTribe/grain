@@ -122,8 +122,9 @@ func appendLedger(root, file string, hashes []string) error {
 // ---- grain hook ----
 
 // cmdHook handles editor/agent integrations.
-//   grain hook claude   reads a Claude Code PostToolUse event on stdin
-//   grain hook install  installs the git post-commit hook + prints the Claude config
+//
+//	grain hook claude   reads a Claude Code PostToolUse event on stdin
+//	grain hook install  installs the git post-commit hook + prints the Claude config
 func cmdHook(args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("usage: grain hook claude | grain hook install")

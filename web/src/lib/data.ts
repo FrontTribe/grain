@@ -84,11 +84,23 @@ export type Security = {
   commits?: number; source?: "cli" | "cloud";
 };
 
+// Dependencies added in the scanned range (grain.json → dependencies), with
+// provenance and, when checked, registry existence and age. Matches internal/deps.
+export type Dependency = {
+  name: string; ecosystem: string; manifest: string; sha: string; subject: string;
+  ai: boolean; reviewed: boolean; checked: boolean; exists: boolean; age_days: number; url: string;
+};
+export type Dependencies = {
+  total: number; ai: number; ai_unreviewed: number; checked: boolean; missing: number; young: number;
+  deps: Dependency[]; commits?: number; source?: "cli" | "cloud";
+};
+
 export type Repo = {
   id: string; name: string; full_name: string | null;
   outcomes?: Outcomes | null;
   risk?: Risk | null;
   security?: Security | null;
+  dependencies?: Dependencies | null;
   human: number; ai: number; unc: number;
   status: "healthy" | "attention"; human_owned: string[]; last_scan_at: string | null;
   ai_attested: number; ai_declared: number; ai_inferred: number;

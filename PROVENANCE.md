@@ -1,6 +1,6 @@
 # Provenance
 
-Authorship mix for **FrontTribe/grain**, measured from 105 commits. Signals, not verdicts.
+Authorship mix for **FrontTribe/grain**, measured from 106 commits. Signals, not verdicts.
 
 | | Share |
 |---|---|
@@ -12,11 +12,11 @@ Authorship mix for **FrontTribe/grain**, measured from 105 commits. Signals, not
 
 | Path | Human | AI | Lines | |
 |---|---|---|---|---|
-| `web/src/` | 4% | 96% | 12379 |  |
+| `web/src/` | 4% | 96% | 12385 |  |
 | `web/` | 0% | 100% | 7268 |  |
 | `docs/` | 6% | 94% | 3037 |  |
 | `cmd/grain/` | 8% | 92% | 1862 |  |
-| `(root)` | 3% | 97% | 1497 |  |
+| `(root)` | 3% | 97% | 1492 |  |
 | `design/product/` | 0% | 100% | 1426 |  |
 | `internal/report/` | 6% | 94% | 718 |  |
 | `design/cloud/` | 0% | 100% | 664 |  |
@@ -27,8 +27,8 @@ What happened to the code after it landed — AI-written and human-written lines
 
 | | Lines | Later reworked | In a fix/revert | Median commits until rework |
 |---|---|---|---|---|
-| AI-written | 5363 | 354 (7%) | 4 | 1 |
-| Human-written | 601 | 65 (11%) | 1 | 1 |
+| AI-written | 5367 | 354 (7%) | 4 | 1 |
+| Human-written | 601 | 67 (11%) | 3 | 1 |
 
 **AI-written lines were reworked 0.6× as often as human-written ones.**
 
@@ -52,8 +52,8 @@ What happened to the code after it landed — AI-written and human-written lines
 - `63ffec5` Add Scoop bucket (Windows): manifest + updater + auto-publish + docs — `workflows`, 34 lines
 - `3817649` feat(web): sign-in, sign-up and reset pages aligned with the landing page — `login`, 33 lines
 - `a064bcb` web: wire real Supabase auth + data — `auth`, 27 lines
-- `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 19 lines
 - `6d8fd6b` feat(cloud): wire filters, search, custom dropdowns & sliders — `auth`, 19 lines
+- `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 19 lines
 - `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 18 lines
 
 ## Security
@@ -68,6 +68,30 @@ What happened to the code after it landed — AI-written and human-written lines
 
 - `5f49f3c` `web/src/app/.well-known/grain-keys.json/route.ts` — CORS open to any origin (medium, AI, unreviewed)  
   `{ headers: { "Cache-Control": "public, max-age=3600", "Access-Control-Allow-Origin": "*" } },`
+
+## Dependencies
+
+**17 dependencies were added in this range; 14 by AI-written lines, 14 of those with no review evidence.** Checked against the registries: **0 not found** (a hallucinated name is the slopsquatting seed) and **0 younger than 30 days**.
+
+| Package | Ecosystem | Added by | Reviewed | Registry |
+|---|---|---|---|---|
+| `next` | npm | AI (`c5a3237`) | no evidence | 5544 days old |
+| `react` | npm | AI (`c5a3237`) | no evidence | 5437 days old |
+| `react-dom` | npm | AI (`c5a3237`) | no evidence | 4514 days old |
+| `@tailwindcss/postcss` | npm | AI (`c5a3237`) | no evidence | 955 days old |
+| `@types/node` | npm | AI (`c5a3237`) | no evidence | 3772 days old |
+| `@types/react` | npm | AI (`c5a3237`) | no evidence | 3772 days old |
+| `@types/react-dom` | npm | AI (`c5a3237`) | no evidence | 3772 days old |
+| `eslint` | npm | AI (`c5a3237`) | no evidence | 4820 days old |
+| `eslint-config-next` | npm | AI (`c5a3237`) | no evidence | 4011 days old |
+| `tailwindcss` | npm | AI (`c5a3237`) | no evidence | 3265 days old |
+| `typescript` | npm | AI (`c5a3237`) | no evidence | 5096 days old |
+| `@supabase/ssr` | npm | AI (`a064bcb`) | no evidence | 1104 days old |
+| `@supabase/supabase-js` | npm | AI (`a064bcb`) | no evidence | 2432 days old |
+| `stripe` | npm | AI (`d472442`) | no evidence | 5465 days old |
+| `gsap` | npm | human (`b00c15e`) | no evidence | 4403 days old |
+| `three` | npm | human (`b00c15e`) | no evidence | 5029 days old |
+| `@types/three` | npm | human (`b00c15e`) | no evidence | 3772 days old |
 
 > **How this is measured:** declared signals (`Co-Authored-By`, bot commits, explicit tags) dominate; behavioral inference is capped at 0.70 confidence and never stated as fact.
 

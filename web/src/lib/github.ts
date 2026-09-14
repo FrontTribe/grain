@@ -9,6 +9,7 @@ import { classifyDiff } from "@/lib/classify";
 import { computeCloudRisk, parseAIHashes, type CloudRisk, type CloudRiskCommit } from "@/lib/risk";
 import { verifyNoteSignature, type NoteSignature } from "@/lib/signing";
 import { computeCloudSecurity, type CloudSecurity } from "@/lib/security";
+import { computeCloudDeps, type CloudDeps } from "@/lib/deps";
 
 const AGENTS = ["claude", "copilot", "cursor", "codex", "devin", "chatgpt", "gemini", "anthropic"];
 
@@ -27,6 +28,7 @@ export type GhReport = {
   by_path: { path: string; human: number; ai: number; lines: number; human_owned: boolean }[];
   risk?: CloudRisk;
   security?: CloudSecurity;
+  dependencies?: CloudDeps;
   // attestation notes found, by signature status (docs/spec/provenance-v1.md)
   attestations?: { signed: number; unsigned: number; invalid: number };
 };
@@ -451,6 +453,9 @@ export async function scanGithubRepo(
   // Security: the same lines through the danger patterns, joined with the same
   // provenance and the review evidence just resolved.
   const security = computeCloudSecurity({ commits: riskCommits, evidence, patterns: risk.patterns });
+  // Dependencies the window added, with registry existence and age. Only
+  // package names are sent to the registries.
+  const dependencies = await computeCloudDeps({ commits: riskCommits, evidence });
 
   const report: GhReport = {
     schema: "grain/v0.1",
@@ -468,6 +473,7 @@ export async function scanGithubRepo(
     risk,
     attestations,
     security,
+    dependencies,
   };
   return {
     report,

@@ -48,6 +48,8 @@ func TestPatternsHitAndMiss(t *testing.T) {
 		{"x.go", `// InsecureSkipVerify: true is wrong`, ""},
 		{"x.go", "re := regexp.MustCompile(`InsecureSkipVerify\\s*:\\s*true`)", ""},
 		{"internal/x_test.go", `cfg := &tls.Config{InsecureSkipVerify: true}`, ""},
+		{"web/src/lib/deps.ts", `const m = npmLine.exec(line);`, ""},
+		{"app.py", `exec(payload)`, "exec.eval"},
 		{"fixtures/keys.txt", `AKIAIOSFODNN7EXAMPLE`, ""},
 		{"docs/security.md", `a pasted token, rejectUnauthorized: false, a shell command`, ""},
 		{"web/src/lib/security-patterns.json", `"note": "MD5/SHA-1 are not password hashes."`, ""},

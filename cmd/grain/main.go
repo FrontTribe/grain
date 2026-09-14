@@ -82,7 +82,7 @@ func usage() {
 	fmt.Fprint(os.Stderr, `grain — code provenance layer. Signals, not verdicts.
 
 usage:
-  grain scan [-C dir] [--max N] [--no-color]     scan history → PROVENANCE.md + grain.json
+  grain scan [-C dir] [--max N] [--check-registry] scan history → PROVENANCE.md + grain.json
   grain check --range <a..b> [-C dir]            gate a change set; exit 1 on attention
   grain badge [-C dir]                           print the shields.io endpoint JSON
   grain explain <sha> [-C dir]                    why a commit was classified as it was
@@ -147,6 +147,7 @@ func cmdScan(args []string) error {
 	max := fs.Int("max", 0, "limit to the most recent N commits (0 = all)")
 	noColor := fs.Bool("no-color", false, "disable colored output")
 	noInfer := fs.Bool("no-inference", false, "declared signals only")
+	checkRegistry := fs.Bool("check-registry", false, "ask npm/PyPI/Go/crates/RubyGems whether added dependencies exist (sends package names only)")
 	fs.Parse(args)
 
 	root, cfg, err := setup(*dir)
@@ -165,7 +166,7 @@ func cmdScan(args []string) error {
 	}
 	added := addedFor(root, "", *max, cfg)
 	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg, added), cfg)
-	attachOutcomes(&rep, root, *max, commits, added, cfg)
+	attachOutcomes(&rep, root, *max, commits, added, cfg, *checkRegistry)
 
 	if err := writeFile(filepath.Join(root, cfg.Output), rep.WriteMarkdown); err != nil {
 		return err

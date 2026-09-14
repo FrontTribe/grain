@@ -161,8 +161,10 @@ reworked vs human lines from the same commits, [docs](docs/outcomes.md)),
 **Risk** (AI-written lines in critical paths with no review evidence, down to
 the commits, [docs](docs/risk.md)), **Security** (added lines that look
 dangerous, joined with who wrote them and whether anyone reviewed them,
-[docs](docs/security.md)) and the engine version — backed by a
-machine-readable `grain.json`.
+[docs](docs/security.md)), **Dependencies** (what AI-written lines pulled in,
+and with `--check-registry` whether each package exists and how old it is:
+the slopsquatting check, [docs](docs/dependencies.md)) and the engine
+version — backed by a machine-readable `grain.json`.
 
 ### 4. Signed attestations
 

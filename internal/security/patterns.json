@@ -74,7 +74,7 @@
     "id": "exec.eval",
     "title": "eval / dynamic code execution",
     "severity": "medium",
-    "re": "\\beval\\s*\\(|\\bnew Function\\s*\\(|\\bexec\\s*\\(\\s*[a-zA-Z_]\\w*\\s*\\)",
+    "re": "(^|[^.\\w])eval\\s*\\(|\\bnew Function\\s*\\(|(^|[^.\\w])exec\\s*\\(\\s*[a-zA-Z_]\\w*\\s*\\)",
     "paths": "\\.(js|jsx|ts|tsx|mjs|cjs|py|php|rb)$",
     "note": "Executes code from a string. Almost always avoidable; if the input can come from outside, it is remote code execution."
   },

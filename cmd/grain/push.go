@@ -25,6 +25,7 @@ func cmdPush(args []string) error {
 	file := fs.String("file", "", "read this grain.json instead of scanning")
 	url := fs.String("url", os.Getenv("GRAIN_API"), "ingest endpoint (or GRAIN_API env)")
 	token := fs.String("token", os.Getenv("GRAIN_TOKEN"), "ingest token (or GRAIN_TOKEN env)")
+	checkRegistry := fs.Bool("check-registry", false, "ask the registries whether added dependencies exist (sends package names only)")
 	fs.Parse(args)
 
 	if strings.TrimSpace(*url) == "" {
@@ -55,7 +56,7 @@ func cmdPush(args []string) error {
 		}
 		added := addedFor(root, "", *max, cfg)
 		rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg, added), cfg)
-		attachOutcomes(&rep, root, *max, commits, added, cfg) // Cloud shows the Outcomes card from this
+		attachOutcomes(&rep, root, *max, commits, added, cfg, *checkRegistry) // Cloud shows the Outcomes card from this
 		var buf bytes.Buffer
 		if err := rep.WriteJSON(&buf); err != nil {
 			return err

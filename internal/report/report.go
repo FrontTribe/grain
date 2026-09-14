@@ -12,11 +12,12 @@ import (
 	"strings"
 
 	"github.com/FrontTribe/grain/internal/config"
+	"github.com/FrontTribe/grain/internal/deps"
 	"github.com/FrontTribe/grain/internal/gitlog"
 	"github.com/FrontTribe/grain/internal/outcomes"
 	"github.com/FrontTribe/grain/internal/risk"
-	"github.com/FrontTribe/grain/internal/security"
 	"github.com/FrontTribe/grain/internal/score"
+	"github.com/FrontTribe/grain/internal/security"
 )
 
 // EngineVersion / WeightsID pin how a score was produced, so grain.json is reproducible.
@@ -69,6 +70,9 @@ type Report struct {
 	// Security is every added line that tripped a conservative danger pattern,
 	// joined with provenance and review evidence, attached alongside Risk.
 	Security *security.Summary
+	// Deps is every dependency the range added, with provenance and, when the
+	// registries were consulted, existence and age.
+	Deps *deps.Summary
 }
 
 // weightsID returns the report's weights id, defaulting to the baseline.
@@ -232,21 +236,23 @@ func (r Report) WriteJSON(w io.Writer) error {
 		Lines        int      `json:"lines"`
 	}
 	doc := struct {
-		Schema      string       `json:"schema"`
-		Engine      engineJSON   `json:"engine"`
-		Repo        string       `json:"repo"`
-		GeneratedAt string       `json:"generated_at"`
-		Range       rangeJSON    `json:"range"`
-		Summary     sumJSON      `json:"summary"`
-		ByPath      []pathJSON   `json:"by_path"`
-		Commits     []commitJSON `json:"commits"`
+		Schema      string            `json:"schema"`
+		Engine      engineJSON        `json:"engine"`
+		Repo        string            `json:"repo"`
+		GeneratedAt string            `json:"generated_at"`
+		Range       rangeJSON         `json:"range"`
+		Summary     sumJSON           `json:"summary"`
+		ByPath      []pathJSON        `json:"by_path"`
+		Commits     []commitJSON      `json:"commits"`
 		Outcomes    *outcomes.Summary `json:"outcomes,omitempty"`
 		Risk        *risk.Summary     `json:"risk,omitempty"`
 		Security    *security.Summary `json:"security,omitempty"`
+		Deps        *deps.Summary     `json:"dependencies,omitempty"`
 	}{
 		Outcomes:    r.Outcomes,
 		Risk:        r.Risk,
 		Security:    r.Security,
+		Deps:        r.Deps,
 		Schema:      "grain/v0.1",
 		Engine:      engineJSON{EngineVersion, r.weightsID()},
 		Repo:        r.Repo,
@@ -302,6 +308,9 @@ func (r Report) WriteMarkdown(w io.Writer) {
 		p("%s", s)
 	}
 	if s := securityMarkdown(r.Security); s != "" {
+		p("%s", s)
+	}
+	if s := depsMarkdown(r.Deps); s != "" {
 		p("%s", s)
 	}
 	p("> **How this is measured:** declared signals (`Co-Authored-By`, bot commits, explicit tags) dominate; behavioral inference is capped at %.2f confidence and never stated as fact.\n\n", score.InferredConfidenceCap)
@@ -393,6 +402,9 @@ func (r Report) WriteText(w io.Writer, color bool) {
 	if s := securityLine(r.Security); s != "" {
 		fmt.Fprint(w, s)
 	}
+	if s := depsLine(r.Deps); s != "" {
+		fmt.Fprint(w, s)
+	}
 }
 
 // ---- helpers ----
@@ -443,7 +455,7 @@ func plural(n int, one, many string) string {
 	return many
 }
 
-func pct(f float64) int    { return int(math.Round(f * 100)) }
+func pct(f float64) int        { return int(math.Round(f * 100)) }
 func round2(f float64) float64 { return math.Round(f*100) / 100 }
 
 func min(a, b int) int {

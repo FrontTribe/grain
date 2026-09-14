@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
+
 	"github.com/FrontTribe/grain/internal/config"
+	"github.com/FrontTribe/grain/internal/deps"
 	"github.com/FrontTribe/grain/internal/gitlog"
 	"github.com/FrontTribe/grain/internal/outcomes"
 	"github.com/FrontTribe/grain/internal/report"
@@ -14,7 +17,7 @@ import (
 // without review evidence). Both need every diff's added lines regardless of
 // whether the classifier is on, so it reads them when scan didn't. Best-effort:
 // a git failure just leaves the block out.
-func attachOutcomes(rep *report.Report, root string, max int, commits []gitlog.Commit, added map[string]map[string][]string, cfg config.Config) {
+func attachOutcomes(rep *report.Report, root string, max int, commits []gitlog.Commit, added map[string]map[string][]string, cfg config.Config, checkRegistry bool) {
 	if added == nil {
 		var err error
 		if added, err = gitlog.ReadAddedLines(root, "", max); err != nil {
@@ -50,6 +53,11 @@ func attachOutcomes(rep *report.Report, root string, max int, commits []gitlog.C
 	// the same provenance and review evidence.
 	sec := security.Compute(commits, added, firstParent, patterns, cfg)
 	rep.Security = &sec
+
+	// Dependencies the range added, attributed the same way; registries only
+	// when asked (local-first: nothing leaves the machine by default).
+	d := deps.Compute(context.Background(), commits, added, firstParent, cfg, checkRegistry)
+	rep.Deps = &d
 }
 
 // without returns a copy of a per-commit diff map with the given paths dropped.

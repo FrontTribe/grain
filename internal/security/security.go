@@ -164,15 +164,15 @@ type PatternCount struct {
 
 // Summary is the security block of a report.
 type Summary struct {
-	Total            int            `json:"total"`
-	AI               int            `json:"ai"`                  // findings in AI-written lines
-	AIUnreviewed     int            `json:"ai_unreviewed"`       // of those, no review evidence
-	AICriticalUnrev  int            `json:"ai_critical_unreviewed"` // and in a critical path: the headline
-	Human            int            `json:"human"`
-	ByPattern        []PatternCount `json:"by_pattern"`
-	Findings         []Finding      `json:"findings"` // worst first, capped
-	Commits          int            `json:"commits"`
-	Source           string         `json:"source"`
+	Total           int            `json:"total"`
+	AI              int            `json:"ai"`                     // findings in AI-written lines
+	AIUnreviewed    int            `json:"ai_unreviewed"`          // of those, no review evidence
+	AICriticalUnrev int            `json:"ai_critical_unreviewed"` // and in a critical path: the headline
+	Human           int            `json:"human"`
+	ByPattern       []PatternCount `json:"by_pattern"`
+	Findings        []Finding      `json:"findings"` // worst first, capped
+	Commits         int            `json:"commits"`
+	Source          string         `json:"source"`
 }
 
 const maxFindings = 50

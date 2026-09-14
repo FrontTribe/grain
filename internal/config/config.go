@@ -12,14 +12,14 @@ import (
 )
 
 type Config struct {
-	AIThreshold float64  // policy: attention when AI share exceeds this
-	HumanOwned  []string // glob-ish paths that should stay human-authored
-	Critical    []string // paths where unreviewed AI code is a risk (empty → built-in list + HumanOwned)
-	Agents      []string // AI agent names recognized in trailers/authors
-	BotAuthors  []string // author patterns treated as bots
-	Inference        bool   // whether behavioral inference runs
-	ContentClassifier bool  // use the content classifier for the inferred path
-	Output           string // human-readable report filename
+	AIThreshold       float64  // policy: attention when AI share exceeds this
+	HumanOwned        []string // glob-ish paths that should stay human-authored
+	Critical          []string // paths where unreviewed AI code is a risk (empty → built-in list + HumanOwned)
+	Agents            []string // AI agent names recognized in trailers/authors
+	BotAuthors        []string // author patterns treated as bots
+	Inference         bool     // whether behavioral inference runs
+	ContentClassifier bool     // use the content classifier for the inferred path
+	Output            string   // human-readable report filename
 
 	// Per-repo calibrated classifier weights, loaded from .grain/model.json when
 	// present (written by `grain calibrate`). Empty → the built-in default model.
