@@ -47,8 +47,18 @@ export async function getInvites(): Promise<Invite[]> {
   return (data as Invite[]) ?? [];
 }
 
+// Rework analysis pushed by the CLI (grain.json → outcomes). Field names match
+// the engine's JSON tags in internal/outcomes.
+export type OutcomesCohort = {
+  ai_lines: number; ai_reworked: number; ai_reworked_in_fix: number;
+  human_lines: number; human_reworked: number; human_reworked_in_fix: number;
+  ai_median_commits_to_rework: number; human_median_commits_to_rework: number;
+};
+export type Outcomes = { strict: OutcomesCohort; broad: OutcomesCohort; commits: number };
+
 export type Repo = {
   id: string; name: string; full_name: string | null;
+  outcomes?: Outcomes | null;
   human: number; ai: number; unc: number;
   status: "healthy" | "attention"; human_owned: string[]; last_scan_at: string | null;
   ai_attested: number; ai_declared: number; ai_inferred: number;

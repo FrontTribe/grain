@@ -39,37 +39,19 @@ yourself in the Vercel dashboard (it's as sensitive as a password).
 
 ---
 
-## 3 — Supabase: a session-less ingest function
+## 3 — Supabase: a session-less ingest function ✓ (applied 2026-09-14)
 
 The webhook has no logged-in user, so it can't call `ingest_grain_member`
-(which resolves the org from `auth.uid()`). Add a sibling that takes an explicit
-org and reuses the exact same ingest body. In the Supabase SQL editor:
+(which resolves the org from `auth.uid()`). `ingest_grain_service(p_org,
+p_payload)` is its sibling: both delegate to the shared `_grain_apply`, so the
+webhook path and the connect path store data identically. It is already applied
+to the Grain project — the definition is in
+[`docs/sql/ingest_grain_service.sql`](sql/ingest_grain_service.sql). Only
+`service_role` (the webhook) may execute it.
 
-```sql
-create or replace function ingest_grain_service(p_org uuid, p_payload jsonb)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  -- Paste the BODY of ingest_grain_member here, but wherever it derives the
-  -- org from the caller (e.g. `v_org := (select org_id from org_members
-  -- where user_id = auth.uid() ...)`), use p_org instead. Everything else —
-  -- upserting the repo, inserting the scan snapshot, repo_dirs, events — is
-  -- identical, so the webhook path and the connect path store data the same way.
-  perform 1;
-end;
-$$;
-
-revoke all on function ingest_grain_service(uuid, jsonb) from public, anon, authenticated;
--- service_role (the webhook) bypasses RLS and may execute it.
-```
-
-> Why this can't be automated from here: this repo's Supabase project isn't the
-> one the tooling is connected to, so the function has to be added from your
-> dashboard. The webhook already calls it by name; once it exists, pushes flow
-> straight through.
+Attention alerts from the webhook use `org_admin_emails(p_org)` for the same
+reason: `org_members` is gated on the caller being a member and returns nothing
+for the service role.
 
 ---
 

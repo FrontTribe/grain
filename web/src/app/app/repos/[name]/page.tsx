@@ -118,6 +118,60 @@ export default async function RepoDetail({
           </Card>
         )}
 
+        {(() => {
+          const o = repo.outcomes;
+          if (!o) return null;
+          const MIN = 30;
+          const valid = (c: typeof o.strict) => c.ai_lines >= MIN && c.human_lines >= MIN;
+          const which = valid(o.strict) ? "strict" : "broad";
+          const c = o[which];
+          if (c.ai_lines === 0 && c.human_lines === 0) return null;
+          const rate = (n: number, d: number) => (d ? n / d : 0);
+          const aiR = rate(c.ai_reworked, c.ai_lines);
+          const huR = rate(c.human_reworked, c.human_lines);
+          const ratio = huR > 0 ? aiR / huR : 0;
+          // literal class names so Tailwind can see them
+          const TONE = { ai: { text: "text-ai", bar: "bg-ai" }, human: { text: "text-human", bar: "bg-human" } } as const;
+          const row = (label: string, lines: number, reworked: number, fix: number, r: number, tone: "ai" | "human") => (
+            <div className="grid grid-cols-[110px_1fr_auto] items-center gap-3 text-[12.5px]">
+              <span className={`font-medium ${TONE[tone].text}`}>{label}</span>
+              <div className="h-2 overflow-hidden rounded-full bg-line-strong/40">
+                <div className={`h-full rounded-full ${TONE[tone].bar}`} style={{ width: `${Math.round(r * 100)}%` }} />
+              </div>
+              <span className="font-mono tabular-nums text-muted">
+                <b className="text-ink">{Math.round(r * 100)}%</b> reworked · {reworked}/{lines} lines · {fix} in fixes
+              </span>
+            </div>
+          );
+          return (
+            <Card className="p-5">
+              <div className="mb-1 flex items-center justify-between">
+                <h3 className="font-display text-[15px] font-bold">Outcomes</h3>
+                <span className="font-mono text-[11px] text-faint">{which} cohort · what happened after the code landed</span>
+              </div>
+              <p className="mb-3.5 text-[12.5px] text-muted">
+                {which === "strict"
+                  ? "AI-written and human-written lines from the same attested commits — author, style and era held constant."
+                  : "Across all commits; undeclared AI counts as human, so the AI figures are a floor."}
+              </p>
+              <div className="flex flex-col gap-2.5">
+                {row("AI-written", c.ai_lines, c.ai_reworked, c.ai_reworked_in_fix, aiR, "ai")}
+                {row("Human-written", c.human_lines, c.human_reworked, c.human_reworked_in_fix, huR, "human")}
+              </div>
+              <div className="mt-3.5 text-[12.5px]">
+                {!valid(c) ? (
+                  <span className="text-faint">Not enough lines on both sides for a verdict yet (need {MIN} each).</span>
+                ) : ratio > 0 ? (
+                  <span>AI-written lines were reworked <b className={ratio > 1 ? "text-ai" : "text-human"}>{ratio.toFixed(1)}×</b> as often as human-written ones
+                    <span className="text-faint"> · median {c.ai_median_commits_to_rework} vs {c.human_median_commits_to_rework} commits until rework</span></span>
+                ) : (
+                  <span className="text-faint">No rework recorded yet on either side.</span>
+                )}
+              </div>
+            </Card>
+          );
+        })()}
+
         <Card className="p-5">
           <div className="mb-2.5 flex flex-wrap gap-3.5 font-mono text-[11px] text-muted">
             <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-human" />human</span>
