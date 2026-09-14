@@ -417,6 +417,7 @@ jobs:
                 <Feature title="Scans on every push">Install the GitHub App. Each push to the default branch re-scans the repo and updates the dashboard.</Feature>
                 <Feature title="Review evidence from GitHub">Cloud asks the pull request API whether a commit went through a PR and who approved it.</Feature>
                 <Feature title="Alerts that name the commit">Threshold crossings and unreviewed AI code in critical paths email your workspace admins with the hotspots.</Feature>
+                <Feature title="Security signals with provenance">Dangerous-looking lines (secrets, TLS off, shell and SQL from strings) shown with who wrote them and whether anyone reviewed them. The same check runs inside the agent loop, before the commit.</Feature>
                 <Feature title="A signed authorship report">Export a Bill of Materials signed by grain Cloud, for audits and due diligence. Anyone can verify it.</Feature>
               </ul>
             </div>
@@ -480,6 +481,9 @@ jobs:
             </QA>
             <QA q="Will it slow down commits?">
               The post-commit hook hashes the lines the commit added and writes one note. On this repository that is a few milliseconds. Nothing runs in the editor loop.
+            </QA>
+            <QA q="Does it catch security problems?">
+              It catches the lines that make vibe coding dangerous: a pasted token, TLS verification turned off, a shell or SQL command built from input, unsafe deserialization, wildcard IAM. When Claude Code writes one, grain tells the agent before the commit; every report says which of these lines an AI wrote and whether anyone reviewed them. It is not a vulnerability scanner, and it says so next to every finding.
             </QA>
             <QA q="Which agents does it capture?">
               Claude Code today, through its PostToolUse hook. The ledger format is a JSON line per edit, so any tool that can run a command after writing a file can attest.
