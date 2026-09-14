@@ -353,11 +353,9 @@ web/                 grain Cloud (Next.js, Supabase, Stripe, GitHub App)
 - [`docs/provenance-capture.md`](./docs/provenance-capture.md) — `grain hook`, `attest`, `blame`
 - [`docs/outcomes.md`](./docs/outcomes.md) · [`docs/risk.md`](./docs/risk.md) — what Outcomes and Risk measure, and don't
 - [`docs/detection/calibration-study.md`](./docs/detection/calibration-study.md) — why the content classifier is calibrated per repo
-- [`docs/concept.html`](./docs/concept.html) — concept pitch
-- [`docs/product-spec.html`](./docs/product-spec.html) — full product specification
 - [`docs/design-system.html`](./docs/design-system.html) — visual design system
 - [`design/brand/`](./design/brand) — brand guidelines · [`design/product/`](./design/product) — full product design (auth, dashboard, landing)
-- [`site/`](./site) — landing page · [`LAUNCH.md`](./LAUNCH.md) — Show HN launch plan
+- [`site/`](./site) — the original static landing page; the live one is `web/`
 
 ## Contributing
 
