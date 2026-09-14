@@ -4,6 +4,7 @@
 package config
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -18,6 +19,12 @@ type Config struct {
 	Inference        bool   // whether behavioral inference runs
 	ContentClassifier bool  // use the content classifier for the inferred path
 	Output           string // human-readable report filename
+
+	// Per-repo calibrated classifier weights, loaded from .grain/model.json when
+	// present (written by `grain calibrate`). Empty → the built-in default model.
+	ModelWeights []float64
+	ModelBias    float64
+	HasModel     bool
 }
 
 // Default returns grain's built-in defaults, used when no .grain.toml is found.
@@ -39,6 +46,7 @@ func Load(root string) (Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
+			loadModel(root, &cfg) // calibrated weights can exist without a .grain.toml
 			return cfg, nil
 		}
 		return cfg, err
@@ -77,7 +85,27 @@ func Load(root string) (Config, error) {
 			cfg.Output = unquote(val)
 		}
 	}
+	loadModel(root, &cfg)
 	return cfg, nil
+}
+
+// loadModel reads per-repo calibrated weights from <root>/.grain/model.json,
+// written by `grain calibrate`. A missing/invalid file leaves the default model.
+func loadModel(root string, cfg *Config) {
+	data, err := os.ReadFile(filepath.Join(root, ".grain", "model.json"))
+	if err != nil {
+		return
+	}
+	var m struct {
+		Weights []float64 `json:"weights"`
+		Bias    float64   `json:"bias"`
+	}
+	if json.Unmarshal(data, &m) != nil || len(m.Weights) == 0 {
+		return
+	}
+	cfg.ModelWeights = m.Weights
+	cfg.ModelBias = m.Bias
+	cfg.HasModel = true
 }
 
 func parseList(val string) []string {

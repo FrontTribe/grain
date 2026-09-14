@@ -38,6 +38,8 @@ func main() {
 		err = cmdAnnotate(os.Args[2:])
 	case "eval":
 		err = cmdEval(os.Args[2:])
+	case "calibrate":
+		err = cmdCalibrate(os.Args[2:])
 	case "push":
 		err = cmdPush(os.Args[2:])
 	case "init":
@@ -76,6 +78,7 @@ usage:
   grain explain <sha> [-C dir]                    why a commit was classified as it was
   grain annotate <sha> --ai|--human|--assisted   attest a commit's provenance in a git note
   grain eval [--fit] [-C dir]                     score the content classifier vs declared commits
+  grain calibrate [-C dir] [--dry-run]            fit this repo's own classifier weights (.grain/model.json)
   grain push [--url U] [--token T] [--file f]     push grain.json to Grain Cloud
   grain init [-C dir]                            write an example .grain.toml
   grain version

@@ -43,11 +43,22 @@ type Result struct {
 // IsAI reports whether the class counts as AI for aggregation.
 func (r Result) IsAI() bool { return r.Class == AIAssisted || r.Class == AIAuthored }
 
+// modelFor returns the per-repo calibrated model when one is loaded (via
+// `grain calibrate` → .grain/model.json), else the built-in default. Per-repo
+// weights are where the content signal actually generalizes — the global
+// default is a conservative prior (see docs/detection/calibration-study.md).
+func modelFor(cfg config.Config) classify.Model {
+	if cfg.HasModel {
+		return classify.Model{ID: "w2-content-fit", Weights: cfg.ModelWeights, Bias: cfg.ModelBias, CalA: 1, CalB: 0}
+	}
+	return classify.DefaultModel()
+}
+
 // EngineWeightsID identifies the weights used, so grain.json stays reproducible:
 // the content classifier's id when enabled, else the behavioral baseline "w1".
 func EngineWeightsID(cfg config.Config) string {
 	if cfg.ContentClassifier {
-		return classify.DefaultModel().WeightsID()
+		return modelFor(cfg).WeightsID()
 	}
 	return "w1"
 }
@@ -96,7 +107,7 @@ func Classify(c gitlog.Commit, s signal.Set, cfg config.Config, added map[string
 	// already capped at the inferred ceiling by classify.
 	if cfg.ContentClassifier {
 		if fv, ok := features.Aggregate(added); ok {
-			res := classify.DefaultModel().Score(fv)
+			res := modelFor(cfg).Score(fv)
 			r.AILikelihood = res.AILikelihood
 			r.Confidence = res.Confidence
 			r.Basis = "inferred"
