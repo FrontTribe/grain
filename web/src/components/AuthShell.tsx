@@ -52,11 +52,12 @@ export function AuthShell({ children, step }: { children: React.ReactNode; step?
 }
 
 // The three steps between here and a first scan: a real sequence, so it is
-// shown as one. Quietly tells a new user how short the path is.
-function Steps({ current }: { current: 1 | 2 | 3 }) {
+// shown as one. Quietly tells a new user how short the path is. Step 4 means
+// "all done" (the first-scan page).
+export function Steps({ current, className = "mb-7" }: { current: 1 | 2 | 3 | 4; className?: string }) {
   const items = ["Create workspace", "Connect GitHub", "First scan"];
   return (
-    <ol className="rise mb-7 flex items-center gap-2 text-[12px]" style={{ "--i": 0 } as React.CSSProperties} aria-label="Setup progress">
+    <ol className={`rise flex items-center gap-2 text-[12px] ${className}`} style={{ "--i": 0 } as React.CSSProperties} aria-label="Setup progress">
       {items.map((label, i) => {
         const n = (i + 1) as 1 | 2 | 3;
         const state = n < current ? "done" : n === current ? "now" : "todo";
@@ -76,6 +77,26 @@ function Steps({ current }: { current: 1 | 2 | 3 }) {
         );
       })}
     </ol>
+  );
+}
+
+// The two setup pages after sign-up (connect, first scan): header with the
+// step pills, one centered card. Same tokens as everything else.
+export function FlowShell({ step, children, width = 720 }: { step: 2 | 3 | 4; children: React.ReactNode; width?: number }) {
+  return (
+    <div className="min-h-[100dvh] bg-ground px-5 py-6 text-ink sm:px-8 sm:py-8">
+      <div className="mx-auto w-full" style={{ maxWidth: width }}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-2.5 font-display text-[19px] font-extrabold tracking-tight">
+            <Mark size={22} /> grain
+          </Link>
+          <Steps current={step} className="" />
+        </div>
+        <div className="rise hero-card mt-6 overflow-hidden rounded-[16px] border border-line bg-surface" style={{ "--i": 1 } as React.CSSProperties}>
+          {children}
+        </div>
+      </div>
+    </div>
   );
 }
 

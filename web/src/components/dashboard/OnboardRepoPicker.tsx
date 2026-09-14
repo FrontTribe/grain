@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { onboardScan } from "@/app/app/integrations/actions";
 import type { GhRepo } from "@/lib/github";
@@ -15,7 +16,7 @@ export function OnboardRepoPicker({ repos, login }: { repos: GhRepo[]; login: st
 
   return (
     <form action={onboardScan}>
-      <div className="px-[30px] py-[22px]">
+      <div className="px-6 py-6 sm:px-8">
         <div className="mb-3.5 flex items-center gap-3">
           <span className="w-[120px] text-[13px] font-medium">Account</span>
           <div className="flex h-11 flex-1 items-center rounded-[10px] border border-line bg-surface px-3.5 text-sm">
@@ -33,7 +34,7 @@ export function OnboardRepoPicker({ repos, login }: { repos: GhRepo[]; login: st
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Filter repositories (e.g. FrontTribe)…"
-          className="mb-2 h-[42px] w-full rounded-[10px] border border-line bg-surface px-3.5 text-[14px] outline-none focus:border-brand"
+          className="mb-2 h-[42px] w-full rounded-[10px] border border-line bg-surface px-3.5 text-[14px] outline-none focus:border-ink"
         />
 
         {filtered.length === 0 ? (
@@ -70,9 +71,9 @@ export function OnboardRepoPicker({ repos, login }: { repos: GhRepo[]; login: st
         </div>
       </div>
 
-      <div className="flex justify-end gap-3 border-t border-line px-[30px] py-[18px]">
-        <a href="/app" className="flex h-11 items-center rounded-[10px] border border-line bg-surface px-5 text-[14px] font-semibold text-muted">Skip for now</a>
-        <button type="submit" className="flex h-11 items-center rounded-[10px] bg-brand px-5 text-[14px] font-semibold text-white">Scan selected repos</button>
+      <div className="flex flex-wrap justify-end gap-3 border-t border-line px-6 py-4 sm:px-8">
+        <Link href="/app" className="press inline-flex h-11 items-center rounded-[10px] border border-line-strong bg-surface px-5 text-[14px] font-semibold text-ink hover:border-ink">Skip for now</Link>
+        <button type="submit" className="press inline-flex h-11 items-center rounded-[10px] bg-ink px-5 text-[14px] font-semibold text-ground">Scan selected repositories</button>
       </div>
     </form>
   );
