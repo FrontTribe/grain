@@ -355,7 +355,6 @@ web/                 grain Cloud (Next.js, Supabase, Stripe, GitHub App)
 - [`docs/detection/calibration-study.md`](./docs/detection/calibration-study.md) — why the content classifier is calibrated per repo
 - [`docs/design-system.html`](./docs/design-system.html) — visual design system
 - [`design/brand/`](./design/brand) — brand guidelines · [`design/product/`](./design/product) — full product design (auth, dashboard, landing)
-- [`site/`](./site) — the original static landing page; the live one is `web/`
 
 ## Contributing
 
