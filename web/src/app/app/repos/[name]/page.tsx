@@ -172,6 +172,56 @@ export default async function RepoDetail({
           );
         })()}
 
+        {(() => {
+          const rk = repo.risk;
+          if (!rk || rk.ai_lines === 0) return null;
+          const share = rk.critical_ai_lines ? rk.critical_ai_unreviewed / rk.critical_ai_lines : 0;
+          return (
+            <Card className="p-5">
+              <div className="mb-1 flex items-center justify-between">
+                <h3 className="font-display text-[15px] font-bold">Risk</h3>
+                <span className="font-mono text-[11px] text-faint">AI-written code in critical paths</span>
+              </div>
+              {rk.critical_ai_lines === 0 ? (
+                <p className="text-[12.5px] text-muted">No AI-written lines landed in critical paths ({rk.patterns.slice(0, 6).join(", ")}…).</p>
+              ) : (
+                <>
+                  <p className="mb-3.5 text-[12.5px] text-muted">
+                    <b className={share > 0.5 ? "text-ai" : "text-ink"}>{rk.critical_ai_unreviewed}</b> of {rk.critical_ai_lines} AI-written lines in critical paths
+                    (<b className="text-ink">{Math.round(share * 100)}%</b>) landed with no review evidence — no reviewer trailer, no PR merge, applied by the author.
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {rk.critical.slice(0, 6).map((p) => (
+                      <div key={p.path} className="grid grid-cols-[150px_1fr_auto] items-center gap-3 text-[12.5px]">
+                        <code className="truncate font-mono text-[11.5px]">{p.path}</code>
+                        <div className="h-2 overflow-hidden rounded-full bg-line-strong/40">
+                          <div className="h-full rounded-full bg-ai" style={{ width: `${p.ai_lines ? Math.round((p.ai_unreviewed / p.ai_lines) * 100) : 0}%` }} />
+                        </div>
+                        <span className="font-mono tabular-nums text-muted"><b className="text-ink">{p.ai_unreviewed}</b>/{p.ai_lines} unreviewed · {p.commits} {p.commits === 1 ? "commit" : "commits"}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {rk.top.length > 0 && (
+                    <div className="mt-3.5 border-t border-line/60 pt-3">
+                      <div className="mb-1.5 font-mono text-[10.5px] uppercase tracking-wider text-muted">Hotspots</div>
+                      <div className="flex flex-col gap-1">
+                        {rk.top.slice(0, 5).map((h) => (
+                          <div key={h.sha + h.path} className="flex items-center gap-2.5 text-[12.5px]">
+                            <code className="font-mono text-[11px] text-faint">{h.sha.slice(0, 7)}</code>
+                            <span className="min-w-0 flex-1 truncate">{h.subject}</span>
+                            <code className="font-mono text-[11px] text-muted">{h.path}</code>
+                            <span className="font-mono tabular-nums text-ai">{h.ai_lines}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </Card>
+          );
+        })()}
+
         <Card className="p-5">
           <div className="mb-2.5 flex flex-wrap gap-3.5 font-mono text-[11px] text-muted">
             <span className="inline-flex items-center gap-1.5"><i className="size-2.5 rounded-sm bg-human" />human</span>

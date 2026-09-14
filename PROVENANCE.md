@@ -1,11 +1,11 @@
 # Provenance
 
-Authorship mix for **FrontTribe/grain**, measured from 82 commits. Signals, not verdicts.
+Authorship mix for **FrontTribe/grain**, measured from 83 commits. Signals, not verdicts.
 
 | | Share |
 |---|---|
-| Human-authored | **1%** |
-| AI-assisted | 99% |
+| Human-authored | **2%** |
+| AI-assisted | 98% |
 | Unclassified | 0% |
 
 ## By directory
@@ -15,9 +15,9 @@ Authorship mix for **FrontTribe/grain**, measured from 82 commits. Signals, not 
 | `web/src/` | 0% | 100% | 7898 |  |
 | `web/` | 0% | 100% | 7118 |  |
 | `docs/` | 6% | 94% | 2510 |  |
-| `cmd/grain/` | 8% | 92% | 1529 |  |
+| `cmd/grain/` | 8% | 92% | 1531 |  |
 | `design/product/` | 0% | 100% | 1426 |  |
-| `(root)` | 0% | 100% | 999 |  |
+| `(root)` | 1% | 99% | 1015 |  |
 | `design/cloud/` | 0% | 100% | 664 |  |
 | `design/brand/` | 0% | 100% | 647 |  |
 
@@ -27,8 +27,32 @@ What happened to the code after it landed — AI-written and human-written lines
 
 | | Lines | Later reworked | In a fix/revert | Median commits until rework |
 |---|---|---|---|---|
-| AI-written | 862 | 2 (0%) | 0 | 3 |
-| Human-written | 116 | 0 (0%) | 0 | 0 |
+| AI-written | 877 | 2 (0%) | 0 | 3 |
+| Human-written | 99 | 0 (0%) | 0 | 0 |
+
+## Risk
+
+**416 of 416 AI-written lines in critical paths (100%) landed without review evidence.** Review evidence is anything git can see — a `Reviewed-by` trailer, a squash-merge `(#123)` subject, arriving via a merge, or a committer other than the author. Absence means no evidence, not proof of no review.
+
+| Critical path | AI lines | Unreviewed | Commits |
+|---|---|---|---|
+| `workflows` | 155 | 155 | 7 |
+| `auth` | 129 | 129 | 7 |
+| `login` | 74 | 74 | 5 |
+| `billing` | 58 | 58 | 2 |
+
+**Hotspots** — commits that put the most unreviewed AI lines into a critical path:
+
+- `7463443` web: grain favicon + auth & onboarding flow — `login`, 53 lines
+- `d472442` feat: Stripe billing integration — `billing`, 50 lines
+- `33617b9` Add npm shim so `npx grain` works, plus a release workflow — `workflows`, 39 lines
+- `d732d4e` Auto-publish Homebrew formula from the release workflow — `workflows`, 35 lines
+- `63ffec5` Add Scoop bucket (Windows): manifest + updater + auto-publish + docs — `workflows`, 34 lines
+- `a064bcb` web: wire real Supabase auth + data — `auth`, 27 lines
+- `6d8fd6b` feat(cloud): wire filters, search, custom dropdowns & sliders — `auth`, 19 lines
+- `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 19 lines
+- `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 18 lines
+- `2251684` web: wire GitHub OAuth sign-in — `auth`, 17 lines
 
 > **How this is measured:** declared signals (`Co-Authored-By`, bot commits, explicit tags) dominate; behavioral inference is capped at 0.70 confidence and never stated as fact.
 

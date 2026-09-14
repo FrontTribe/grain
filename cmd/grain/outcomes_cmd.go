@@ -5,12 +5,14 @@ import (
 	"github.com/FrontTribe/grain/internal/gitlog"
 	"github.com/FrontTribe/grain/internal/outcomes"
 	"github.com/FrontTribe/grain/internal/report"
+	"github.com/FrontTribe/grain/internal/risk"
 )
 
-// attachOutcomes adds the rework analysis to a report. It needs both sides of
-// every diff regardless of whether the content classifier is on, so it reads
-// the removed lines itself and reuses the added lines when scan already has
-// them. Best-effort: a git failure just leaves the block out.
+// attachOutcomes adds the two post-hoc analyses to a report: Outcomes (how
+// often AI vs human lines get reworked) and Risk (AI lines in critical paths
+// without review evidence). Both need every diff's added lines regardless of
+// whether the classifier is on, so it reads them when scan didn't. Best-effort:
+// a git failure just leaves the block out.
 func attachOutcomes(rep *report.Report, root string, max int, commits []gitlog.Commit, added map[string]map[string][]string, cfg config.Config) {
 	if added == nil {
 		var err error
@@ -18,10 +20,44 @@ func attachOutcomes(rep *report.Report, root string, max int, commits []gitlog.C
 			return
 		}
 	}
-	removed, err := gitlog.ReadRemovedLines(root, "", max)
-	if err != nil {
-		return
+
+	// grain's own generated outputs are rewritten on every scan; their churn is
+	// noise, not authorship — keep them out of both analyses.
+	skip := map[string]bool{"grain.json": true}
+	if cfg.Output != "" {
+		skip[cfg.Output] = true
 	}
-	o := outcomes.Compute(commits, added, removed, cfg)
-	rep.Outcomes = &o
+	added = without(added, skip)
+
+	if removed, err := gitlog.ReadRemovedLines(root, "", max); err == nil {
+		o := outcomes.Compute(commits, added, without(removed, skip), cfg)
+		rep.Outcomes = &o
+	}
+
+	// Critical paths: the built-in security/money list unless the repo sets
+	// `critical = [...]`, plus its human_owned paths either way.
+	patterns := cfg.Critical
+	if len(patterns) == 0 {
+		patterns = risk.DefaultCritical
+	}
+	patterns = append(append([]string{}, patterns...), cfg.HumanOwned...)
+	r := risk.Compute(commits, added, gitlog.FirstParentSet(root, "", max), patterns, cfg)
+	rep.Risk = &r
+}
+
+// without returns a copy of a per-commit diff map with the given paths dropped.
+func without(m map[string]map[string][]string, skip map[string]bool) map[string]map[string][]string {
+	out := make(map[string]map[string][]string, len(m))
+	for sha, files := range m {
+		kept := make(map[string][]string, len(files))
+		for p, lines := range files {
+			if !skip[p] {
+				kept[p] = lines
+			}
+		}
+		if len(kept) > 0 {
+			out[sha] = kept
+		}
+	}
+	return out
 }

@@ -23,7 +23,11 @@ func outcomesLine(o *outcomes.Summary) string {
 	case !c.Valid():
 		s += " · not enough lines for a verdict"
 	case c.Ratio() > 0:
-		s += fmt.Sprintf(" · %.1f× more often", c.Ratio())
+		if r := c.Ratio(); r < 1 {
+			s += fmt.Sprintf(" · %.2f× as often", r)
+		} else {
+			s += fmt.Sprintf(" · %.1f× as often", r)
+		}
 	}
 	return s + "\n"
 }

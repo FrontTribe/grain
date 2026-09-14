@@ -14,6 +14,7 @@ import (
 type Config struct {
 	AIThreshold float64  // policy: attention when AI share exceeds this
 	HumanOwned  []string // glob-ish paths that should stay human-authored
+	Critical    []string // paths where unreviewed AI code is a risk (empty → built-in list + HumanOwned)
 	Agents      []string // AI agent names recognized in trailers/authors
 	BotAuthors  []string // author patterns treated as bots
 	Inference        bool   // whether behavioral inference runs
@@ -74,6 +75,8 @@ func Load(root string) (Config, error) {
 			}
 		case "human_owned":
 			cfg.HumanOwned = parseList(val)
+		case "critical":
+			cfg.Critical = parseList(val)
 		case "agents":
 			if l := parseList(val); len(l) > 0 {
 				cfg.Agents = l

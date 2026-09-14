@@ -56,9 +56,21 @@ export type OutcomesCohort = {
 };
 export type Outcomes = { strict: OutcomesCohort; broad: OutcomesCohort; commits: number };
 
+// Risk analysis pushed by the CLI (grain.json → risk): AI lines in critical
+// paths without review evidence. Field names match internal/risk.
+export type RiskPath = { path: string; ai_lines: number; ai_unreviewed: number; commits: number };
+export type RiskHotspot = { sha: string; subject: string; path: string; ai_lines: number };
+export type Risk = {
+  ai_lines: number; ai_unreviewed: number;
+  critical_ai_lines: number; critical_ai_unreviewed: number;
+  critical: RiskPath[]; top: RiskHotspot[]; patterns: string[];
+  reviewed_commits: number; unreviewed_commits: number;
+};
+
 export type Repo = {
   id: string; name: string; full_name: string | null;
   outcomes?: Outcomes | null;
+  risk?: Risk | null;
   human: number; ai: number; unc: number;
   status: "healthy" | "attention"; human_owned: string[]; last_scan_at: string | null;
   ai_attested: number; ai_declared: number; ai_inferred: number;

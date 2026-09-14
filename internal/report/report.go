@@ -14,6 +14,7 @@ import (
 	"github.com/FrontTribe/grain/internal/config"
 	"github.com/FrontTribe/grain/internal/gitlog"
 	"github.com/FrontTribe/grain/internal/outcomes"
+	"github.com/FrontTribe/grain/internal/risk"
 	"github.com/FrontTribe/grain/internal/score"
 )
 
@@ -61,6 +62,9 @@ type Report struct {
 	// Outcomes is the rework analysis (AI vs human lines later rewritten),
 	// attached by scan when both sides of the diffs are available.
 	Outcomes *outcomes.Summary
+	// Risk is where AI-written lines landed in critical paths without review
+	// evidence, attached alongside Outcomes.
+	Risk *risk.Summary
 }
 
 // weightsID returns the report's weights id, defaulting to the baseline.
@@ -233,8 +237,10 @@ func (r Report) WriteJSON(w io.Writer) error {
 		ByPath      []pathJSON   `json:"by_path"`
 		Commits     []commitJSON `json:"commits"`
 		Outcomes    *outcomes.Summary `json:"outcomes,omitempty"`
+		Risk        *risk.Summary     `json:"risk,omitempty"`
 	}{
 		Outcomes:    r.Outcomes,
+		Risk:        r.Risk,
 		Schema:      "grain/v0.1",
 		Engine:      engineJSON{EngineVersion, r.weightsID()},
 		Repo:        r.Repo,
@@ -284,6 +290,9 @@ func (r Report) WriteMarkdown(w io.Writer) {
 		p("\n")
 	}
 	if s := outcomesMarkdown(r.Outcomes); s != "" {
+		p("%s", s)
+	}
+	if s := riskMarkdown(r.Risk); s != "" {
 		p("%s", s)
 	}
 	p("> **How this is measured:** declared signals (`Co-Authored-By`, bot commits, explicit tags) dominate; behavioral inference is capped at %.2f confidence and never stated as fact.\n\n", score.InferredConfidenceCap)
@@ -367,6 +376,9 @@ func (r Report) WriteText(w io.Writer, color bool) {
 	fmt.Fprintf(w, "    %s %3d%%  %s\n", c(ai, pad("ai-assisted")), pct(r.Summary.AIAssisted), c(ai, bar(r.Summary.AIAssisted)))
 	fmt.Fprintf(w, "    %s %3d%%  %s\n", c(dim, pad("unclassified")), pct(r.Summary.Unclassified), c(dim, bar(r.Summary.Unclassified)))
 	if s := outcomesLine(r.Outcomes); s != "" {
+		fmt.Fprint(w, s)
+	}
+	if s := riskLine(r.Risk); s != "" {
 		fmt.Fprint(w, s)
 	}
 }

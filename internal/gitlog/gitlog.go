@@ -170,6 +170,32 @@ func Head(dir string) (string, error) {
 // Run executes a git subcommand in dir and returns its stdout.
 func Run(dir string, args ...string) (string, error) { return run(dir, args...) }
 
+// FirstParentSet returns the non-merge commits on the first-parent chain of
+// rev (HEAD when empty): the ones that landed directly on the branch rather
+// than arriving through a merge. Used as one piece of review evidence — a
+// commit that is NOT in this set came in via a merge (typically a reviewed PR).
+func FirstParentSet(dir, rev string, max int) map[string]bool {
+	args := []string{"rev-list", "--first-parent", "--no-merges"}
+	if max > 0 {
+		args = append(args, fmt.Sprintf("--max-count=%d", max))
+	}
+	if rev == "" {
+		rev = "HEAD"
+	}
+	args = append(args, rev)
+	out, err := run(dir, args...)
+	set := map[string]bool{}
+	if err != nil {
+		return set
+	}
+	for _, sha := range strings.Split(out, "\n") {
+		if sha = strings.TrimSpace(sha); sha != "" {
+			set[sha] = true
+		}
+	}
+	return set
+}
+
 // ReadAddedLines returns, per commit SHA, the added ('+') lines grouped by file
 // path. It shells out once to `git log -p --unified=0` and parses the patch. Used
 // by content-based detection (which needs the actual added code, not just counts).
