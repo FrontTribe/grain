@@ -164,6 +164,8 @@ export default async function RepoDetail({
                 ) : ratio > 0 ? (
                   <span>AI-written lines were reworked <b className={ratio > 1 ? "text-ai" : "text-human"}>{ratio.toFixed(1)}×</b> as often as human-written ones
                     <span className="text-faint"> · median {c.ai_median_commits_to_rework} vs {c.human_median_commits_to_rework} commits until rework</span></span>
+                ) : aiR > 0 ? (
+                  <span className="text-faint">No human-written rework to compare against yet.</span>
                 ) : (
                   <span className="text-faint">No rework recorded yet on either side.</span>
                 )}
