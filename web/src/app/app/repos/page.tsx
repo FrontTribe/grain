@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { TopBar, Card, MiniBar, Spark, Pill } from "@/components/dashboard/ui";
 import { SearchInput } from "@/components/dashboard/controls";
-import { getRepos, ago, num } from "@/lib/data";
+import { getRepos, getRepoTrends, ago, num } from "@/lib/data";
 
 function spark(ai: number, attention: boolean): number[] {
   const end = Math.min(0.95, ai / 100);
@@ -12,10 +12,18 @@ function spark(ai: number, attention: boolean): number[] {
 export default async function Repositories({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const { q } = await searchParams;
   const query = (q ?? "").trim().toLowerCase();
-  const all = await getRepos();
+  const [all, repoTrends] = await Promise.all([getRepos(), getRepoTrends()]);
+  const trendById = new Map(repoTrends.map((t) => [t.id, t]));
   const repos = query
     ? all.filter((r) => `${r.name} ${r.full_name ?? ""}`.toLowerCase().includes(query))
     : all;
+
+  // Real sparkline when a repo has ≥2 scans; synthetic fallback otherwise.
+  const sparkProps = (id: string, ai: number, attention: boolean) => {
+    const t = trendById.get(id);
+    if (t && t.points >= 2) return { series: t.series, up: t.delta > 0 };
+    return { series: spark(ai, attention), up: attention };
+  };
   return (
     <>
       <TopBar
@@ -40,7 +48,7 @@ export default async function Repositories({ searchParams }: { searchParams: Pro
                   </td>
                   <td><MiniBar human={num(r.human)} ai={num(r.ai)} /></td>
                   <td className="font-mono tabular-nums">{num(r.ai)}%</td>
-                  <td><Spark series={spark(num(r.ai), r.status === "attention")} up={r.status === "attention"} /></td>
+                  <td><Spark {...sparkProps(r.id, num(r.ai), r.status === "attention")} /></td>
                   <td><Pill tone={r.status === "attention" ? "attention" : "ok"}>{r.status}</Pill></td>
                   <td className="font-mono tabular-nums text-faint">{r.last_scan_at ? ago(r.last_scan_at) + " ago" : "—"}</td>
                 </tr>

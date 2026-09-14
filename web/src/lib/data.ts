@@ -169,18 +169,36 @@ export async function getRepoDetail(name: string) {
   };
 }
 
-// Org authorship trend: per-repo scans aggregated by month (averaged).
+// Org authorship trend, month by month.
+//  - no repoId: the org-level snapshots that also power the Overview chart, so
+//    the "All repositories" view is consistent with the dashboard and populated
+//    whenever Overview is.
+//  - repoId: that repo's own scans, averaged per month.
 export async function getOrgTrend(repoId?: string): Promise<{ month: string; human: number; ai: number }[]> {
   const orgId = await getActiveOrgId();
   if (!orgId) return [];
   const s = await createClient();
-  let q = s
+
+  if (!repoId) {
+    const { data } = await s
+      .from("scans")
+      .select("human,ai,created_at")
+      .eq("org_id", orgId)
+      .is("repo_id", null)
+      .order("created_at", { ascending: true });
+    return ((data ?? []) as { human: number; ai: number; created_at: string }[]).map((r) => ({
+      month: monthLabel(r.created_at),
+      human: Math.round(Number(r.human)),
+      ai: Math.round(Number(r.ai)),
+    }));
+  }
+
+  const { data } = await s
     .from("scans")
     .select("human,ai,created_at")
     .eq("org_id", orgId)
-    .not("repo_id", "is", null);
-  if (repoId) q = q.eq("repo_id", repoId);
-  const { data } = await q.order("created_at", { ascending: true });
+    .eq("repo_id", repoId)
+    .order("created_at", { ascending: true });
   const rows = (data ?? []) as { human: number; ai: number; created_at: string }[];
   const byMonth = new Map<string, { h: number; a: number; n: number; label: string }>();
   for (const r of rows) {
@@ -195,7 +213,7 @@ export async function getOrgTrend(repoId?: string): Promise<{ month: string; hum
     .map(([, v]) => ({ month: v.label, human: Math.round(v.h / v.n), ai: Math.round(v.a / v.n) }));
 }
 
-export type RepoTrend = { id: string; name: string; owner: string; ai: number; series: number[]; delta: number };
+export type RepoTrend = { id: string; name: string; owner: string; ai: number; series: number[]; delta: number; points: number };
 
 export async function getRepoTrends(): Promise<RepoTrend[]> {
   const orgId = await getActiveOrgId();
@@ -220,6 +238,7 @@ export async function getRepoTrends(): Promise<RepoTrend[]> {
       ai: Math.round(Number(r.ai)),
       series: fractions,
       delta,
+      points: pct.length,
     };
   });
 }

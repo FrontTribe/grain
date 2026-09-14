@@ -3,7 +3,7 @@ import { TrendChart } from "@/components/dashboard/TrendChart";
 import { Onboarding } from "@/components/dashboard/Onboarding";
 import { GithubPanel } from "@/components/dashboard/GithubPanel";
 import { SearchInput, SelectNav } from "@/components/dashboard/controls";
-import { getRepos, getOrgScans, getEvents, getUserAndOrg, ago, monthLabel, num } from "@/lib/data";
+import { getRepos, getOrgScans, getEvents, getRepoTrends, getUserAndOrg, ago, monthLabel, num } from "@/lib/data";
 
 const RANGES = [
   { value: "3", label: "Last 3 months" },
@@ -22,7 +22,8 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   const { range, q } = await searchParams;
   const months = RANGES.some((r) => r.value === range) ? Number(range) : 6;
   const query = (q ?? "").trim().toLowerCase();
-  const [repos, scans, events] = await Promise.all([getRepos(), getOrgScans(), getEvents()]);
+  const [repos, scans, events, repoTrends] = await Promise.all([getRepos(), getOrgScans(), getEvents(), getRepoTrends()]);
+  const trendById = new Map(repoTrends.map((t) => [t.id, t]));
 
   // Fresh workspace (e.g. a new GitHub OAuth user): guide them to first data.
   if (repos.length === 0) {
@@ -55,6 +56,14 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   const shownRepos = query
     ? repos.filter((r) => `${r.name} ${r.full_name ?? ""}`.toLowerCase().includes(query))
     : repos;
+
+  // Real 30-day sparkline from accumulated scan history when a repo has ≥2 scans;
+  // otherwise a gentle synthetic line derived from its current AI share.
+  const sparkProps = (id: string, ai: number, attention: boolean) => {
+    const t = trendById.get(id);
+    if (t && t.points >= 2) return { series: t.series, up: t.delta > 0 };
+    return { series: spark(ai, attention), up: attention };
+  };
   const attention = events
     .filter((e) => e.kind === "attention" && e.pr)
     .slice(0, 5)
@@ -144,7 +153,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
                   <td className="font-medium">{r.name} <span className="font-mono font-normal text-faint">{r.full_name?.split("/")[0] ?? ""}/</span></td>
                   <td><MiniBar human={num(r.human)} ai={num(r.ai)} /></td>
                   <td className="font-mono tabular-nums">{num(r.ai)}%</td>
-                  <td><Spark series={spark(num(r.ai), r.status === "attention")} up={r.status === "attention"} /></td>
+                  <td><Spark {...sparkProps(r.id, num(r.ai), r.status === "attention")} /></td>
                   <td><Pill tone={r.status === "attention" ? "attention" : "ok"}>{r.status}</Pill></td>
                   <td className="font-mono tabular-nums text-faint">{r.last_scan_at ? ago(r.last_scan_at) + " ago" : "—"}</td>
                 </tr>
