@@ -345,7 +345,7 @@ human_owned  = ["src/auth/**", "src/payments/**"]
 
 [detection]
 inference          = true
-content_classifier = false   # score inferred commits from code content (experimental)
+content_classifier = true    # score inferred commits from code content (default; false = declared-only)
 local_model = "off"
 agents      = ["claude", "copilot", "cursor", "codex", "devin"]
 bot_authors = ["*[bot]"]

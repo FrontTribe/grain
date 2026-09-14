@@ -35,7 +35,12 @@ func Default() Config {
 		Agents:      []string{"claude", "copilot", "cursor", "codex", "devin", "aider", "cody", "chatgpt", "gpt", "gemini", "tabnine"},
 		BotAuthors:  []string{"[bot]", "bot@"},
 		Inference:   true,
-		Output:      "PROVENANCE.md",
+		// On by default so the CLI and Grain Cloud agree: the inferred tier runs
+		// the content classifier (a conservative global prior, capped at 0.70 and
+		// labelled a guess; `grain calibrate` refines it per repo). Set
+		// content_classifier = false in .grain.toml for declared-only scans.
+		ContentClassifier: true,
+		Output:            "PROVENANCE.md",
 	}
 }
 

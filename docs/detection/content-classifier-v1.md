@@ -1,9 +1,10 @@
 # Content classifier v1 — implementation plan
 
-> **Status: built & wired (M1–M4 shipped), opt-in, unvalidated.** Enable with
-> `.grain.toml [detection] content_classifier = true`. M5 (measured validation)
-> is blocked on balanced labeled data — see "Milestones" and the honest finding
-> below. Off by default; does not change existing behavior.
+> **Status: built, wired, on by default (since 2026-09-14), validated per-repo.**
+> The global prior is a conservative starting point (capped at 0.70, labelled a
+> guess); `grain calibrate` fits a repo's own weights, which is where the signal
+> actually holds — see [calibration-study.md](calibration-study.md). Disable with
+> `content_classifier = false` in `.grain.toml` for declared-only scans.
 
 **Goal.** Replace Grain's weak inferred heuristic (`inferFeatures`: a diff-size
 logistic) with a **content-based** classifier that reads the actual added code,
@@ -85,7 +86,9 @@ grain eval [-C dir] [--fit] [--report json|text]
 
 ## Integration into `score.Classify`
 
-- New config gate: `.grain.toml [detection] content_classifier = true`.
+- Config gate: `content_classifier` in `.grain.toml`. **On by default** since
+  2026-09-14 so the CLI and Grain Cloud agree; set `content_classifier = false`
+  for declared-only scans.
 - When enabled and no declared AI signal: run the classifier instead of the v0
   burst heuristic (or blend: `max`/weighted). Keep `Basis = "inferred"`, cap 0.70.
 - Bump `report.WeightsID` (`w1` → `w2-content`) so `grain.json` stays reproducible.
