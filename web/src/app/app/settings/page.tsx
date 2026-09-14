@@ -80,7 +80,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 <div className="flex items-center gap-4">
                   <label className="w-[150px] text-[13px] font-medium">URL</label>
                   <div className="flex h-[42px] flex-1 items-center rounded-[9px] border border-line bg-surface px-3 text-sm text-muted">
-                    <span className="text-faint">grain.dev/</span>{slug}
+                    <span className="text-faint">getgrain.dev/</span>{slug}
                   </div>
                 </div>
                 <div className="mt-4 flex justify-end"><button type="submit" className={`${btn} bg-brand text-surface`}>Save changes</button></div>

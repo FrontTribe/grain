@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 import { Fingerprint } from "@/components/Fingerprint";
 
-const INGEST_URL = "https://grain-fronttribe.vercel.app/api/ingest";
 const REPO = "https://github.com/FrontTribe/grain";
 
 function Copy({ text }: { text: string }) {
@@ -50,7 +49,10 @@ function Step({ n, title, children }: { n: number; title: string; children: Reac
 }
 
 export function Onboarding({ workspace, connect }: { workspace: string; connect: ReactNode }) {
-  const pushBlock = `export GRAIN_API=${INGEST_URL}\nexport GRAIN_TOKEN=grain_…        # from Settings\ngrain push`;
+  // Derive the ingest endpoint from the domain actually serving the app, so it
+  // tracks whatever host the user is on (getgrain.dev, a preview, localhost).
+  const ingestUrl = (typeof window !== "undefined" ? window.location.origin : "https://getgrain.dev") + "/api/ingest";
+  const pushBlock = `export GRAIN_API=${ingestUrl}\nexport GRAIN_TOKEN=grain_…        # from Settings\ngrain push`;
 
   return (
     <div className="flex flex-1 items-start justify-center overflow-y-auto p-7">
