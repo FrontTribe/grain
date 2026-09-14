@@ -159,6 +159,7 @@ func cmdScan(args []string) error {
 	}
 	added := addedFor(root, "", *max, cfg)
 	rep := report.Build(repoName(root), today(), commits, classifyAll(commits, cfg, added), cfg)
+	attachOutcomes(&rep, root, *max, commits, added, cfg)
 
 	if err := writeFile(filepath.Join(root, cfg.Output), rep.WriteMarkdown); err != nil {
 		return err

@@ -174,6 +174,20 @@ func Run(dir string, args ...string) (string, error) { return run(dir, args...) 
 // path. It shells out once to `git log -p --unified=0` and parses the patch. Used
 // by content-based detection (which needs the actual added code, not just counts).
 func ReadAddedLines(dir, rev string, max int) (map[string]map[string][]string, error) {
+	return readDiffLines(dir, rev, max, '+')
+}
+
+// ReadRemovedLines is the removed ('-') side of ReadAddedLines: the lines each
+// commit deleted or rewrote, grouped by file path (the old path when the file
+// was deleted). Used by outcome tracking to tell which earlier-added lines were
+// later reworked.
+func ReadRemovedLines(dir, rev string, max int) (map[string]map[string][]string, error) {
+	return readDiffLines(dir, rev, max, '-')
+}
+
+// readDiffLines shells out once to `git log -p --unified=0` and collects, per
+// commit SHA, the lines with the given sign ('+' added, '-' removed) by file.
+func readDiffLines(dir, rev string, max int, sign byte) (map[string]map[string][]string, error) {
 	args := []string{"log", "--no-merges", "-p", "--unified=0",
 		"--format=" + rs + "%H", "--no-color"}
 	if max > 0 {
@@ -202,25 +216,39 @@ func ReadAddedLines(dir, rev string, max int) (map[string]map[string][]string, e
 			continue
 		}
 		byFile := make(map[string][]string)
-		var path string
+		var oldPath, newPath string
 		for _, ln := range strings.Split(chunk[nl+1:], "\n") {
 			switch {
-			case strings.HasPrefix(ln, "+++ "):
-				p := strings.TrimPrefix(ln, "+++ ")
-				p = strings.TrimPrefix(p, "b/")
+			case strings.HasPrefix(ln, "--- "):
+				p := strings.TrimPrefix(strings.TrimPrefix(ln, "--- "), "a/")
 				if p == "/dev/null" {
-					path = ""
+					oldPath = ""
 				} else {
-					path = p
+					oldPath = p
 				}
-			case strings.HasPrefix(ln, "diff --git"), strings.HasPrefix(ln, "--- "),
+			case strings.HasPrefix(ln, "+++ "):
+				p := strings.TrimPrefix(strings.TrimPrefix(ln, "+++ "), "b/")
+				if p == "/dev/null" {
+					newPath = ""
+				} else {
+					newPath = p
+				}
+			case strings.HasPrefix(ln, "diff --git"),
 				strings.HasPrefix(ln, "@@"), strings.HasPrefix(ln, "index "),
 				strings.HasPrefix(ln, "new file"), strings.HasPrefix(ln, "deleted file"),
 				strings.HasPrefix(ln, "rename "), strings.HasPrefix(ln, "similarity "),
 				strings.HasPrefix(ln, "Binary files"):
 				// diff metadata — skip
-			case strings.HasPrefix(ln, "+") && path != "":
-				byFile[path] = append(byFile[path], ln[1:])
+			case len(ln) > 0 && ln[0] == sign:
+				// added lines belong to the new path; removed lines too, unless the
+				// file was deleted outright (then only the old path exists).
+				path := newPath
+				if sign == '-' && path == "" {
+					path = oldPath
+				}
+				if path != "" {
+					byFile[path] = append(byFile[path], ln[1:])
+				}
 			}
 		}
 		if len(byFile) > 0 {

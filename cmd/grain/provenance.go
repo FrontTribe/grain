@@ -2,8 +2,6 @@ package main
 
 import (
 	"bufio"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -14,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/FrontTribe/grain/internal/gitlog"
+	"github.com/FrontTribe/grain/internal/outcomes"
 	"github.com/FrontTribe/grain/internal/signal"
 )
 
@@ -36,12 +35,10 @@ const ledgerFile = ".grain/ai-edits.jsonl"
 // attestation survives later edits elsewhere in the file. Trivial lines
 // ("}", ")") are skipped by callers: they'd collide across authors and carry no
 // signal, matching internal/features' convention.
-func lineHash(line string) string {
-	sum := sha256.Sum256([]byte(strings.TrimSpace(line)))
-	return hex.EncodeToString(sum[:])[:10]
-}
+// One definition, shared with blame and outcome tracking, so hashes never drift.
+func lineHash(line string) string { return outcomes.LineHash(line) }
 
-func substantive(line string) bool { return len(strings.TrimSpace(line)) > 3 }
+func substantive(line string) bool { return outcomes.Substantive(line) }
 
 type ledgerEntry struct {
 	File   string   `json:"file"`
