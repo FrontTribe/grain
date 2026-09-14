@@ -54,7 +54,7 @@ stripe products create \
 # uzmi prod_... iz outputa, pa:
 stripe prices create \
   --product prod_XXX \
-  --unit-amount 2000 \
+  --unit-amount 2900 \
   --currency usd \
   --recurring.interval month \
   --live

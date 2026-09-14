@@ -2,6 +2,10 @@ import { headers } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendEmail, attentionEmail, riskEmail } from "@/lib/email";
 import { getOrgMembers, getOrgPolicy, getUserAndOrg } from "@/lib/data";
+import { orgSubscribed, planSubscribed } from "@/lib/plan";
+
+// Email alerts are a Team feature: every notifier checks the plan first and
+// stays silent on Free (the dashboard still shows everything).
 
 type EmailRow = { email: string };
 
@@ -16,6 +20,7 @@ export async function notifyAttentionForOrg(
   repoName: string,
   aiPercent: number,
 ): Promise<void> {
+  if (!(await orgSubscribed(db, orgId))) return;
   const { data: policy } = await db.from("org_policy").select("threshold").eq("org_id", orgId).maybeSingle();
   const threshold = Math.round(Number((policy?.threshold as number | string | undefined) ?? 0.4) * 100);
   if (aiPercent <= threshold) return;
@@ -44,6 +49,7 @@ export async function notifyRiskForOrg(
   pushedShas: string[],
 ): Promise<void> {
   if (pushedShas.length === 0) return;
+  if (!(await orgSubscribed(db, orgId))) return;
   const pushed = new Set(pushedShas);
   const hot = risk.top.filter((h) => pushed.has(h.sha));
   if (hot.length === 0) return;
@@ -65,6 +71,7 @@ export async function notifyRiskForOrg(
 // org policy's AI threshold. Best-effort and inert unless email is configured;
 // callers wrap it so a notification failure never affects the scan result.
 export async function notifyIfOverThreshold(repoName: string, aiPercent: number): Promise<void> {
+  if (!(await planSubscribed())) return;
   const policy = await getOrgPolicy();
   const threshold = Math.round((policy?.threshold ?? 0.4) * 100);
   if (aiPercent <= threshold) return;

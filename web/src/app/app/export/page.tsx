@@ -1,11 +1,12 @@
 import { TopBar } from "@/components/dashboard/ui";
 import { PrintButton } from "@/components/dashboard/PrintButton";
 import { buildAuthorshipBOM } from "@/lib/export";
+import { planSubscribed } from "@/lib/plan";
 
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
 
 export default async function ExportPage() {
-  const bom = await buildAuthorshipBOM(new Date().toISOString());
+  const [bom, subscribed] = await Promise.all([buildAuthorshipBOM(new Date().toISOString()), planSubscribed()]);
   const s = bom.summary;
 
   return (
@@ -14,7 +15,13 @@ export default async function ExportPage() {
         title="Authorship report"
         right={
           <>
-            <a href="/api/export/authorship" className={`${btn} border border-line bg-surface text-muted no-print`}>Download JSON</a>
+            {subscribed ? (
+              <a href="/api/export/authorship" className={`${btn} border border-line bg-surface text-muted no-print`}>Download signed JSON</a>
+            ) : (
+              <a href="/app/settings?tab=billing" className={`${btn} border border-line bg-surface text-muted no-print`} title="The signed export is part of the Team plan">
+                Signed export: Team plan
+              </a>
+            )}
             <PrintButton className={`${btn} bg-brand text-surface no-print`} />
           </>
         }

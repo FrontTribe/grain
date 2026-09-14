@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { TopBar, Card } from "@/components/dashboard/ui";
 import { getUserAndOrg, getIngestTokens, getOrgMembers, getInvites, getMyOrgs, getActiveOrgId, getRepos } from "@/lib/data";
-import { FREE_LIMITS } from "@/lib/plan";
+import { FREE_LIMITS, PLAN_FEATURES, TEAM_PRICE_USD } from "@/lib/plan";
 import { IngestTokens } from "@/components/dashboard/IngestTokens";
 import { MembersCard } from "@/components/dashboard/MembersCard";
 import { GithubPanel } from "@/components/dashboard/GithubPanel";
@@ -129,20 +129,28 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               <div className="mt-2 font-display text-2xl font-extrabold capitalize tracking-tight">{subscribed ? "Team" : plan}</div>
               <div className="mt-1 text-[13px] text-muted">
                 {subscribed
-                  ? `$20 / month${periodEnd ? ` · renews ${new Date(periodEnd).toLocaleDateString()}` : ""}`
-                  : "Free during early access"}
+                  ? `$${TEAM_PRICE_USD} / month${periodEnd ? ` · renews ${new Date(periodEnd).toLocaleDateString()}` : ""}`
+                  : "No card on file"}
               </div>
               {subscribed ? (
                 <ul className="mt-3.5 flex flex-col gap-1.5 text-[13px]">
-                  <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">Unlimited repositories</li>
-                  <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">Org dashboard &amp; policy</li>
+                  {PLAN_FEATURES.team.slice(0, 3).map((f) => (
+                    <li key={f} className="before:mr-1 before:font-mono before:text-brand before:content-['→']">{f}</li>
+                  ))}
                   <li className="before:mr-1 before:font-mono before:text-brand before:content-['→']">{members.length} {members.length === 1 ? "seat" : "seats"} used</li>
                 </ul>
               ) : (
                 <div className="mt-4 flex flex-col gap-3">
                   <Usage label="Repositories" used={repos.length} limit={FREE_LIMITS.repos} />
                   <Usage label="Seats" used={members.length + invites.length} limit={FREE_LIMITS.seats} />
-                  <p className="mt-1 text-[12.5px] text-muted">Upgrade to Team for unlimited repositories and seats.</p>
+                  <div className="mt-1 text-[12.5px] text-muted">
+                    <p>Team adds:</p>
+                    <ul className="mt-1 flex flex-col gap-1">
+                      {PLAN_FEATURES.team.slice(0, 3).map((f) => (
+                        <li key={f} className="before:mr-1 before:font-mono before:text-brand before:content-['→']">{f}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               )}
               <div className="mt-5 flex justify-end">
@@ -151,7 +159,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 ) : subscribed ? (
                   <form action={openPortal}><button type="submit" className={`${btn} border border-line bg-surface text-muted`}>Manage subscription</button></form>
                 ) : (
-                  <form action={startCheckout}><button type="submit" className={`${btn} bg-brand text-surface`}>Upgrade to Team — $20/mo</button></form>
+                  <form action={startCheckout}><button type="submit" className={`${btn} bg-brand text-surface`}>Upgrade to Team, ${TEAM_PRICE_USD}/mo</button></form>
                 )}
               </div>
             </Card>

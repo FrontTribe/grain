@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Mark } from "@/components/Mark";
 import { SELF_SCAN, SELF_COMMITS } from "@/lib/self-scan";
+import { PLAN_FEATURES, TEAM_PRICE_USD } from "@/lib/plan";
 import { BlameReveal, type BlameLine } from "@/components/marketing/BlameReveal";
 import { TiltCard } from "@/components/marketing/TiltCard";
 import { Fingerprint } from "@/components/Fingerprint";
@@ -511,19 +512,18 @@ jobs:
             <h2 id="pricing-h" className="text-balance font-display text-[30px] font-bold tracking-tight sm:text-[38px]">
               The CLI is free forever. Cloud is free to start.
             </h2>
-            <div className="mt-10 grid gap-4 md:grid-cols-2">
+            <p className="mt-4 max-w-[62ch] text-[16.5px] leading-relaxed text-muted">
+              Free shows you everything. Team is for when you want to be told, and to hand the numbers to someone else.
+            </p>
+            <div className="mt-10 grid gap-4 md:grid-cols-3">
               <div className="flex flex-col rounded-[14px] border border-line bg-ground p-7">
                 <h3 className="font-display text-[22px] font-bold tracking-tight">Free</h3>
                 <p className="mt-1 text-[14.5px] text-muted">For solo developers and small projects.</p>
                 <p className="mt-6 font-display text-[40px] font-extrabold leading-none tracking-tight">$0</p>
                 <ul className="mt-6 flex flex-col gap-2.5 text-[14.5px]">
-                  <Li>3 repositories, 3 seats</Li>
-                  <Li>GitHub App auto-scan and alerts</Li>
-                  <Li>Risk, Outcomes, trends, policy</Li>
-                  <Li>Signed authorship report</Li>
-                  <Li>Everything in the CLI, always</Li>
+                  {PLAN_FEATURES.free.map((f) => <Li key={f}>{f}</Li>)}
                 </ul>
-                <div className="mt-8">
+                <div className="mt-auto pt-8">
                   <Link href="/signup" className={`${btnSecondary} w-full`}>Start free</Link>
                   <p className="mt-2.5 text-center text-[12.5px] text-muted">No card required.</p>
                 </div>
@@ -532,21 +532,31 @@ jobs:
                 <h3 className="font-display text-[22px] font-bold tracking-tight text-human">Team</h3>
                 <p className="mt-1 text-[14.5px] text-muted">For teams shipping with agents every day.</p>
                 <p className="mt-6 font-display text-[40px] font-extrabold leading-none tracking-tight">
-                  $20<span className="text-[16px] font-semibold text-muted"> per workspace, per month</span>
+                  ${TEAM_PRICE_USD}<span className="text-[16px] font-semibold text-muted"> per workspace, per month</span>
                 </p>
                 <ul className="mt-6 flex flex-col gap-2.5 text-[14.5px]">
-                  <Li>Unlimited repositories and seats</Li>
-                  <Li>Everything in Free</Li>
-                  <Li>Upgrade or cancel in Settings, any time</Li>
+                  {PLAN_FEATURES.team.map((f) => <Li key={f}>{f}</Li>)}
                 </ul>
-                <div className="mt-8">
+                <div className="mt-auto pt-8">
                   <Link href="/signup" className={`${btnPrimary} w-full`}>Start free</Link>
+                  <p className="mt-2.5 text-center text-[12.5px] text-muted">Upgrade or cancel in Settings, any time.</p>
+                </div>
+              </div>
+              <div className="flex flex-col rounded-[14px] border border-line bg-ground p-7">
+                <h3 className="font-display text-[22px] font-bold tracking-tight">Audit</h3>
+                <p className="mt-1 text-[14.5px] text-muted">For regulated teams, due diligence, and procurement.</p>
+                <p className="mt-6 font-display text-[40px] font-extrabold leading-none tracking-tight">
+                  $199<span className="text-[16px] font-semibold text-muted"> per month, from</span>
+                </p>
+                <ul className="mt-6 flex flex-col gap-2.5 text-[14.5px]">
+                  {PLAN_FEATURES.audit.map((f) => <Li key={f}>{f}</Li>)}
+                </ul>
+                <div className="mt-auto pt-8">
+                  <a href={`${REPO}/issues/new?title=Audit%20plan&labels=audit`} className={`${btnSecondary} w-full`}>Talk to us</a>
+                  <p className="mt-2.5 text-center text-[12.5px] text-muted">Tell us what your audit needs.</p>
                 </div>
               </div>
             </div>
-            <p className="mt-6 text-[14px] text-muted">
-              Need SSO, retention rules, or on-prem? <a href={`${REPO}/issues/new`} className="underline decoration-line-strong underline-offset-4 hover:text-ink">Open an issue</a> and tell us what your audit needs.
-            </p>
           </div>
         </section>
 
