@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Mark } from "@/components/Mark";
 import { SELF_SCAN, SELF_COMMITS } from "@/lib/self-scan";
 import { PLAN_FEATURES, TEAM_PRICE_USD } from "@/lib/plan";
-import { BlameReveal, type BlameLine } from "@/components/marketing/BlameReveal";
+import { BlameReveal } from "@/components/marketing/BlameReveal";
+import { BLAME_FILE, BLAME_LINES, BLAME_SUMMARY } from "@/lib/self-blame";
 import { TiltCard } from "@/components/marketing/TiltCard";
 import { Fingerprint } from "@/components/Fingerprint";
 import { StepsScrolly, type StepData } from "@/components/marketing/StepsScrolly";
@@ -17,23 +18,6 @@ const SPEC = `${REPO}/blob/main/docs/spec/provenance-v1.md`;
 // (numbers in @/lib/self-scan), command transcripts copied from a terminal,
 // the alert email as it was delivered. Nothing is mocked.
 
-// grain's own command dispatch: the annotate/eval/calibrate cases were
-// captured by the hook; hook/attest/blame predate it, so they show as human.
-const BLAME_FILE = "cmd/grain/main.go";
-const BLAME_LINES: BlameLine[] = [
-  { ai: true, sha: "04ef67e", n: 37, text: "\tcase \"annotate\":" },
-  { ai: true, sha: "04ef67e", n: 38, text: "\t\terr = cmdAnnotate(os.Args[2:])" },
-  { ai: true, sha: "25d0dfc", n: 39, text: "\tcase \"eval\":" },
-  { ai: true, sha: "25d0dfc", n: 40, text: "\t\terr = cmdEval(os.Args[2:])" },
-  { ai: true, sha: "1ca4935", n: 41, text: "\tcase \"calibrate\":" },
-  { ai: true, sha: "1ca4935", n: 42, text: "\t\terr = cmdCalibrate(os.Args[2:])" },
-  { ai: false, sha: "2a65cf1", n: 43, text: "\tcase \"hook\":" },
-  { ai: false, sha: "2a65cf1", n: 44, text: "\t\terr = cmdHook(os.Args[2:])" },
-  { ai: false, sha: "2a65cf1", n: 45, text: "\tcase \"attest\":" },
-  { ai: false, sha: "2a65cf1", n: 46, text: "\t\terr = cmdAttest(os.Args[2:])" },
-  { ai: false, sha: "2a65cf1", n: 47, text: "\tcase \"blame\":" },
-  { ai: false, sha: "2a65cf1", n: 48, text: "\t\terr = cmdBlame(os.Args[2:])" },
-];
 
 // Terminal sessions, run on this repository. Lines starting with "$ " are
 // the commands; everything else is what grain printed.
@@ -160,7 +144,7 @@ export default function Home() {
               <BlameReveal
                 file={BLAME_FILE}
                 lines={BLAME_LINES}
-                summary={<>362 lines, <span className="text-ai">260 AI-written</span> (71%), attested from git notes</>}
+                summary={<>{BLAME_SUMMARY.lines} lines, <span className="text-ai">{BLAME_SUMMARY.ai} AI-written</span> ({BLAME_SUMMARY.pct}%), attested from git notes</>}
               />
             </TiltCard>
             <figcaption className="mt-2.5 text-[12.5px] text-faint">

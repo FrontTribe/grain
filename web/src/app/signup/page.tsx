@@ -9,7 +9,7 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
   const { error, next } = await searchParams;
 
   return (
-    <AuthShell>
+    <AuthShell step={1}>
       <h1 className="font-display text-[28px] font-bold tracking-tight">Create your workspace</h1>
       <p className="mb-6 mt-1.5 text-[14.5px] text-muted">
         Free for {FREE_LIMITS.repos} repositories and {FREE_LIMITS.seats} seats. No card required.
@@ -23,7 +23,7 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
           <GitHubMark /> Continue with GitHub
         </button>
       </form>
-      <p className="mt-2.5 text-center text-[12.5px] text-muted">The fastest path: you can connect repositories right away.</p>
+      <p className="mt-2.5 text-center text-[12.5px] text-muted">Fastest: step two is already done when you land.</p>
 
       <Divider />
 

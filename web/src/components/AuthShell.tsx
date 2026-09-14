@@ -1,61 +1,89 @@
 import Link from "next/link";
 import { Mark } from "@/components/Mark";
-import { Fingerprint } from "@/components/Fingerprint";
-import { SELF_SCAN, SELF_COMMITS } from "@/lib/self-scan";
+import { BlameReveal } from "@/components/marketing/BlameReveal";
+import { BLAME_FILE, BLAME_LINES, BLAME_SUMMARY } from "@/lib/self-blame";
 import { FREE_LIMITS } from "@/lib/plan";
 
-// The shell every auth page shares: the landing page's claim and proof on the
-// left, the form on the right. Same tokens as the rest of the site, so the
+// The shell every auth page shares. Left: the product's answer, as it is,
+// the same real `grain blame` view the landing page opens with. Right: the
+// form in a card. Same tokens as the rest of the site in both themes, so the
 // step from landing to sign-in doesn't feel like a different product.
-export function AuthShell({ children, aside = true }: { children: React.ReactNode; aside?: boolean }) {
+export function AuthShell({ children, step }: { children: React.ReactNode; step?: 1 | 2 | 3 }) {
   return (
-    <div className="min-h-[100dvh] bg-ground text-ink lg:grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-      {aside ? (
-        <aside className="hidden border-r border-line bg-surface lg:flex lg:flex-col lg:p-12">
-          <Link href="/" className="flex items-center gap-2.5 font-display text-[19px] font-extrabold tracking-tight">
-            <Mark size={22} /> grain
-          </Link>
-          <div className="mt-auto">
-            <h2 className="max-w-[16ch] text-balance font-display text-[36px] font-extrabold leading-[1.04] tracking-[-0.03em]">
-              Know which lines the <span className="text-ai">AI</span> wrote.
-            </h2>
-            <ul className="mt-6 flex flex-col gap-2.5 text-[14.5px] text-muted">
-              <li>Reads your git history locally or through the GitHub App. Code is never uploaded.</li>
-              <li>Attestations are signed into git and verifiable by anyone.</li>
-              <li>Free for {FREE_LIMITS.repos} repositories and {FREE_LIMITS.seats} seats. No card.</li>
-            </ul>
-            <div className="mt-9 rounded-[14px] border border-line bg-ground px-4 py-3">
-              <Fingerprint height={56} data={SELF_COMMITS} />
-              <div className="mt-2 font-mono text-[11.5px] text-muted">
-                grain on its own repository: {s(SELF_SCAN.commits)} commits, <span className="text-ai">{SELF_SCAN.ai}% AI-assisted</span>
-              </div>
-            </div>
+    <div className="min-h-[100dvh] bg-ground text-ink lg:grid lg:grid-cols-[minmax(0,6fr)_minmax(0,6fr)]">
+      <aside className="hidden lg:flex lg:flex-col lg:justify-between lg:px-14 lg:py-10 xl:px-20">
+        <Link href="/" className="flex items-center gap-2.5 font-display text-[19px] font-extrabold tracking-tight">
+          <Mark size={22} /> grain
+        </Link>
+        <div className="max-w-[520px]">
+          <h2 className="rise text-balance font-display text-[40px] font-extrabold leading-[1.04] tracking-[-0.03em]" style={{ "--i": 0 } as React.CSSProperties}>
+            Know which lines the <span className="text-ai">AI</span> wrote.
+          </h2>
+          <p className="rise mt-4 max-w-[44ch] text-[15.5px] leading-relaxed text-muted" style={{ "--i": 1 } as React.CSSProperties}>
+            Recorded when the agent writes it, signed into git, verifiable by anyone. This is grain reading its own repository.
+          </p>
+          <div className="rise hero-card mt-8 rounded-[14px]" style={{ "--i": 2 } as React.CSSProperties}>
+            <BlameReveal
+              file={BLAME_FILE}
+              lines={BLAME_LINES}
+              summary={<>{BLAME_SUMMARY.lines} lines, <span className="text-ai">{BLAME_SUMMARY.ai} AI-written</span> ({BLAME_SUMMARY.pct}%), attested from git notes</>}
+            />
           </div>
-        </aside>
-      ) : (
-        <div className="hidden lg:block" />
-      )}
+        </div>
+        <p className="text-[12.5px] text-faint">MIT engine. Your code is never uploaded.</p>
+      </aside>
 
-      <main className="flex min-h-[100dvh] flex-col px-5 py-6 sm:px-8 lg:min-h-0 lg:justify-center lg:px-16 lg:py-12">
-        <div className={aside ? "lg:hidden" : ""}>
+      <main className="flex min-h-[100dvh] flex-col bg-surface px-5 py-6 sm:px-8 lg:min-h-0 lg:justify-center lg:border-l lg:border-line lg:px-14 lg:py-12 xl:px-20">
+        <div className="lg:hidden">
           <Link href="/" className="inline-flex items-center gap-2.5 font-display text-[19px] font-extrabold tracking-tight">
             <Mark size={22} /> grain
           </Link>
         </div>
-        <div className="my-auto w-full max-w-[400px] py-10 lg:my-0 lg:py-0">{children}</div>
+        <div className="my-auto w-full max-w-[420px] py-10 lg:my-0 lg:py-0">
+          {step && <Steps current={step} />}
+          <div className="rise" style={{ "--i": 1 } as React.CSSProperties}>{children}</div>
+          <p className="mt-8 text-[12.5px] text-faint lg:hidden">
+            Free for {FREE_LIMITS.repos} repositories and {FREE_LIMITS.seats} seats. MIT engine, code never uploaded.
+          </p>
+        </div>
       </main>
     </div>
   );
 }
 
-function s(n: number): string {
-  return n.toLocaleString("en-US");
+// The three steps between here and a first scan: a real sequence, so it is
+// shown as one. Quietly tells a new user how short the path is.
+function Steps({ current }: { current: 1 | 2 | 3 }) {
+  const items = ["Create workspace", "Connect GitHub", "First scan"];
+  return (
+    <ol className="rise mb-7 flex items-center gap-2 text-[12px]" style={{ "--i": 0 } as React.CSSProperties} aria-label="Setup progress">
+      {items.map((label, i) => {
+        const n = (i + 1) as 1 | 2 | 3;
+        const state = n < current ? "done" : n === current ? "now" : "todo";
+        return (
+          <li key={label} className="flex items-center gap-2">
+            <span
+              aria-current={state === "now" ? "step" : undefined}
+              className={`inline-flex h-6 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 font-medium ${
+                state === "now" ? "bg-ink text-ground" : state === "done" ? "bg-human-soft text-human" : "border border-line text-muted"
+              }`}
+            >
+              <span className="font-mono text-[11px]">{n}</span>
+              <span className={state === "now" ? "" : "hidden sm:inline"}>{label}</span>
+            </span>
+            {i < items.length - 1 && <span className="h-px w-3 bg-line" aria-hidden />}
+          </li>
+        );
+      })}
+    </ol>
+  );
 }
 
 // Shared form pieces so the three pages stay identical in rhythm.
-export const fieldCls = "h-11 w-full rounded-[10px] border border-line bg-surface px-3.5 text-[14.5px] text-ink outline-none placeholder:text-faint focus:border-ink";
+export const fieldCls =
+  "h-11 w-full rounded-[10px] border border-line bg-ground px-3.5 text-[14.5px] text-ink outline-none placeholder:text-faint transition-[border-color,box-shadow] focus:border-ink focus:shadow-[0_0_0_3px_color-mix(in_oklab,var(--ink)_12%,transparent)]";
 export const primaryBtn = "press flex h-11 w-full items-center justify-center gap-2.5 rounded-[10px] bg-ink text-[14.5px] font-semibold text-ground";
-export const secondaryBtn = "press flex h-11 w-full items-center justify-center rounded-[10px] border border-line-strong text-[14.5px] font-semibold text-ink hover:border-ink";
+export const secondaryBtn = "press flex h-11 w-full items-center justify-center rounded-[10px] border border-line-strong bg-ground text-[14.5px] font-semibold text-ink hover:border-ink";
 
 export function Label({ htmlFor, children, right }: { htmlFor: string; children: React.ReactNode; right?: React.ReactNode }) {
   return (
