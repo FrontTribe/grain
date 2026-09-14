@@ -1,23 +1,23 @@
 # Provenance
 
-Authorship mix for **FrontTribe/grain**, measured from 91 commits. Signals, not verdicts.
+Authorship mix for **FrontTribe/grain**, measured from 99 commits. Signals, not verdicts.
 
 | | Share |
 |---|---|
-| Human-authored | **2%** |
-| AI-assisted | 98% |
+| Human-authored | **3%** |
+| AI-assisted | 97% |
 | Unclassified | 0% |
 
 ## By directory
 
 | Path | Human | AI | Lines | |
 |---|---|---|---|---|
-| `web/src/` | 2% | 98% | 10657 |  |
+| `web/src/` | 3% | 97% | 11979 |  |
 | `web/` | 0% | 100% | 7268 |  |
-| `docs/` | 6% | 94% | 2589 |  |
+| `docs/` | 6% | 94% | 2591 |  |
 | `cmd/grain/` | 8% | 92% | 1806 |  |
 | `design/product/` | 0% | 100% | 1426 |  |
-| `(root)` | 1% | 99% | 1079 |  |
+| `(root)` | 1% | 99% | 1093 |  |
 | `design/cloud/` | 0% | 100% | 664 |  |
 | `design/brand/` | 0% | 100% | 647 |  |
 
@@ -27,20 +27,20 @@ What happened to the code after it landed — AI-written and human-written lines
 
 | | Lines | Later reworked | In a fix/revert | Median commits until rework |
 |---|---|---|---|---|
-| AI-written | 3595 | 283 (8%) | 0 | 1 |
-| Human-written | 303 | 50 (17%) | 0 | 1 |
+| AI-written | 4259 | 348 (8%) | 4 | 1 |
+| Human-written | 370 | 65 (18%) | 1 | 1 |
 
 **AI-written lines were reworked 0.5× as often as human-written ones.**
 
 ## Risk
 
-**416 of 416 AI-written lines in critical paths (100%) landed without review evidence.** Review evidence is anything git can see — a `Reviewed-by` trailer, a squash-merge `(#123)` subject, arriving via a merge, or a committer other than the author. Absence means no evidence, not proof of no review.
+**449 of 449 AI-written lines in critical paths (100%) landed without review evidence.** Review evidence is anything git can see — a `Reviewed-by` trailer, a squash-merge `(#123)` subject, arriving via a merge, or a committer other than the author. Absence means no evidence, not proof of no review.
 
 | Critical path | AI lines | Unreviewed | Commits |
 |---|---|---|---|
 | `workflows` | 155 | 155 | 7 |
 | `auth` | 129 | 129 | 7 |
-| `login` | 74 | 74 | 5 |
+| `login` | 107 | 107 | 6 |
 | `billing` | 58 | 58 | 2 |
 
 **Hotspots** — commits that put the most unreviewed AI lines into a critical path:
@@ -50,11 +50,11 @@ What happened to the code after it landed — AI-written and human-written lines
 - `33617b9` Add npm shim so `npx grain` works, plus a release workflow — `workflows`, 39 lines
 - `d732d4e` Auto-publish Homebrew formula from the release workflow — `workflows`, 35 lines
 - `63ffec5` Add Scoop bucket (Windows): manifest + updater + auto-publish + docs — `workflows`, 34 lines
+- `3817649` feat(web): sign-in, sign-up and reset pages aligned with the landing page — `login`, 33 lines
 - `a064bcb` web: wire real Supabase auth + data — `auth`, 27 lines
 - `6d8fd6b` feat(cloud): wire filters, search, custom dropdowns & sliders — `auth`, 19 lines
 - `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 19 lines
 - `66b8036` Add GitHub Action (PR provenance comment) + CI, and grain check --format md — `workflows`, 18 lines
-- `2251684` web: wire GitHub OAuth sign-in — `auth`, 17 lines
 
 > **How this is measured:** declared signals (`Co-Authored-By`, bot commits, explicit tags) dominate; behavioral inference is capped at 0.70 confidence and never stated as fact.
 
