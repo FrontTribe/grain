@@ -74,12 +74,47 @@ export async function getRepos(): Promise<Repo[]> {
   return (data as Repo[]) ?? [];
 }
 
+// Org-level monthly series. Seeded org snapshots (repo_id NULL) win for their
+// month; every other month is derived from per-repo scans — each repo's latest
+// scan that month, averaged across repos — so real workspaces (which have no
+// snapshots) still get a live org series that grows with every scan.
 export async function getOrgScans(): Promise<ScanRow[]> {
   const orgId = await getActiveOrgId();
   if (!orgId) return [];
   const s = await createClient();
-  const { data } = await s.from("scans").select("human,ai,unc,commits,created_at").eq("org_id", orgId).is("repo_id", null).order("created_at", { ascending: true });
-  return (data as ScanRow[]) ?? [];
+  const [{ data: snaps }, { data: repoScans }] = await Promise.all([
+    s.from("scans").select("human,ai,unc,commits,created_at").eq("org_id", orgId).is("repo_id", null).order("created_at", { ascending: true }),
+    s.from("scans").select("repo_id,human,ai,unc,commits,created_at").eq("org_id", orgId).not("repo_id", "is", null).order("created_at", { ascending: true }),
+  ]);
+  const month = (iso: string) => iso.slice(0, 7); // "YYYY-MM"
+
+  // latest scan per (month, repo)
+  type RS = ScanRow & { repo_id: string };
+  const latest = new Map<string, Map<string, RS>>();
+  for (const r of (repoScans ?? []) as RS[]) {
+    const m = month(r.created_at);
+    const byRepo = latest.get(m) ?? new Map<string, RS>();
+    const prev = byRepo.get(r.repo_id);
+    if (!prev || r.created_at > prev.created_at) byRepo.set(r.repo_id, r);
+    latest.set(m, byRepo);
+  }
+
+  const byMonth = new Map<string, ScanRow>();
+  for (const [m, byRepo] of latest) {
+    const rows = [...byRepo.values()];
+    const n = rows.length;
+    const avg = (sel: (r: RS) => number) => rows.reduce((t, r) => t + Number(sel(r) ?? 0), 0) / n;
+    byMonth.set(m, {
+      human: avg((r) => r.human),
+      ai: avg((r) => r.ai),
+      unc: avg((r) => r.unc),
+      commits: rows.reduce((t, r) => t + Number(r.commits ?? 0), 0),
+      created_at: rows.reduce((t, r) => (r.created_at > t ? r.created_at : t), rows[0].created_at),
+    });
+  }
+  for (const r of (snaps ?? []) as ScanRow[]) byMonth.set(month(r.created_at), r); // snapshot wins
+
+  return [...byMonth.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([, v]) => v);
 }
 
 export async function getEvents(): Promise<EventRow[]> {
@@ -180,13 +215,8 @@ export async function getOrgTrend(repoId?: string): Promise<{ month: string; hum
   const s = await createClient();
 
   if (!repoId) {
-    const { data } = await s
-      .from("scans")
-      .select("human,ai,created_at")
-      .eq("org_id", orgId)
-      .is("repo_id", null)
-      .order("created_at", { ascending: true });
-    return ((data ?? []) as { human: number; ai: number; created_at: string }[]).map((r) => ({
+    // Same merged org series the Overview chart uses.
+    return (await getOrgScans()).map((r) => ({
       month: monthLabel(r.created_at),
       human: Math.round(Number(r.human)),
       ai: Math.round(Number(r.ai)),

@@ -1,9 +1,10 @@
+import Link from "next/link";
 import { TopBar, Card, ProvBar, MiniBar, Spark, Pill, Kpi } from "@/components/dashboard/ui";
 import { TrendChart } from "@/components/dashboard/TrendChart";
 import { Onboarding } from "@/components/dashboard/Onboarding";
 import { GithubPanel } from "@/components/dashboard/GithubPanel";
 import { SearchInput, SelectNav } from "@/components/dashboard/controls";
-import { getRepos, getOrgScans, getEvents, getRepoTrends, getUserAndOrg, ago, monthLabel, num } from "@/lib/data";
+import { getRepos, getOrgScans, getRepoTrends, getUserAndOrg, ago, monthLabel, num } from "@/lib/data";
 
 const RANGES = [
   { value: "3", label: "Last 3 months" },
@@ -22,7 +23,7 @@ export default async function Overview({ searchParams }: { searchParams: Promise
   const { range, q } = await searchParams;
   const months = RANGES.some((r) => r.value === range) ? Number(range) : 6;
   const query = (q ?? "").trim().toLowerCase();
-  const [repos, scans, events, repoTrends] = await Promise.all([getRepos(), getOrgScans(), getEvents(), getRepoTrends()]);
+  const [repos, scans, repoTrends] = await Promise.all([getRepos(), getOrgScans(), getRepoTrends()]);
   const trendById = new Map(repoTrends.map((t) => [t.id, t]));
 
   // Fresh workspace (e.g. a new GitHub OAuth user): guide them to first data.
@@ -64,10 +65,19 @@ export default async function Overview({ searchParams }: { searchParams: Promise
     if (t && t.points >= 2) return { series: t.series, up: t.delta > 0 };
     return { series: spark(ai, attention), up: attention };
   };
-  const attention = events
-    .filter((e) => e.kind === "attention" && e.pr)
-    .slice(0, 5)
-    .map((e) => ({ repo: e.repo!, pr: e.pr!, ai: num(e.ai ?? 0), ago: ago(e.created_at) }));
+  // Repos currently over their policy threshold — the same set the
+  // "Open attention" KPI counts, so the card and the number always agree.
+  const attention = repos
+    .filter((r) => r.status === "attention")
+    .sort((a, b) => num(b.ai) - num(a.ai))
+    .slice(0, 6)
+    .map((r) => ({
+      id: r.id,
+      name: r.name,
+      owner: r.full_name?.split("/")[0] ?? "",
+      ai: num(r.ai),
+      ago: r.last_scan_at ? ago(r.last_scan_at) : "—",
+    }));
 
   return (
     <>
@@ -121,14 +131,14 @@ export default async function Overview({ searchParams }: { searchParams: Promise
             </div>
             <div className="flex flex-col">
               {attention.map((a) => (
-                <div key={a.pr} className="flex items-center gap-3 border-b border-line/60 py-2.5 last:border-none">
+                <Link key={a.id} href={`/app/repos/${encodeURIComponent(a.name)}`} className="flex items-center gap-3 border-b border-line/60 py-2.5 last:border-none hover:text-brand">
                   <span className="size-2 flex-none rounded-full bg-ai" />
                   <span className="text-[13px] font-medium">
-                    {a.repo} <span className="font-mono font-normal text-faint">#{a.pr}</span>
+                    {a.name} <span className="font-mono font-normal text-faint">{a.owner}/</span>
                   </span>
                   <span className="ml-auto font-mono text-[12.5px] font-semibold text-ai">{a.ai}%</span>
                   <span className="w-10 text-right font-mono text-[11px] text-faint">{a.ago}</span>
-                </div>
+                </Link>
               ))}
               {attention.length === 0 && <div className="py-6 text-center text-[13px] text-faint">Nothing needs attention 🎉</div>}
             </div>
