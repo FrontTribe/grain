@@ -56,13 +56,6 @@ grain verify — 99 commits, 21 attested
   ✓ every attestation checks out
 ```
 
-<!-- After recording the GIF (see below), uncomment:
-![grain scan demo](docs/demo.gif)
--->
-
-> **Record the GIF:** `grain` on your PATH + [VHS](https://github.com/charmbracelet/vhs), then
-> `vhs docs/demo.tape` → writes `docs/demo.gif`. Uncomment the line above to embed it.
-
 ## Install
 
 **macOS / Linux** — one line:
