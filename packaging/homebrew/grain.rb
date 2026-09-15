@@ -5,28 +5,28 @@
 class Grain < Formula
   desc "Code provenance layer — see how much of your codebase is human-written vs AI"
   homepage "https://github.com/FrontTribe/grain"
-  version "0.1.0"
+  version "0.2.0"
   license "MIT"
 
   on_macos do
     on_arm do
       url "https://github.com/FrontTribe/grain/releases/download/v#{version}/grain-darwin-arm64"
-      sha256 "7aee4d3559991cc1de8a20c918ce58f1f816431481de4a4504612b67dc30645a"
+      sha256 "278afd16e416bc6169bc183e150a7ed7c646daa7f025a925c448e8d45da475a3"
     end
     on_intel do
       url "https://github.com/FrontTribe/grain/releases/download/v#{version}/grain-darwin-amd64"
-      sha256 "77f2e8987f2cd2058f7d3ea3457290b8becc605a6233f1cd9ad1c666dabc8c2a"
+      sha256 "3a0a8272b6d1ae857c36df77d6939c867e26f00388463d528520cafeae841ea3"
     end
   end
 
   on_linux do
     on_arm do
       url "https://github.com/FrontTribe/grain/releases/download/v#{version}/grain-linux-arm64"
-      sha256 "9000b831ec9746599470dd0b0263a89d084672c3685b39f7c8ff073de0fe6d8b"
+      sha256 "f3c1a1e183d10fb54f562ddeafd76064be337feea8caa71413e98737ad3822d8"
     end
     on_intel do
       url "https://github.com/FrontTribe/grain/releases/download/v#{version}/grain-linux-amd64"
-      sha256 "ee70e4fd72010b65ac87745c49a890720f570155d5376bf5a0b21a4b12469b85"
+      sha256 "8d03b379e1c547ee281f93d73149bf4419af50198b2db9e5232e9729ee690b54"
     end
   end
 
