@@ -293,8 +293,7 @@ repositories and keeps watching:
   offline with `grain verify --bom`.
 
 CLI-scanned repositories reach the same dashboard with `grain push`
-(Settings → Ingest tokens). Setup notes: [GitHub App](docs/github-app-setup.md),
-[email](docs/email-setup.md).
+(Settings → Ingest tokens).
 
 ## Open core
 

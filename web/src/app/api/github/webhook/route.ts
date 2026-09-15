@@ -89,7 +89,7 @@ async function rescanFromWebhook(fullName: string, installationId: number, pushe
   const scan = await scanGithubRepo(parsed.owner, parsed.repo, { token, max: 100 });
   for (const orgId of orgIds) {
     // Service-role ingest: a thin, session-less wrapper around the member ingest
-    // that takes an explicit org (see docs/github-app-setup.md).
+    // that takes an explicit org.
     await db.rpc("ingest_grain_service", { p_org: orgId, p_payload: scan.report });
     // Alert the workspace's admins if this push pushed the repo over threshold…
     try {
