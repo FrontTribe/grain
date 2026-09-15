@@ -209,7 +209,7 @@ export default function Home() {
                 className="self-start"
                 lines={[
                   "$ grain scan",
-                  "grain 0.1.0 · scanning FrontTribe/grain",
+                  "grain 0.2.0 · scanning FrontTribe/grain",
                   "  reading 91 commits done",
                   "  provenance:",
                   "    human-authored    2%  ░░░░░░░░░░░░░░░░░░░░",

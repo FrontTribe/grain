@@ -4,7 +4,7 @@ import { canonical } from "@/lib/bom";
 import { loadSigningKey, signBomDigest, type BomSignature } from "@/lib/signing";
 
 // Engine identity mirrored from the CLI (internal/report). Bump with the engine.
-const ENGINE_VERSION = "0.1.0";
+const ENGINE_VERSION = "0.2.0";
 
 export type BomRepo = {
   name: string;

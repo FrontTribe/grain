@@ -22,7 +22,7 @@ import (
 
 // EngineVersion / WeightsID pin how a score was produced, so grain.json is reproducible.
 const (
-	EngineVersion = "0.1.0"
+	EngineVersion = "0.2.0"
 	WeightsID     = "w1"
 )
 

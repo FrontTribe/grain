@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    tags: ['v*']
+    tags: ['v[0-9]+.[0-9]+.[0-9]+']   # v0.2.0 releases; the moving v1 tag for the Action does not build
 
 permissions:
   contents: write   # to create the release and upload binaries

@@ -31,7 +31,7 @@ anyone reviewed it — with a confidence level on every claim.
 
 ```console
 $ grain scan
-grain 0.1.0 · scanning FrontTribe/grain
+grain 0.2.0 · scanning FrontTribe/grain
   reading 99 commits done
   provenance:
     human-authored    3%  █░░░░░░░░░░░░░░░░░░░
