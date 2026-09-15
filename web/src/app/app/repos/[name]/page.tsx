@@ -6,6 +6,7 @@ import { RepoPolicyForm } from "@/components/dashboard/RepoPolicyForm";
 import { BadgeCard } from "@/components/dashboard/BadgeCard";
 import { getRepoDetail, ago, num } from "@/lib/data";
 import { rescanRepo } from "@/app/app/integrations/actions";
+import { connectGithub } from "@/app/auth/actions";
 
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
 
@@ -20,10 +21,10 @@ export default async function RepoDetail({
   searchParams,
 }: {
   params: Promise<{ name: string }>;
-  searchParams: Promise<{ error?: string; rescanned?: string; policy?: string }>;
+  searchParams: Promise<{ error?: string; rescanned?: string; policy?: string; reconnect?: string }>;
 }) {
   const { name } = await params;
-  const { error, rescanned, policy: policyMsg } = await searchParams;
+  const { error, rescanned, policy: policyMsg, reconnect } = await searchParams;
   const data = await getRepoDetail(name);
   if (!data) notFound();
   const { repo, dirs, prs, policy, orgPolicy } = data;
@@ -48,6 +49,19 @@ export default async function RepoDetail({
       {(error || okMsg) && (
         <div className={`mx-7 mt-4 rounded-[10px] border px-3.5 py-2.5 text-[13px] ${error ? "border-ai/40 bg-ai-soft text-ai" : "border-human/40 bg-human-soft text-human"}`}>
           {error ? error : okMsg}
+        </div>
+      )}
+      {reconnect && (
+        <div className="mx-7 mt-4 flex flex-wrap items-center gap-3 rounded-[10px] border border-ai/40 bg-ai-soft px-3.5 py-2.5 text-[13px] text-ai">
+          <span className="min-w-0 flex-1">
+            {reconnect === "rescanned"
+              ? "GitHub no longer accepts your connected token. This public repo was re-scanned without it; private repos and push scans need a fresh connection."
+              : "GitHub no longer accepts your connected token, so this repo could not be re-scanned. Reconnect GitHub and try again."}
+          </span>
+          <form action={connectGithub}>
+            <input type="hidden" name="next" value={`/app/repos/${encodeURIComponent(repo.name)}`} />
+            <button type="submit" className={`${btn} bg-ink text-ground`}>Reconnect GitHub</button>
+          </form>
         </div>
       )}
       <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-7">

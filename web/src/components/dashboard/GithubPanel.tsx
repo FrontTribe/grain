@@ -1,4 +1,4 @@
-import { getGithubConnection, getGithubRepos } from "@/lib/data";
+import { getGithubConnection, getGithubReposChecked } from "@/lib/data";
 import { connectGithub } from "@/app/auth/actions";
 import { disconnectGithub } from "@/app/app/integrations/actions";
 import { ConnectRepo } from "@/components/dashboard/ConnectRepo";
@@ -15,13 +15,47 @@ const gitIcon = (
 // connected, and always the manual owner/repo field (public repos need no token).
 export async function GithubPanel({ heading = true }: { heading?: boolean }) {
   const conn = await getGithubConnection();
-  const repos = conn ? await getGithubRepos() : [];
+  // Listing repos is also the liveness check: a 401 marks the token invalid.
+  const listed = conn && !conn.invalid_at ? await getGithubReposChecked() : { repos: [], invalid: false };
+  const repos = listed.repos;
+  const rejectedAt = conn?.invalid_at ?? (listed.invalid ? new Date().toISOString() : null);
 
   return (
     <div>
       {heading && <h3 className="font-display text-base font-bold">Connect a repository</h3>}
 
-      {conn ? (
+      {conn && rejectedAt ? (
+        <>
+          <div className="mb-3.5 mt-1 flex flex-wrap items-center gap-2 text-[12.5px]">
+            <span className="inline-flex items-center gap-1.5 font-mono text-ai">
+              <span className="size-2 rounded-full bg-ai" /> GitHub token rejected
+            </span>
+            {conn.github_login && <span className="text-muted">was {conn.github_login}</span>}
+            <span className="text-faint">· {new Date(rejectedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</span>
+            <form action={disconnectGithub} className="ml-auto">
+              <button type="submit" className="rounded-[7px] px-2 py-1 font-mono text-[11.5px] text-muted hover:bg-surface-2">
+                forget
+              </button>
+            </form>
+          </div>
+          <p className="mb-3 text-[12.5px] text-muted">
+            GitHub stopped accepting the stored token (revoked, or unused for a year). Public repos still scan without it; private repos and the picker need a fresh connection.
+          </p>
+          <form action={connectGithub}>
+            <input type="hidden" name="next" value="/app/settings" />
+            <button
+              type="submit"
+              className="inline-flex h-[42px] items-center gap-2 rounded-[10px] bg-ink px-4 text-[13.5px] font-semibold text-ground"
+            >
+              {gitIcon} Reconnect GitHub
+            </button>
+          </form>
+          <div className="mt-4 border-t border-line pt-4">
+            <div className="mb-2 font-mono text-[11px] uppercase tracking-wider text-faint">or by name</div>
+            <ConnectRepo compact />
+          </div>
+        </>
+      ) : conn ? (
         <>
           <div className="mb-3.5 mt-1 flex items-center gap-2 text-[12.5px]">
             <span className="inline-flex items-center gap-1.5 font-mono text-human">

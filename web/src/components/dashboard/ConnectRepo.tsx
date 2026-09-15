@@ -49,6 +49,12 @@ export function ConnectRepo({ compact = false }: { compact?: boolean }) {
           </div>
         </div>
       )}
+      {state.reconnect && (
+        <div className="mt-3 rounded-[10px] border border-ai/40 bg-ai-soft px-3.5 py-2.5 text-[13px] text-ai">
+          GitHub no longer accepts your connected token{state.ok ? "; this public repo scanned without it" : ""}.{" "}
+          <Link href="/app/settings" className="underline">Reconnect GitHub in Settings</Link> for private repos and the picker.
+        </div>
+      )}
       {!compact && (
         <p className="mt-3 text-[12px] text-faint">
           Public repos scan instantly. Declared signals only (Co-Authored-By, bot commits).

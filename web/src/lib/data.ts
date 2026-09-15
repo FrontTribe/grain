@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
-import { listUserRepos, type GhRepo } from "@/lib/github";
+import { listUserRepos, type GhRepo, GithubScanError } from "@/lib/github";
 
 // RLS keeps a user to their own orgs, but a user can belong to several (e.g. after
 // accepting an invite). The active org is a cookie; every query is scoped to it.
@@ -194,7 +194,9 @@ export async function getIngestTokens(): Promise<IngestToken[]> {
   return (data as IngestToken[]) ?? [];
 }
 
-export type GithubConn = { github_login: string | null; connected_at: string } | null;
+// invalid_at is set when GitHub rejected the stored token (see
+// invalidate_github_token); the UI then offers a reconnect instead of a picker.
+export type GithubConn = { github_login: string | null; connected_at: string; invalid_at: string | null } | null;
 
 export async function getGithubConnection(): Promise<GithubConn> {
   const s = await createClient();
@@ -203,15 +205,26 @@ export async function getGithubConnection(): Promise<GithubConn> {
   return (row as GithubConn) ?? null;
 }
 
-export async function getGithubRepos(): Promise<GhRepo[]> {
+// Lists the user's repositories with the stored token. A 401 marks the token
+// invalid so the next render shows the reconnect state; `invalid` tells the
+// caller that happened on this request.
+export async function getGithubReposChecked(): Promise<{ repos: GhRepo[]; invalid: boolean }> {
   const s = await createClient();
   const { data: token } = await s.rpc("get_github_token");
-  if (!token) return [];
+  if (!token) return { repos: [], invalid: false };
   try {
-    return await listUserRepos(token as string, 100);
-  } catch {
-    return [];
+    return { repos: await listUserRepos(token as string, 100), invalid: false };
+  } catch (e) {
+    if (e instanceof GithubScanError && e.status === 401) {
+      await s.rpc("invalidate_github_token");
+      return { repos: [], invalid: true };
+    }
+    return { repos: [], invalid: false };
   }
+}
+
+export async function getGithubRepos(): Promise<GhRepo[]> {
+  return (await getGithubReposChecked()).repos;
 }
 
 export async function getOrgPolicy() {

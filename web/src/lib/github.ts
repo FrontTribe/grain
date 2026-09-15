@@ -120,6 +120,11 @@ export async function listUserRepos(token: string, max = 100): Promise<GhRepo[]>
   return rows.map((r) => ({ full_name: r.full_name, private: r.private, pushed_at: r.pushed_at }));
 }
 
+// GitHub answered 401 to a stored OAuth token: revoked by the user, or expired
+// (GitHub drops OAuth tokens unused for a year). The callers mark the connection
+// invalid and ask for a reconnect instead of retrying with the same token.
+export const TOKEN_REJECTED = "GitHub no longer accepts the connected token. Reconnect GitHub to scan with it.";
+
 export class GithubScanError extends Error {
   status: number;
   constructor(message: string, status: number) {
@@ -318,6 +323,9 @@ export async function scanGithubRepo(
 
   if (res.status === 404) {
     throw new GithubScanError("Repository not found (or private — connect a token for private repos).", 404);
+  }
+  if (res.status === 401) {
+    throw new GithubScanError(TOKEN_REJECTED, 401);
   }
   if (res.status === 403 || res.status === 429) {
     throw new GithubScanError("GitHub API rate limit reached — try again in a few minutes.", 403);
