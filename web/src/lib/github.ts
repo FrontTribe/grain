@@ -437,7 +437,9 @@ export async function scanGithubRepo(
       path: p.path,
       human: p.humanN / p.lines,
       ai: p.aiN / p.lines,
-      lines: p.lines,
+      // Partially attested commits split their lines by AI share, so the sum
+      // is a float; the ingest stores an integer.
+      lines: Math.round(p.lines),
       human_owned: false,
     }));
 
