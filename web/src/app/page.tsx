@@ -565,7 +565,7 @@ jobs:
             <a href={`${REPO}#readme`} className={btnSecondary}>Read the docs</a>
           </div>
           <div className="mx-auto mt-6 max-w-[360px]">
-            <CopyCommand cmd="npx grain scan" />
+            <CopyCommand cmd="npx getgrain scan" />
           </div>
         </section>
       </main>

@@ -80,7 +80,7 @@ scoop install grain
 **Any platform** — via npm, or Go:
 
 ```bash
-npx grain scan
+npx getgrain scan
 go install github.com/FrontTribe/grain/cmd/grain@latest
 ```
 

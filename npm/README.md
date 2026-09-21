@@ -4,7 +4,7 @@ Run [Grain](https://github.com/FrontTribe/grain) — the code-provenance CLI —
 with no manual install:
 
 ```bash
-npx grain scan
+npx getgrain scan
 ```
 
 This package is a thin launcher. On first run it downloads the prebuilt Grain

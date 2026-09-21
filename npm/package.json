@@ -1,5 +1,5 @@
 {
-  "name": "grain",
+  "name": "getgrain",
   "version": "0.2.0",
   "description": "Code provenance layer — see how much of your codebase is human-written vs AI-assisted. Signals, not verdicts.",
   "bin": {

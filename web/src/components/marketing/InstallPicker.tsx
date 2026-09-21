@@ -7,7 +7,7 @@ import { useState } from "react";
 const OPTIONS = [
   { id: "sh", label: "macOS / Linux", cmd: "curl -fsSL https://raw.githubusercontent.com/FrontTribe/grain/main/install.sh | sh" },
   { id: "brew", label: "Homebrew", cmd: "brew install FrontTribe/tap/grain" },
-  { id: "npx", label: "npm", cmd: "npx grain scan" },
+  { id: "npx", label: "npm", cmd: "npx getgrain scan" },
   { id: "go", label: "Go", cmd: "go install github.com/FrontTribe/grain/cmd/grain@latest" },
   { id: "scoop", label: "Windows", cmd: "scoop bucket add fronttribe https://github.com/FrontTribe/scoop-bucket && scoop install grain" },
 ] as const;
