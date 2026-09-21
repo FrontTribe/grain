@@ -7,7 +7,13 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 
-const VERSION = require('../package.json').version;
+const pkg = require('../package.json');
+// The shim's own version can move (launcher fixes) without a new grain release:
+// package.json "grain.release" pins which GitHub release the binary comes from.
+const VERSION = (pkg.grain && pkg.grain.release) || pkg.version;
+// A stalled connection must fail, not hang npm install forever; the launcher
+// retries on the next run.
+const IDLE_TIMEOUT_MS = 60 * 1000;
 const REPO = 'FrontTribe/grain';
 
 // Map Node's platform/arch to the release asset naming (Go's GOOS/GOARCH).
@@ -31,6 +37,7 @@ function download(url, dest, redirects) {
   return new Promise((resolve, reject) => {
     if (redirects > 10) return reject(new Error('too many redirects'));
     const req = https.get(url, { headers: { 'User-Agent': 'grain-npm', Accept: 'application/octet-stream' } }, (res) => {
+      res.setTimeout(IDLE_TIMEOUT_MS, () => res.destroy(new Error('download stalled for ' + url)));
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         res.resume();
         return download(res.headers.location, dest, redirects + 1).then(resolve, reject);
@@ -41,12 +48,16 @@ function download(url, dest, redirects) {
       }
       const tmp = dest + '.download';
       const file = fs.createWriteStream(tmp);
+      const fail = (e) => { try { fs.unlinkSync(tmp); } catch (_) {} reject(e); };
       res.pipe(file);
+      res.on('error', fail);
+      res.on('aborted', () => fail(new Error('download aborted for ' + url)));
       file.on('finish', () => file.close(() => {
-        try { fs.renameSync(tmp, dest); resolve(); } catch (e) { reject(e); }
+        try { fs.renameSync(tmp, dest); resolve(); } catch (e) { fail(e); }
       }));
-      file.on('error', (e) => { try { fs.unlinkSync(tmp); } catch (_) {} reject(e); });
+      file.on('error', fail);
     });
+    req.setTimeout(IDLE_TIMEOUT_MS, () => req.destroy(new Error('connection timed out for ' + url)));
     req.on('error', reject);
   });
 }
