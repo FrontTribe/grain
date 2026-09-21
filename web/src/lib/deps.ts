@@ -4,6 +4,7 @@
 // and how old is it. Agents hallucinate names; attackers register them
 // (slopsquatting). Mirrors internal/deps; only package names leave the server.
 import { lineHash, substantive, type CloudRiskCommit, type ReviewEvidence } from "@/lib/risk";
+import { triageDeps, suspicious, type DepTriage } from "@/lib/triage";
 
 export type Ecosystem = "npm" | "go" | "pypi" | "cargo" | "rubygems";
 
@@ -19,6 +20,7 @@ export type CloudDep = {
   exists: boolean;
   age_days: number; // -1 when unknown
   url: string;
+  triage?: DepTriage; // Cloud name triage (TypeSafe Jev), when enabled
 };
 
 export type CloudDeps = {
@@ -28,6 +30,7 @@ export type CloudDeps = {
   checked: boolean;
   missing: number;
   young: number;
+  suspicious: number; // names that look typosquatted or invented (triage)
   deps: CloudDep[];
   commits: number;
   source: "cloud";
@@ -171,7 +174,7 @@ export async function lookup(eco: Ecosystem, name: string): Promise<{ exists: bo
 }
 
 function rank(d: CloudDep): number {
-  return (d.checked && !d.exists ? 16 : 0) + (d.checked && d.exists && d.age_days >= 0 && d.age_days < YOUNG_DAYS ? 8 : 0) + (d.ai ? 4 : 0) + (d.reviewed ? 0 : 2);
+  return (suspicious(d.triage, d) ? 32 : 0) + (d.checked && !d.exists ? 16 : 0) + (d.checked && d.exists && d.age_days >= 0 && d.age_days < YOUNG_DAYS ? 8 : 0) + (d.ai ? 4 : 0) + (d.reviewed ? 0 : 2);
 }
 
 // Commits arrive newest first; walk them oldest first so a dependency is
@@ -203,11 +206,18 @@ export async function computeCloudDeps(opts: { commits: CloudRiskCommit[]; evide
       if (r) { d.checked = true; d.exists = r.exists; d.age_days = r.age_days; }
     }));
   }
-  const out: CloudDeps = { total: deps.length, ai: 0, ai_unreviewed: 0, checked: check, missing: 0, young: 0, deps: [], commits: opts.commits.length, source: "cloud" };
+  // Name triage after the registry answer, so the model sees it too.
+  const triage = await triageDeps(deps);
+  for (const d of deps) {
+    const t = triage.get(`${d.ecosystem}/${d.name}`);
+    if (t) d.triage = t;
+  }
+  const out: CloudDeps = { total: deps.length, ai: 0, ai_unreviewed: 0, checked: check, missing: 0, young: 0, suspicious: 0, deps: [], commits: opts.commits.length, source: "cloud" };
   for (const d of deps) {
     if (d.ai) { out.ai++; if (!d.reviewed) out.ai_unreviewed++; }
     if (d.checked && !d.exists) out.missing++;
     if (d.checked && d.exists && d.age_days >= 0 && d.age_days < YOUNG_DAYS) out.young++;
+    if (suspicious(d.triage, d)) out.suspicious++;
   }
   out.deps = deps.sort((a, b) => rank(b) - rank(a)).slice(0, MAX_DEPS);
   return out;

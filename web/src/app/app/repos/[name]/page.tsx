@@ -7,6 +7,7 @@ import { BadgeCard } from "@/components/dashboard/BadgeCard";
 import { getRepoDetail, ago, num } from "@/lib/data";
 import { rescanRepo } from "@/app/app/integrations/actions";
 import { connectGithub } from "@/app/auth/actions";
+import { suspicious, triageReason } from "@/lib/triage";
 
 const btn = "inline-flex items-center gap-2 rounded-[9px] px-4 py-2 text-[13.5px] font-semibold";
 
@@ -300,10 +301,12 @@ export default async function RepoDetail({
           const dp = repo.dependencies;
           if (!dp || dp.total === 0) return null;
           const scope = dp.source === "cloud" ? `last ${dp.commits ?? "?"} commits · GitHub scan` : dp.source === "cli" ? "full history · CLI scan" : "";
-          const flagged = dp.deps.filter((d) => d.checked && (!d.exists || (d.age_days >= 0 && d.age_days < 30)));
+          const flagged = dp.deps.filter((d) => suspicious(d.triage, d) || (d.checked && (!d.exists || (d.age_days >= 0 && d.age_days < 30))));
           const rest = dp.deps.filter((d) => !flagged.includes(d));
           const reg = (d: (typeof dp.deps)[number]) =>
             !d.checked ? "not checked" : !d.exists ? "not found" : d.age_days >= 0 && d.age_days < 30 ? `${d.age_days} days old` : d.age_days >= 0 ? `${Math.round(d.age_days / 365)}y` : "exists";
+          const why = (d: (typeof dp.deps)[number]) => (suspicious(d.triage, d) ? triageReason(d.triage) : "");
+          const triaged = dp.deps.some((d) => d.triage);
           return (
             <Card className="p-5">
               <div className="mb-1 flex items-center justify-between">
@@ -313,7 +316,7 @@ export default async function RepoDetail({
               <p className="mb-3.5 text-[12.5px] text-muted">
                 <b className="text-ink">{dp.total}</b> added, <b className="text-ink">{dp.ai}</b> by AI-written lines, <b className="text-ink">{dp.ai_unreviewed}</b> of those with no review evidence.
                 {dp.checked ? (
-                  <> Registries: <b className={dp.missing > 0 ? "text-ai" : "text-ink"}>{dp.missing} not found</b>, <b className={dp.young > 0 ? "text-ai" : "text-ink"}>{dp.young}</b> younger than 30 days.</>
+                  <> Registries: <b className={dp.missing > 0 ? "text-ai" : "text-ink"}>{dp.missing} not found</b>, <b className={dp.young > 0 ? "text-ai" : "text-ink"}>{dp.young}</b> younger than 30 days.{triaged && <> Names: <b className={(dp.suspicious ?? 0) > 0 ? "text-ai" : "text-ink"}>{dp.suspicious ?? 0}</b> look typosquatted or invented.</>}</>
                 ) : (
                   <> Registries not consulted (run the CLI with <code className="font-mono">--check-registry</code>).</>
                 )}
@@ -324,6 +327,7 @@ export default async function RepoDetail({
                     <div key={d.ecosystem + d.name} className="flex items-center gap-2.5 rounded-[8px] bg-ai-soft px-2.5 py-1.5 text-[12.5px]">
                       <a href={d.url} target="_blank" rel="noreferrer" className="font-mono text-[12px] font-semibold text-ink hover:underline">{d.name}</a>
                       <span className="font-mono text-[10.5px] text-muted">{d.ecosystem}</span>
+                      {why(d) && <span className="text-[11.5px] text-ai">{why(d)}</span>}
                       <span className="ml-auto font-mono text-[11px] font-semibold text-ai">{reg(d)}</span>
                       <span className="font-mono text-[10.5px] text-muted">{d.ai ? "AI" : "human"}{d.reviewed ? "" : " · unreviewed"}</span>
                     </div>
@@ -339,7 +343,7 @@ export default async function RepoDetail({
                 ))}
                 {rest.length > 24 && <span className="px-1 py-0.5 font-mono text-[11px] text-faint">+{rest.length - 24} more</span>}
               </div>
-              <p className="mt-3 text-[11.5px] text-faint">Orange chips were added by AI-written lines. Existence is not safety; this is where to look, not an audit of package contents.</p>
+              <p className="mt-3 text-[11.5px] text-faint">Orange chips were added by AI-written lines. Existence is not safety; this is where to look, not an audit of package contents.{triaged && <> Name triage by TypeSafe Jev sees the package name, ecosystem and registry answer, nothing else.</>}</p>
             </Card>
           );
         })()}

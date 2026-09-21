@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendEmail, attentionEmail, riskEmail, securityEmail } from "@/lib/email";
 import type { Security, Dependencies } from "@/lib/data";
+import { suspicious, triageReason } from "@/lib/triage";
 import { getOrgMembers, getOrgPolicy, getUserAndOrg } from "@/lib/data";
 import { orgSubscribed, planSubscribed } from "@/lib/plan";
 
@@ -83,9 +84,9 @@ export async function notifySecurityForOrg(
   if (pushedShas.length === 0) return;
   const pushed = new Set(pushedShas);
   const findings = (security?.findings ?? []).filter((f) => f.ai && pushed.has(f.sha));
-  const deps = (dependencies?.deps ?? []).filter(
-    (d) => d.checked && pushed.has(d.sha) && (!d.exists || (d.ai && d.age_days >= 0 && d.age_days < 30)),
-  );
+  const deps = (dependencies?.deps ?? [])
+    .filter((d) => pushed.has(d.sha) && (suspicious(d.triage, d) || (d.checked && (!d.exists || (d.ai && d.age_days >= 0 && d.age_days < 30)))))
+    .map((d) => ({ ...d, reason: suspicious(d.triage, d) ? triageReason(d.triage) : "" }));
   if (findings.length === 0 && deps.length === 0) return;
   if (!(await orgSubscribed(db, orgId))) return;
 

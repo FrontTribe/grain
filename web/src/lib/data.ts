@@ -1,4 +1,5 @@
 import { cache } from "react";
+import type { DepTriage } from "@/lib/triage";
 import { cookies } from "next/headers";
 import { createClient } from "@/utils/supabase/server";
 import { listUserRepos, type GhRepo, GithubScanError } from "@/lib/github";
@@ -89,9 +90,11 @@ export type Security = {
 export type Dependency = {
   name: string; ecosystem: string; manifest: string; sha: string; subject: string;
   ai: boolean; reviewed: boolean; checked: boolean; exists: boolean; age_days: number; url: string;
+  triage?: DepTriage; // Cloud scans only: what the name looks like (TypeSafe Jev)
 };
 export type Dependencies = {
   total: number; ai: number; ai_unreviewed: number; checked: boolean; missing: number; young: number;
+  suspicious?: number; // Cloud scans only: names that look typosquatted or invented
   deps: Dependency[]; commits?: number; source?: "cli" | "cloud";
 };
 

@@ -37,6 +37,28 @@ it, review evidence, registry answer with age); `grain.json` carries the
 `dependencies` block; Cloud shows a **Dependencies** card on the repo page,
 computed over its scan window with the registries consulted.
 
+## Cloud: what the name looks like
+
+The registry says whether a name exists. Cloud scans add a second question:
+what does the name *look* like. Each added dependency is sent to TypeSafe's
+Jev, a model that returns typed, calibrated decisions instead of text, with
+exactly three fields: the package name, the ecosystem, and the registry
+answer. It comes back with a kind (`established`, `plausible_new`,
+`lookalike`, `private_or_internal`) with a confidence, and two probabilities:
+that the name is a misspelling or near-variant of a well-known package, and
+that it reads like a name an assistant would invent.
+
+A dependency counts as **suspicious** when it is a lookalike with confidence
+of at least 0.5, or reads as invented (0.7 or more) and the registry does not
+vouch for it with age. Suspicious names sort to the top of the Dependencies
+card with the reason, and land in the security email. On grain's own
+dependencies the model called all 17 established; `reqeusts` came back as a
+lookalike at 0.97 and `leftpadd-utilz` as invented at 0.82.
+
+This is Cloud only and opt-in for a self-hosted deployment (`TYPESAFE_API_KEY`);
+without the key, nothing is sent and nothing changes. The CLI never calls it:
+local-first means only registry lookups, and only when asked.
+
 ## Gating a pull request
 
 `grain check` lists every dependency the change set added in the PR comment,

@@ -103,7 +103,7 @@ export function riskEmail(
 }
 
 export type SecurityAlertFinding = { sha: string; subject: string; path: string; title: string; severity: string; excerpt: string };
-export type SecurityAlertDep = { sha: string; name: string; ecosystem: string; url: string; ai: boolean; exists: boolean; age_days: number };
+export type SecurityAlertDep = { sha: string; name: string; ecosystem: string; url: string; ai: boolean; exists: boolean; age_days: number; reason?: string };
 
 // One email per push: the AI-written security findings and the dependencies
 // the registry does not know (or that are young and AI-added). Either list may
@@ -116,9 +116,11 @@ export function securityEmail(
   href: string,
 ): { subject: string; html: string } {
   const missing = deps.filter((d) => !d.exists);
+  const suspect = deps.filter((d) => d.reason);
   const parts: string[] = [];
   if (findings.length) parts.push(`${findings.length} AI-written security ${findings.length === 1 ? "finding" : "findings"}`);
-  if (missing.length) parts.push(`${missing.length} ${missing.length === 1 ? "package" : "packages"} not on the registry`);
+  if (suspect.length) parts.push(`${suspect.length} package ${suspect.length === 1 ? "name that looks" : "names that look"} typosquatted or invented`);
+  else if (missing.length) parts.push(`${missing.length} ${missing.length === 1 ? "package" : "packages"} not on the registry`);
   else if (deps.length) parts.push(`${deps.length} young AI-added ${deps.length === 1 ? "package" : "packages"}`);
   const subject = `${repo}: ${parts.join(", ")}`;
 
@@ -130,7 +132,8 @@ export function securityEmail(
     .slice(0, 6)
     .map((d) => {
       const reg = !d.exists ? "<b>not found</b>" : `${d.age_days} days old`;
-      return `<li><code>${esc(d.sha.slice(0, 7))}</code> <a href="${esc(d.url)}"><code>${esc(d.name)}</code></a> <span style="color:#948D80">${esc(d.ecosystem)}</span> — ${reg}, added by ${d.ai ? "an AI-written line" : "a human"}</li>`;
+      const why = d.reason ? `, <b>${esc(d.reason)}</b>` : "";
+      return `<li><code>${esc(d.sha.slice(0, 7))}</code> <a href="${esc(d.url)}"><code>${esc(d.name)}</code></a> <span style="color:#948D80">${esc(d.ecosystem)}</span> — ${reg}${why}, added by ${d.ai ? "an AI-written line" : "a human"}</li>`;
     })
     .join("");
 
